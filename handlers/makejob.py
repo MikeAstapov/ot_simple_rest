@@ -1,4 +1,5 @@
 import re
+import logging
 
 import tornado.web
 import psycopg2
@@ -8,6 +9,8 @@ class MakeJob(tornado.web.RequestHandler):
 
     def initialize(self, db_conf):
         self.db_conf = db_conf
+        self.logger = logging.getLogger('osr')
+        self.logger.info('Initialized')
 
     def post(self):
         response = self.make_job()
@@ -18,23 +21,25 @@ class MakeJob(tornado.web.RequestHandler):
         # TODO
         return True
 
-    @staticmethod
-    def check_cache(cache_ttl, original_spl, tws, twf, cur):
+    def check_cache(self, cache_ttl, original_spl, tws, twf, cur):
         cache_id = creating_date = None
+        self.logger.debug('cache_ttl: %s' % cache_ttl)
         if cache_ttl:
             check_cache_statement = 'SELECT id, extract(epoch from creating_date) FROM cachesdl WHERE expiring_date >= \
             CURRENT_TIMESTAMP AND original_spl=%s AND tws=%s AND twf=%s;'
+            self.logger.debug(check_cache_statement % (original_spl, tws, twf))
             cur.execute(check_cache_statement, (original_spl, tws, twf))
             fetch = cur.fetchone()
             print(fetch)
             if fetch:
                 cache_id, creating_date = fetch
+        self.logger.debug('cache_id: %s, creating_date: %s' % (cache_id, creating_date))
         return cache_id, creating_date
 
-    @staticmethod
-    def check_running(original_spl, tws, twf, cur):
+    def check_running(self, original_spl, tws, twf, cur):
         check_running_statement = "SELECT id, extract(epoch from creating_date) FROM splqueries \
         WHERE status = 'running' AND original_spl=%s AND tws=%s AND twf=%s;"
+        self.logger.debug(check_running_statement % (original_spl, tws, twf))
         cur.execute(check_running_statement, (original_spl, tws, twf))
         fetch = cur.fetchone()
         print(fetch)
@@ -44,31 +49,32 @@ class MakeJob(tornado.web.RequestHandler):
         else:
             job_id = creating_date = None
 
+        self.logger.debug('job_id: %s, creating_date: %s' % (job_id, creating_date))
         return job_id, creating_date
 
-    @staticmethod
-    def user_have_right(username, indexes, cur):
+    def user_have_right(self, username, indexes, cur):
         check_user_role_stm = "SELECT indexes FROM RoleModel WHERE username = %s;"
+        self.logger.debug(check_user_role_stm % (username,))
         cur.execute(check_user_role_stm, (username,))
         fetch = cur.fetchone()
-        print(fetch)
-
+        access_flag = False
         if fetch:
             _indexes = fetch[0]
             if '*' in _indexes:
-                return True
-            index_count = 0
-            for index in indexes:
-                if index in _indexes:
-                    index_count += 1
-            if index_count == len(indexes):
-                return True
-
-        return False
+                access_flag = True
+            else:
+                index_count = 0
+                for index in indexes:
+                    if index in _indexes:
+                        index_count += 1
+                if index_count == len(indexes):
+                    access_flag = True
+        self.logger.debug('User has a right: %s' % access_flag)
+        return access_flag
 
     def make_job(self):
-        print('make_job', self.request.body_arguments)
         request = self.request.body_arguments
+        self.logger.debug(request)
         original_spl = request["original_spl"][0].decode()
 
         username = request["username"][0].decode()
@@ -86,6 +92,7 @@ class MakeJob(tornado.web.RequestHandler):
             cache_id, creating_date = self.check_cache(cache_ttl, original_spl, tws, twf, cur)
 
             if cache_id is None:
+                self.logger.debug('No cache')
 
                 fields = re.findall(r"\\| ?fields (\S+)+", original_spl)
                 filters = list(filter(
@@ -96,11 +103,13 @@ class MakeJob(tornado.web.RequestHandler):
                 if self.validate():
 
                     job_id, creating_date = self.check_running(original_spl, tws, twf, cur)
-
+                    self.logger.debug('Running job_id: %s, creating_date: %s' % (job_id, creating_date))
                     if job_id is None:
                         make_job_statement = 'INSERT INTO splqueries \
                         (original_spl, indexes, fields, filters, tws, twf, calculation, cache_ttl) \
                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id, extract(epoch from creating_date);'
+                        self.logger.debug(make_job_statement % (original_spl, indexes, fields, filters, tws, twf,
+                                                                calculation, cache_ttl))
                         cur.execute(make_job_statement, (
                             original_spl, indexes, fields, filters, tws, twf, calculation, cache_ttl
                         ))
@@ -116,5 +125,5 @@ class MakeJob(tornado.web.RequestHandler):
         else:
             response = {"status": "Failed", "error": "User has no access to index"}
 
-        print(response)
+        self.logger.debug('Response: %s' % response)
         return response
