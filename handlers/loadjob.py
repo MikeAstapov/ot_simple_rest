@@ -33,12 +33,15 @@ class LoadJob(tornado.web.RequestHandler):
         fetch = cur.fetchone()
         if fetch:
             cache_id, creating_date = fetch
-            response = {"_time": creating_date, "status": "Success", "cache_id": cache_id, 'status': 'Finished'}
+            response = {"_time": creating_date, "cache_id": cache_id, 'status': 'cached'}
         else:
             check_job_statement = 'SELECT status FROM splqueries WHERE original_spl=%s AND tws=%s AND twf=%s;'
             cur.execute(check_job_statement, (original_spl, tws, twf))
             fetch = cur.fetchone()
-            status = fetch[0]
-            response = {"status": status}
+            if fetch:
+                status = fetch[0]
+                response = {"status": status}
+            else:
+                response = {"status": 'Not found job'}
         self.logger.debug(response)
         return response
