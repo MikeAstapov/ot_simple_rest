@@ -27,10 +27,9 @@ class MakeJob(tornado.web.RequestHandler):
         if cache_ttl:
             check_cache_statement = 'SELECT id, extract(epoch from creating_date) FROM cachesdl WHERE expiring_date >= \
             CURRENT_TIMESTAMP AND original_spl=%s AND tws=%s AND twf=%s;'
-            self.logger.debug(check_cache_statement % (original_spl, tws, twf))
+            self.logger.info(check_cache_statement % (original_spl, tws, twf))
             cur.execute(check_cache_statement, (original_spl, tws, twf))
             fetch = cur.fetchone()
-            print(fetch)
             if fetch:
                 cache_id, creating_date = fetch
         self.logger.debug('cache_id: %s, creating_date: %s' % (cache_id, creating_date))
@@ -39,10 +38,9 @@ class MakeJob(tornado.web.RequestHandler):
     def check_running(self, original_spl, tws, twf, cur):
         check_running_statement = "SELECT id, extract(epoch from creating_date) FROM splqueries \
         WHERE status = 'running' AND original_spl=%s AND tws=%s AND twf=%s;"
-        self.logger.debug(check_running_statement % (original_spl, tws, twf))
+        self.logger.info(check_running_statement % (original_spl, tws, twf))
         cur.execute(check_running_statement, (original_spl, tws, twf))
         fetch = cur.fetchone()
-        print(fetch)
 
         if fetch:
             job_id, creating_date = fetch
@@ -108,22 +106,22 @@ class MakeJob(tornado.web.RequestHandler):
                         make_job_statement = 'INSERT INTO splqueries \
                         (original_spl, indexes, fields, filters, tws, twf, calculation, cache_ttl) \
                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id, extract(epoch from creating_date);'
-                        self.logger.debug(make_job_statement % (original_spl, indexes, fields, filters, tws, twf,
-                                                                calculation, cache_ttl))
+                        self.logger.info(make_job_statement % (original_spl, indexes, fields, filters, tws, twf,
+                                                               calculation, cache_ttl))
                         cur.execute(make_job_statement, (
                             original_spl, indexes, fields, filters, tws, twf, calculation, cache_ttl
                         ))
                         job_id, creating_date = cur.fetchone()
                         conn.commit()
 
-                    response = {"_time": creating_date, "status": "Success", "job_id": job_id}
+                    response = {"_time": creating_date, "status": "success", "job_id": job_id}
                 else:
-                    response = {"status": "Failed", "error": "Validation failed"}
+                    response = {"status": "fail", "error": "Validation failed"}
             else:
-                response = {"_time": creating_date, "status": "Success", "job_id": cache_id}
+                response = {"_time": creating_date, "status": "success", "job_id": cache_id}
 
         else:
-            response = {"status": "Failed", "error": "User has no access to index"}
+            response = {"status": "fail", "error": "User has no access to index"}
 
         self.logger.debug('Response: %s' % response)
         return response

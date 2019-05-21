@@ -2,12 +2,14 @@ import logging
 
 import tornado.web
 import psycopg2
+from pyignite import Client
 
 
 class LoadJob(tornado.web.RequestHandler):
 
-    def initialize(self, db_conf):
+    def initialize(self, db_conf, ignite_conf):
         self.db_conf = db_conf
+        self.ignite_conf = ignite_conf
         self.logger = logging.getLogger('osr')
         self.logger.debug('Initialized')
 
@@ -25,23 +27,51 @@ class LoadJob(tornado.web.RequestHandler):
         conn = psycopg2.connect(**self.db_conf)
         cur = conn.cursor()
 
-        check_cache_statement = 'SELECT id, extract(epoch from creating_date) FROM cachesdl WHERE expiring_date >= \
-        CURRENT_TIMESTAMP AND original_spl=%s AND tws=%s AND twf=%s;'
+        check_job_status = 'SELECT splqueries.id, splqueries.status, cachesdl.expiring_date FROM splqueries ' \
+                           'LEFT JOIN cachesdl ON splqueries.id = cachesdl.id WHERE splqueries.original_spl=%s AND ' \
+                           'splqueries.tws=%s AND splqueries.twf=%s ORDER BY splqueries.id DESC LIMIT 1 '
 
-        self.logger.debug(check_cache_statement % (original_spl, tws, twf))
-        cur.execute(check_cache_statement, (original_spl, tws, twf))
+        self.logger.info(check_job_status % (original_spl, tws, twf))
+        cur.execute(check_job_status, (original_spl, tws, twf))
         fetch = cur.fetchone()
+        self.logger.info(fetch)
         if fetch:
-            cache_id, creating_date = fetch
-            response = {"_time": creating_date, "cache_id": cache_id, 'status': 'cached'}
-        else:
-            check_job_statement = 'SELECT status FROM splqueries WHERE original_spl=%s AND tws=%s AND twf=%s;'
-            cur.execute(check_job_statement, (original_spl, tws, twf))
-            fetch = cur.fetchone()
-            if fetch:
-                status = fetch[0]
-                response = {"status": status}
+            cid, status, expiring_date = fetch
+            if status == 'finished' and expiring_date:
+                events = self.ignite_load(cid)
+                self.logger.info('Cache is %s loaded from ignite.' % cid)
+                response = {'status': 'success', 'events': events}
+            elif status == 'finished' and not expiring_date:
+                response = {'status': 'nocache'}
+            elif status == 'running':
+                response = {'status': 'running'}
+            elif status == 'new':
+                response = {'status': 'new'}
+            elif status == 'fail':
+                response = {'status': 'fail', 'error': 'Job is failed'}
             else:
-                response = {"status": 'Not found job'}
+                self.logger.warning('Unknown status of job: %s' % status)
+                response = {'status': 'fail', 'error': 'Unknown status: %s' % status}
+        else:
+            response = {'status': 'fail', 'error': 'Job is not found'}
+
         self.logger.debug(response)
         return response
+
+    def ignite_load(self, cid):
+        events = []
+        client = Client()
+        client.connect(self.ignite_conf['nodes'])
+        cache = client.get_cache('SQL_PUBLIC_CACHE_%s' % cid)
+        results = cache.scan()
+        for k, v in results:
+            fields = v.schema.keys()
+            event = {}
+            for field in fields:
+                event[field.lower()] = getattr(v, field)
+            events.append(event)
+            if len(events) == 100000:
+                break
+        client.close()
+        return events
+

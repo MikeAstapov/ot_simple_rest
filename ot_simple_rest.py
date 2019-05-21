@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# ot_simple_rest.py
+
 import logging
 
 
@@ -31,7 +35,7 @@ func=%(funcName)s - %(message)s")
 
 def main():
 
-    logger = set_logger('DEBUG', './otsimplerest.log', 'osr')
+    logger = set_logger('INFO', './otsimplerest.log', 'osr')
 
     db_conf = {
         "host": "c3000-blade2.corp.ot.ru",
@@ -40,11 +44,18 @@ def main():
         # "async": True
     }
 
+    ignite_conf = {
+        "nodes": [
+            ("172.25.12.70", 10800)
+        ]
+    }
+
     logger.info('DB configuration: %s' % db_conf)
+    logger.info('Ignite configuration: %s' % ignite_conf)
 
     application = tornado.web.Application([
         (r'/makejob', MakeJob, {"db_conf": db_conf}),
-        (r'/loadjob', LoadJob, {"db_conf": db_conf}),
+        (r'/loadjob', LoadJob, {"db_conf": db_conf, "ignite_conf": ignite_conf}),
         (r'/makerolemodel', MakeRoleModel, {"db_conf": db_conf})
     ])
 
