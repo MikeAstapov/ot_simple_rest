@@ -125,3 +125,6 @@ class MakeJob(tornado.web.RequestHandler):
 
         self.logger.debug('Response: %s' % response)
         return response
+
+    # @staticmethod
+    # def parse(original_spl):

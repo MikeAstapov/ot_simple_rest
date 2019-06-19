@@ -1,0 +1,5 @@
+index=hpsm_db sourcetype=hpsm_incidents_new SUBCATEGORY="Инцидент"	{'hpsm_db': ' sourcetype=hpsm_incidents_new AND SUBCATEGORY="Инцидент"'}
+(index=incidents_local AND sourcetype=incident_json)  OR (index=ezsm_events_hist AND sourcetype=hpsm_incidents AND f_category="Инцидент")	{'incidents_local': ' sourcetype=incident_json', 'ezsm_events_hist': ' sourcetype=hpsm_incidents AND f_category="Инцидент"'}
+index=hpsm_db_stat SUBCATEGORY="Инцидент" OR SUBCATEGORY="Запрос информации"  HPC_AFFECTED_ITEM_NAME="ППРБ - Accounting Engine (CI00766650)"	{'hpsm_db_stat': ' SUBCATEGORY="Инцидент" OR SUBCATEGORY="Запрос информации" AND HPC_AFFECTED_ITEM_NAME="ППРБ - Accounting Engine (CI00766650)"'}
+index=incidents_local AND sourcetype=incident_json	{'incidents_local': ' sourcetype=incident_json'}
+index=apacheLog GET {'apacheLog: '_raw like \'%GET%\''}
