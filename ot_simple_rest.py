@@ -45,11 +45,17 @@ def main():
         # "async": True
     }
 
+    mem_conf = {
+        "path": "/mnt/g1/caches/"
+    }
+
     logger.info('DB configuration: %s' % db_conf)
+    logger.info('MEM configuration: %s' % mem_conf)
+
 
     application = tornado.web.Application([
         (r'/makejob', MakeJob, {"db_conf": db_conf}),
-        (r'/loadjob', LoadJob, {"db_conf": db_conf}),
+        (r'/loadjob', LoadJob, {"db_conf": db_conf, "mem_conf": mem_conf}),
         (r'/makerolemodel', MakeRoleModel, {"db_conf": db_conf})
     ])
 

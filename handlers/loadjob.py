@@ -1,13 +1,18 @@
 import logging
+import os
+import re
 
 import tornado.web
 import psycopg2
+from avro.datafile import DataFileReader
+from avro.io import DatumReader
 
 
 class LoadJob(tornado.web.RequestHandler):
 
-    def initialize(self, db_conf):
+    def initialize(self, db_conf, mem_conf):
         self.db_conf = db_conf
+        self.mem_conf = mem_conf
         self.logger = logging.getLogger('osr')
         self.logger.debug('Initialized')
 
@@ -19,6 +24,8 @@ class LoadJob(tornado.web.RequestHandler):
         request = self.request.arguments
         self.logger.debug(request)
         original_spl = request["original_spl"][0].decode()
+        original_spl = re.sub(r"\|\s*ot\s+(ttl=\d+)?\s*\|", "", original_spl)
+        original_spl = re.sub(r"\|\s*simple.*", "", original_spl)
         tws = int(float(request['tws'][0]))
         twf = int(float(request['twf'][0]))
 
@@ -57,7 +64,16 @@ class LoadJob(tornado.web.RequestHandler):
         return response
 
     def load_from_memcache(self, cid):
-        # TODO replace plug with real code after Scala side.
+        self.logger.debug('Started loading cache %s.' % cid)
         events = []
+        path_to_cache_dir = '%s/search_%s.cache/' % (self.mem_conf['path'], cid)
+        self.logger.debug('Path to cache %s.' % path_to_cache_dir)
+        file_names = os.listdir(path_to_cache_dir)
+        for file_name in file_names:
+            if file_name[-5:] == '.avro':
+                reader = DataFileReader(open(path_to_cache_dir + file_name, "rb"), DatumReader())
+                for event in reader:
+                    events.append(event)
+        self.logger.debug('Count of events: %s' % events.count())
         return events
 
