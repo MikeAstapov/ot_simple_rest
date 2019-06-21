@@ -2,7 +2,6 @@ import logging
 
 import tornado.web
 import psycopg2
-from pyignite import Client
 
 
 class LoadJob(tornado.web.RequestHandler):
@@ -38,7 +37,7 @@ class LoadJob(tornado.web.RequestHandler):
         if fetch:
             cid, status, expiring_date = fetch
             if status == 'finished' and expiring_date:
-                events = self.ignite_load(cid)
+                events = self.load_from_memcache(cid)
                 self.logger.info('Cache is %s loaded from ignite.' % cid)
                 response = {'status': 'success', 'events': events}
             elif status == 'finished' and not expiring_date:
@@ -58,20 +57,8 @@ class LoadJob(tornado.web.RequestHandler):
         self.logger.debug(response)
         return response
 
-    def ignite_load(self, cid):
+    def load_from_memcache(self, cid):
+        # TODO replace plug with real code after Scala side.
         events = []
-        client = Client()
-        client.connect(self.ignite_conf['nodes'])
-        cache = client.get_cache('SQL_PUBLIC_CACHE_%s' % cid)
-        results = cache.scan()
-        for k, v in results:
-            fields = v.schema.keys()
-            event = {}
-            for field in fields:
-                event[field.lower()] = getattr(v, field)
-            events.append(event)
-            if len(events) == 100000:
-                break
-        client.close()
         return events
 
