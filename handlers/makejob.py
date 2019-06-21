@@ -75,13 +75,17 @@ class MakeJob(tornado.web.RequestHandler):
 
     def make_job(self):
         request = self.request.body_arguments
-        self.logger.debug(request)
-        original_spl = request["original_spl"][0].decode()
-        username = request["username"][0].decode()
+        self.logger.debug('Request: %s' % request)
+        original_spl = request['original_spl'][0].decode()
+        self.logger.debug("Original spl: %s" % original_spl)
+        original_spl = re.sub(r"\|\s*ot\s+(ttl=\d+)?\s*\|", "", original_spl)
+        original_spl = re.sub(r"\|\s*simple.*", "", original_spl)
+        self.logger.debug('Fixed original_spl: %s' % original_spl)
+        username = request['username'][0].decode()
         indexes = re.findall(r"index=(\S+)", original_spl)
         resolver = Resolver()
         resolved_spl = resolver.resolve(original_spl)
-
+        self.logger.debug("Resolved_spl: %s" % resolved_spl)
         conn = psycopg2.connect(**self.db_conf)
         cur = conn.cursor()
         access_flag, indexes = self.user_have_right(username, indexes, cur)
@@ -97,10 +101,10 @@ class MakeJob(tornado.web.RequestHandler):
                 searches.append(search)
 
             searches.append(resolved_spl['search'])
-
+            self.logger.debug("Searches: %s" % searches)
             for search in searches:
 
-                cache_id, creating_date = self.check_cache(cache_ttl, search['original_spl'], tws, twf, cur)
+                cache_id, creating_date = self.check_cache(cache_ttl, search[0], tws, twf, cur)
 
                 if cache_id is None:
                     self.logger.debug('No cache')

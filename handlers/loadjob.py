@@ -6,9 +6,8 @@ import psycopg2
 
 class LoadJob(tornado.web.RequestHandler):
 
-    def initialize(self, db_conf, ignite_conf):
+    def initialize(self, db_conf):
         self.db_conf = db_conf
-        self.ignite_conf = ignite_conf
         self.logger = logging.getLogger('osr')
         self.logger.debug('Initialized')
 
