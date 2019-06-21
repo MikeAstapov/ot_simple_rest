@@ -1,0 +1,8 @@
+translationstring
+
+[docs]
+Sphinx
+
+[testing]
+nose
+coverage
