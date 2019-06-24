@@ -1,11 +1,10 @@
+import base64
 import logging
 import os
 import re
 
 import tornado.web
 import psycopg2
-from avro.datafile import DataFileReader
-from avro.io import DatumReader
 
 
 class LoadJob(tornado.web.RequestHandler):
@@ -65,15 +64,11 @@ class LoadJob(tornado.web.RequestHandler):
 
     def load_from_memcache(self, cid):
         self.logger.debug('Started loading cache %s.' % cid)
-        events = []
+        events = {}
         path_to_cache_dir = '%s/search_%s.cache/' % (self.mem_conf['path'], cid)
         self.logger.debug('Path to cache %s.' % path_to_cache_dir)
         file_names = os.listdir(path_to_cache_dir)
         for file_name in file_names:
-            if file_name[-5:] == '.avro':
-                reader = DataFileReader(open(path_to_cache_dir + file_name, "rb"), DatumReader())
-                for event in reader:
-                    events.append(event)
-        self.logger.debug('Count of events: %s' % len(events))
+            events[file_name] = base64.b64encode(open(path_to_cache_dir + file_name, 'rb').read()).decode('ascii')
         return events
 
