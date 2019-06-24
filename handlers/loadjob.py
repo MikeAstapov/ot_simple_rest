@@ -60,7 +60,7 @@ class LoadJob(tornado.web.RequestHandler):
         else:
             response = {'status': 'fail', 'error': 'Job is not found'}
 
-        self.logger.debug(response)
+        # self.logger.debug(response)
         return response
 
     def load_from_memcache(self, cid):
@@ -74,6 +74,6 @@ class LoadJob(tornado.web.RequestHandler):
                 reader = DataFileReader(open(path_to_cache_dir + file_name, "rb"), DatumReader())
                 for event in reader:
                     events.append(event)
-        self.logger.debug('Count of events: %s' % events.count())
+        self.logger.debug('Count of events: %s' % len(events))
         return events
 
