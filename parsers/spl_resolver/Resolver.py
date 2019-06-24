@@ -25,7 +25,7 @@ class Resolver:
         self.subsearches = {}
 
     def create_subsearch(self, match_object):
-        subsearch_md5 = sha256(match_object.group(0).encode('utf-8')).hexdigest()
+        subsearch_sha256 = sha256(match_object.group(1).strip().encode('utf-8')).hexdigest()
         subsearch_query = match_object.group(1)
         for replacement in self.inverted_query_replacements:
             subsearch_query = subsearch_query.replace(replacement, self.inverted_query_replacements[replacement])
@@ -33,8 +33,8 @@ class Resolver:
         subsearch_query_service = re.sub(self.read_pattern_middle, self.create_read_graph, subsearch_query)
         subsearch_query_service = re.sub(self.read_pattern_start, self.create_read_graph, subsearch_query_service)
 
-        self.subsearches['subsearch_%s' % subsearch_md5] = (subsearch_query, subsearch_query_service)
-        return match_object.group(0).replace('[%s]' % match_object.group(1), 'subsearch=subsearch_%s' % subsearch_md5)
+        self.subsearches['subsearch_%s' % subsearch_sha256] = (subsearch_query, subsearch_query_service)
+        return match_object.group(0).replace('[%s]' % match_object.group(1), 'subsearch=subsearch_%s' % subsearch_sha256)
 
     @staticmethod
     def create_read_graph(match_object):

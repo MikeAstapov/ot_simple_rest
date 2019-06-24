@@ -114,11 +114,21 @@ class MakeJob(tornado.web.RequestHandler):
                         job_id, creating_date = self.check_running(original_spl, tws, twf, cur)
                         self.logger.debug('Running job_id: %s, creating_date: %s' % (job_id, creating_date))
                         if job_id is None:
+                            subsearches = []
+                            if 'subsearch=' in search[1]:
+                                _subsearches = re.findall(r'subsearch=(\S+)', search[1])
+                                for each in _subsearches:
+                                    subsearches.append(resolved_spl['subsearches'][each][0])
+
+                            self.logger.debug('Search: %s. Subsearches: %s.' % (search[1], subsearches))
                             make_job_statement = 'INSERT INTO splqueries \
-                            (original_spl, service_spl, tws, twf, cache_ttl, username) \
-                            VALUES (%s,%s,%s,%s,%s,%s) RETURNING id, extract(epoch from creating_date);'
-                            self.logger.info(make_job_statement % (search[0], search[1], tws, twf, cache_ttl, username))
-                            cur.execute(make_job_statement, (search[0], search[1], tws, twf, cache_ttl, username))
+                            (original_spl, service_spl, subsearches, tws, twf, cache_ttl, username) \
+                            VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id, extract(epoch from creating_date);'
+
+                            stm_tuple = (search[0], search[1], subsearches,
+                                         tws, twf, cache_ttl, username)
+                            self.logger.info(make_job_statement % stm_tuple)
+                            cur.execute(make_job_statement, stm_tuple)
                             job_id, creating_date = cur.fetchone()
                             conn.commit()
 
