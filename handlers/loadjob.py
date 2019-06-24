@@ -69,6 +69,8 @@ class LoadJob(tornado.web.RequestHandler):
         self.logger.debug('Path to cache %s.' % path_to_cache_dir)
         file_names = os.listdir(path_to_cache_dir)
         for file_name in file_names:
-            events[file_name] = base64.b64encode(open(path_to_cache_dir + file_name, 'rb').read()).decode('ascii')
+            self.logger.debug('Reading part: %s' % file_name)
+            if file_name[-4:] == '.csv':
+                events[file_name] = open(path_to_cache_dir + file_name).read()
         return events
 
