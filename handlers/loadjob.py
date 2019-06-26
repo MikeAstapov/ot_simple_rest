@@ -43,7 +43,7 @@ class LoadJob(tornado.web.RequestHandler):
             cid, status, expiring_date = fetch
             if status == 'finished' and expiring_date:
                 events = self.load_from_memcache(cid)
-                self.logger.info('Cache is %s loaded from ignite.' % cid)
+                self.logger.info('Cache is %s loaded.' % cid)
                 response = {'status': 'success', 'events': events}
             elif status == 'finished' and not expiring_date:
                 response = {'status': 'nocache'}
