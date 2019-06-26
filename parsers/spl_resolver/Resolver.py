@@ -40,8 +40,8 @@ class Resolver:
 
     def create_otrest(self, match_object):
         otrest_sha256 = sha256(match_object.group(1).strip().encode('utf-8')).hexdigest()
-        otrest_service = 'otrest subsearch=subsearch_%s' % otrest_sha256
-        self.subsearches['subsearch_%s' % otrest_sha256] = (match_object.group(0), otrest_service)
+        otrest_service = '| otrest subsearch=subsearch_%s' % otrest_sha256
+        self.subsearches['subsearch_%s' % otrest_sha256] = ('| %s' % match_object.group(0), otrest_service)
         return otrest_service
 
     @staticmethod

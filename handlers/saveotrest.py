@@ -31,8 +31,8 @@ class SaveOtRest(tornado.web.RequestHandler):
         data = request['data'][0].decode()
         self.logger.debug('Endpoint: %s.' % endpoint)
         self.logger.debug('Data: %s.' % data)
-        original_spl = 'otrest endpoint="%s"' % endpoint
-        service_spl = 'otrest subsearch=%s' % sha256(endpoint.encode()).hexdigest()
+        original_spl = '| otrest endpoint="%s"' % endpoint
+        service_spl = '| otrest subsearch=subsearch_%s' % sha256(endpoint.encode()).hexdigest()
 
         if self.validate():
             conn = psycopg2.connect(**self.db_conf)
