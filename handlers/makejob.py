@@ -98,6 +98,8 @@ class MakeJob(tornado.web.RequestHandler):
 
             searches = []
             for search in resolved_spl['subsearches'].values():
+                if 'otrest' in search[0]:
+                    continue
                 searches.append(search)
 
             searches.append(resolved_spl['search'])

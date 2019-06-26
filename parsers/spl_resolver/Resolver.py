@@ -13,7 +13,7 @@ class Resolver:
     read_pattern_middle = r'\[\s*search (.+?)[\|\]]'
     read_pattern_start = r'^ *search ([^|]+)'
 
-    otrest_pattern = r'\|\s+otrest\s+endpoint="(\S+?)"\s*|'
+    otrest_pattern = r'otrest\s+endpoint\s*?=\s*?"(\S+?)"'
 
     query_replacements = {
         "\\[": "&&OPENSQUAREBRACKET",
@@ -38,10 +38,11 @@ class Resolver:
         self.subsearches['subsearch_%s' % subsearch_sha256] = (subsearch_query, subsearch_query_service)
         return match_object.group(0).replace('[%s]' % match_object.group(1), 'subsearch=subsearch_%s' % subsearch_sha256)
 
-    @staticmethod
-    def create_otrest(match_object):
+    def create_otrest(self, match_object):
         otrest_sha256 = sha256(match_object.group(1).strip().encode('utf-8')).hexdigest()
-        return '| otrest subsearch=%s |' % otrest_sha256
+        otrest_service = 'otrest subsearch=subsearch_%s' % otrest_sha256
+        self.subsearches['subsearch_%s' % otrest_sha256] = (match_object.group(0), otrest_service)
+        return otrest_service
 
     @staticmethod
     def create_read_graph(match_object):
@@ -83,6 +84,8 @@ if __name__ == '__main__':
     spl4 = """|makeresults |search index=main (GET AND 200) OR (POST AND 404) "asd   ertert xbfert"| timechart span=1w max(val) as val | 
     join val [search index=notmain 200 | table _time, val, _span] | join host [search index=second 400] | table _raw]"""
 
+    spl5 = """otrest endpoint="/services/search/jobs/" | stats count """
+
     resolver = Resolver()
     print(resolver.resolve(spl1))
 
@@ -94,3 +97,6 @@ if __name__ == '__main__':
 
     resolver = Resolver()
     print(resolver.resolve(spl4))
+
+    resolver = Resolver()
+    print(resolver.resolve(spl5))
