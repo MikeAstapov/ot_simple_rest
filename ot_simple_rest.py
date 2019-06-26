@@ -11,6 +11,7 @@ import tornado.web
 from handlers.loadjob import LoadJob
 from handlers.makejob import MakeJob
 from handlers.makerolemodel import MakeRoleModel
+from handlers.saveotrest import SaveOtRest
 
 
 def set_logger(loglevel, logfile, logger_name):
@@ -56,6 +57,7 @@ def main():
     application = tornado.web.Application([
         (r'/makejob', MakeJob, {"db_conf": db_conf}),
         (r'/loadjob', LoadJob, {"db_conf": db_conf, "mem_conf": mem_conf}),
+        (r'/otrest', SaveOtRest, {"db_conf": db_conf, "mem_conf": mem_conf}),
         (r'/makerolemodel', MakeRoleModel, {"db_conf": db_conf})
     ])
 

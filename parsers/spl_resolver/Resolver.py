@@ -13,6 +13,8 @@ class Resolver:
     read_pattern_middle = r'\[\s*search (.+?)[\|\]]'
     read_pattern_start = r'^ *search ([^|]+)'
 
+    otrest_pattern = r'\|\s+otrest\s+endpoint="(\S+?)"\s*|'
+
     query_replacements = {
         "\\[": "&&OPENSQUAREBRACKET",
         "\\]": "&&CLOSESQUAREBRACKET"
@@ -37,6 +39,11 @@ class Resolver:
         return match_object.group(0).replace('[%s]' % match_object.group(1), 'subsearch=subsearch_%s' % subsearch_sha256)
 
     @staticmethod
+    def create_otrest(match_object):
+        otrest_sha256 = sha256(match_object.group(1).strip().encode('utf-8')).hexdigest()
+        return '| otrest subsearch=%s |' % otrest_sha256
+
+    @staticmethod
     def create_read_graph(match_object):
         query = match_object.group(1)
         graph = SPLtoSQL.parse(query)
@@ -58,6 +65,7 @@ class Resolver:
 
         _spl = re.sub(self.read_pattern_middle, self.create_read_graph, _spl)
         _spl = re.sub(self.read_pattern_start, self.create_read_graph, _spl)
+        _spl = re.sub(self.otrest_pattern, self.create_otrest, _spl)
 
         return {'search': (spl, _spl), 'subsearches': self.subsearches}
 
