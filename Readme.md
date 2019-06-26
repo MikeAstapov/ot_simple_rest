@@ -13,7 +13,6 @@ This  is tested configuration:
 tornado-6.0.2-py3.6.egg-info
 psycopg2-2.8.3-py3.6.egg-info
 lark_parser-0.7.1-py3.6.egg-info
-avro_python3-1.9.0-py3.6.egg-info/
 
 ### Installing
 
