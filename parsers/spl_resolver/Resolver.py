@@ -6,15 +6,34 @@ import re
 from hashlib import sha256
 from parsers.spl_to_sparksql.splunk_parser import SPLtoSQL
 
+__author__ = "Andrey Starchenkov"
+__copyright__ = "Copyright 2019, Open Technologies 98"
+__credits__ = []
+__license__ = ""
+__version__ = "0.1.1"
+__maintainer__ = "Andrey Starchenkov"
+__email__ = "astarchenkov@ot.ru"
+__status__ = "Development"
+
 
 class Resolver:
+    """
+    Gets service SPL string from original one. Transforms next commands:
 
+    1. search -> | read "{__fts_json__}"
+    2. | otrest endpoint=/any/path/to/api/ -> | otrest subsearch=subsearch_id
+    3. any_command [subsearch] -> any_command subsearch=subsearch_id
+
+    This is needed for calculation part of Dispatcher.
+    """
+
+    # Patterns for tranformation.
     subsearch_pattern = r'.+\[(.+?)\]'
     read_pattern_middle = r'\[\s*search (.+?)[\|\]]'
     read_pattern_start = r'^ *search ([^|]+)'
-
     otrest_pattern = r'otrest\s+endpoint\s*?=\s*?"(\S+?)"'
 
+    # Service structures for escaping special symbols in original SPL queries.
     query_replacements = {
         "\\[": "&&OPENSQUAREBRACKET",
         "\\]": "&&CLOSESQUAREBRACKET"
@@ -23,10 +42,16 @@ class Resolver:
     inverted_query_replacements = {v: k for (k, v) in query_replacements.items()}
 
     def __init__(self):
-
         self.subsearches = {}
 
     def create_subsearch(self, match_object):
+        """
+        Finds subsearches and transforms original SPL with subsearch id.
+        any_command [subsearch] -> any_command subsearch=subsearch_id
+
+        :param match_object: Re match object with original SPL.
+        :return: String with replaces of subsearches.
+        """
         subsearch_sha256 = sha256(match_object.group(1).strip().encode('utf-8')).hexdigest()
         subsearch_query = match_object.group(1)
         for replacement in self.inverted_query_replacements:
@@ -39,6 +64,13 @@ class Resolver:
         return match_object.group(0).replace('[%s]' % match_object.group(1), 'subsearch=subsearch_%s' % subsearch_sha256)
 
     def create_otrest(self, match_object):
+        """
+        Finds "| otrest endpoint=/any/path/to/api/" command and transforms it to service form.
+        | otrest endpoint=/any/path/to/api/-> | otrest subsearch=subsearch_id
+
+        :param match_object: Re match object with original SPL.
+        :return: String with replaces of subsearches.
+        """
         otrest_sha256 = sha256(match_object.group(1).strip().encode('utf-8')).hexdigest()
         otrest_service = '| otrest subsearch=subsearch_%s' % otrest_sha256
         self.subsearches['subsearch_%s' % otrest_sha256] = ('| %s' % match_object.group(0), otrest_service)
@@ -46,11 +78,23 @@ class Resolver:
 
     @staticmethod
     def create_read_graph(match_object):
+        """
+        Finds "search __fts_query__" and transforms it to service form.
+        search -> | read "{__fts_json__}"
+
+        :param match_object: Re match object with original SPL.
+        :return: String with replaces of FTS part.
+        """
         query = match_object.group(1)
         graph = SPLtoSQL.parse(query)
         return '| read %s' % json.dumps(graph)
 
     def resolve(self, spl):
+        """
+        Finds and replaces service patterns of original SPL.
+        :param spl: original SPL.
+        :return: dict with search query params.
+        """
         spl = spl.replace('\n', ' ')
         for replacement in self.query_replacements:
             spl = spl.replace(replacement, self.query_replacements[replacement])

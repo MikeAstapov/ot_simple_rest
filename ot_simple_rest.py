@@ -4,7 +4,6 @@
 
 import logging
 
-
 import tornado.ioloop
 import tornado.web
 
@@ -12,6 +11,15 @@ from handlers.loadjob import LoadJob
 from handlers.makejob import MakeJob
 from handlers.makerolemodel import MakeRoleModel
 from handlers.saveotrest import SaveOtRest
+
+__author__ = "Andrey Starchenkov"
+__copyright__ = "Copyright 2019, Open Technologies 98"
+__credits__ = []
+__license__ = ""
+__version__ = "0.1.1"
+__maintainer__ = "Andrey Starchenkov"
+__email__ = "astarchenkov@ot.ru"
+__status__ = "Development"
 
 
 def set_logger(loglevel, logfile, logger_name):
@@ -35,9 +43,19 @@ func=%(funcName)s - %(message)s")
 
 
 def main():
+    """
+    Main function with config and starter code. It starts TORNADO server with custom handlers which register, check and
+    load Job's results from ramcache to OT.Simple Splunk app.
+    :return:
+    """
 
     logger = set_logger('DEBUG', './otsimplerest.log', 'osr')
 
+    # # # # # # #  Configuration section  # # # # # # #
+
+    # TODO replace this section with config files
+
+    # Configuration of Postgres DB.
     db_conf = {
         "host": "am.local",
         "database": "dispatcher",
@@ -46,14 +64,17 @@ def main():
         # "async": True
     }
 
+    # Configuration of ramcache.
     mem_conf = {
         "path": "/mnt/g1/caches/"
     }
 
+    # # # # # # # # # # # # # # # # # # # # # # # # # #
+
     logger.info('DB configuration: %s' % db_conf)
     logger.info('MEM configuration: %s' % mem_conf)
 
-
+    # Set TORNADO application with custom handlers.
     application = tornado.web.Application([
         (r'/makejob', MakeJob, {"db_conf": db_conf}),
         (r'/loadjob', LoadJob, {"db_conf": db_conf, "mem_conf": mem_conf}),
@@ -63,6 +84,7 @@ def main():
 
     logger.info('Starting server')
 
+    # Start application.
     application.listen(50000)
     tornado.ioloop.IOLoop.current().start()
 

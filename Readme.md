@@ -4,46 +4,45 @@ We can't live without Splunk. Splunk is our all. At all. So this app is helper f
 
 ## Getting Started
 
-I don't tell you how to run this because of my lazy. Let's play a game, my little admin.
+Only config ramcache, db and we are ready to go. 
 
 ### Prerequisites
 
-This  is tested configuration:
+You need postgresql-devel library for psycopg2 lib.
+
+### Installing
+
+Install Python3 and virtual environment.
+Install postgresql-devel lib.
+
+## Deployment
+
+source ./venv/bin/activate
+./venv/bin/python3 ot_simple_rest.py
+
+## Built with
 
 tornado-6.0.2-py3.6.egg-info
 psycopg2-2.8.3-py3.6.egg-info
 lark_parser-0.7.1-py3.6.egg-info
 
-### Installing
-
-If you will able to start from venv please help me with this.
-
-## Deployment
-
-Copy and run.
-
-## Built with
-
-TODO
-
 ## Contributing
 
-TODO
+Nikolay Ryabykh
 
 ## Versioning
 
-Git. Only GIt.
+Git. Only Git.
 
 ## Authors
 
-TODO
+Andrey Starchenkov (astarchenkov@ot.ru)
+Sergei Ermilov (sermilov@ot.ru)
 
 ## License
 
-TODO
+
 
 ## Acknowledgments
 
-Coffee and cigarettes.
-
-
+Coffee.
