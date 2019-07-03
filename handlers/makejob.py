@@ -10,7 +10,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -31,6 +31,8 @@ class MakeJob(tornado.web.RequestHandler):
     8. Register new Job in Dispatcher DB.
     """
 
+    logger = logging.getLogger('osr')
+
     def initialize(self, db_conf):
         """
         Gets config and init logger.
@@ -40,8 +42,6 @@ class MakeJob(tornado.web.RequestHandler):
         """
 
         self.db_conf = db_conf
-        self.logger = logging.getLogger('osr')
-        self.logger.info('Initialized')
 
     def post(self):
         """
@@ -155,7 +155,9 @@ class MakeJob(tornado.web.RequestHandler):
         indexes = re.findall(r"index=(\S+)", original_spl)
 
         # Step 3. Get service OTL form of query from original SPL.
-        resolver = Resolver()
+        tws = int(float(request['tws'][0]))
+        twf = int(float(request['twf'][0]))
+        resolver = Resolver(indexes, tws, twf)
         resolved_spl = resolver.resolve(original_spl)
         self.logger.debug("Resolved_spl: %s" % resolved_spl)
         conn = psycopg2.connect(**self.db_conf)
@@ -166,10 +168,8 @@ class MakeJob(tornado.web.RequestHandler):
 
         if access_flag:
 
-            # Get time window and cache time to life.
+            # Get cache lifetime.
             cache_ttl = int(request['cache_ttl'][0])
-            tws = int(float(request['tws'][0]))
-            twf = int(float(request['twf'][0]))
 
             # Step 5. Make searches queue based on subsearches of main query.
             searches = []

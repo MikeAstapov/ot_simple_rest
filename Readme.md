@@ -17,14 +17,15 @@ Install postgresql-devel lib.
 
 ## Deployment
 
-source ./venv/bin/activate
+source ./venv/bin/activate  
 ./venv/bin/python3 ot_simple_rest.py
 
 ## Built with
 
-tornado-6.0.2-py3.6.egg-info
-psycopg2-2.8.3-py3.6.egg-info
-lark_parser-0.7.1-py3.6.egg-info
+Python 3.6.8  
+tornado-6.0.2-py3.6  
+psycopg2-2.8.3-py3.6  
+lark_parser-0.7.1-py3.6
 
 ## Contributing
 
@@ -36,7 +37,7 @@ Git. Only Git.
 
 ## Authors
 
-Andrey Starchenkov (astarchenkov@ot.ru)
+Andrey Starchenkov (astarchenkov@ot.ru)  
 Sergei Ermilov (sermilov@ot.ru)
 
 ## License

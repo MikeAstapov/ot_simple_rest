@@ -11,7 +11,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -21,6 +21,8 @@ class SaveOtRest(tornado.web.RequestHandler):
     """
     Saves results of OT.Simple Splunk app's otrest command to separate cache file as a result of normal search query.
     """
+
+    logger = logging.getLogger('osr')
 
     def initialize(self, db_conf, mem_conf):
         """
@@ -32,8 +34,6 @@ class SaveOtRest(tornado.web.RequestHandler):
         """
         self.db_conf = db_conf
         self.mem_conf = mem_conf
-        self.logger = logging.getLogger('osr')
-        self.logger.debug('Initialized')
 
     def post(self):
         """

@@ -8,3 +8,19 @@ index=scom*	{'scom': '', 'scomab': '', 'scomcd': '', 'scomfe': ''}
 index=tivoli*	{'tivoliab': '', 'tivolicd': '', 'tivoli': ''}
 index=apacheLog GET	{'apacheLog': '(_raw like \'%GET%\')'}
 index=pprb_system sourcetype="oracle_db" cursor_version	{'pprb_system': 'sourcetype="oracle_db" AND (_raw like \'%cursor_version%\')'}
+sourcetype=pm_* index=hppm
+sourcetype=pm* index=hppm
+earliest=-2m latest=-1m index="pprbzalogi_business" source="pprbzalogi_gordon-op_monindex"
+host="har*" index="pprbproc*"
+host=har* index="pprbproc*"
+host="kanga*" index="pprbproc_business"
+index=alerts* sourcetype!=alert_metadata
+index=alerts* sourcetype!=alert_metadata alert=pprb_gridgain*
+index=alerts* sourcetype!=alert_metadata alert=pprb_*oracle*
+index=alerts* sourcetype!=alert_metadata alert=pprb_sla*
+
+
+
+
+
+

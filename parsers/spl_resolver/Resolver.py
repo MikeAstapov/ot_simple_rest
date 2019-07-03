@@ -32,6 +32,7 @@ class Resolver:
     read_pattern_middle = r'\[\s*search (.+?)[\|\]]'
     read_pattern_start = r'^ *search ([^|]+)'
     otrest_pattern = r'otrest\s+endpoint\s*?=\s*?"(\S+?)"'
+    filter_pattern = r'\|\s*search (.+?)\|'
 
     # Service structures for escaping special symbols in original SPL queries.
     query_replacements = {
@@ -41,7 +42,14 @@ class Resolver:
 
     inverted_query_replacements = {v: k for (k, v) in query_replacements.items()}
 
-    def __init__(self):
+    def __init__(self, indexes, tws, twf):
+        """
+        Init with default available indexes.
+        :param indexes: list of default available indexes.
+        """
+        self.indexes = indexes
+        self.tws = tws
+        self.twf = twf
         self.subsearches = {}
 
     def create_subsearch(self, match_object):
@@ -76,8 +84,7 @@ class Resolver:
         self.subsearches['subsearch_%s' % otrest_sha256] = ('| %s' % match_object.group(0), otrest_service)
         return otrest_service
 
-    @staticmethod
-    def create_read_graph(match_object):
+    def create_read_graph(self, match_object):
         """
         Finds "search __fts_query__" and transforms it to service form.
         search -> | read "{__fts_json__}"
@@ -86,12 +93,26 @@ class Resolver:
         :return: String with replaces of FTS part.
         """
         query = match_object.group(1)
-        graph = SPLtoSQL.parse(query)
+        graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf= self.twf)
         return '| read %s' % json.dumps(graph)
+
+    @staticmethod
+    def create_filter_graph(match_object):
+        """
+        Finds "| search __filter_query__" and transforms it to service form.
+        | search -> | filter "{__filter_json__}"
+
+        :param match_object: Re match object with original SPL.
+        :return: String with replaces of filter part.
+        """
+        query = match_object.group(1)
+        graph = SPLtoSQL.parse_filter(query)
+        return '| filter %s' % json.dumps(graph)
 
     def resolve(self, spl):
         """
         Finds and replaces service patterns of original SPL.
+
         :param spl: original SPL.
         :return: dict with search query params.
         """
@@ -110,7 +131,10 @@ class Resolver:
 
         _spl = re.sub(self.read_pattern_middle, self.create_read_graph, _spl)
         _spl = re.sub(self.read_pattern_start, self.create_read_graph, _spl)
+
         _spl = re.sub(self.otrest_pattern, self.create_otrest, _spl)
+
+        _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl)
 
         return {'search': (spl, _spl), 'subsearches': self.subsearches}
 
@@ -130,17 +154,24 @@ if __name__ == '__main__':
 
     spl5 = """otrest endpoint="/services/search/jobs/" | stats count """
 
-    resolver = Resolver()
+    spl6 = """index = main | search 404 AND POST | table * """
+
+    default_indexes = ['main', '_internal']
+
+    resolver = Resolver(default_indexes)
     print(resolver.resolve(spl1))
 
-    resolver = Resolver()
+    resolver = Resolver(default_indexes)
     print(resolver.resolve(spl2))
 
-    resolver = Resolver()
+    resolver = Resolver(default_indexes)
     print(resolver.resolve(spl3))
 
-    resolver = Resolver()
+    resolver = Resolver(default_indexes)
     print(resolver.resolve(spl4))
 
-    resolver = Resolver()
+    resolver = Resolver(default_indexes)
     print(resolver.resolve(spl5))
+
+    resolver = Resolver(default_indexes)
+    print(resolver.resolve(spl6))

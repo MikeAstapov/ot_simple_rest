@@ -1,4 +1,3 @@
-import base64
 import logging
 import os
 import re
@@ -10,7 +9,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -27,6 +26,8 @@ class LoadJob(tornado.web.RequestHandler):
     5. Return Job's status or results.
     """
 
+    logger = logging.getLogger('osr')
+
     def initialize(self, db_conf, mem_conf):
         """
         Gets config and init logger.
@@ -40,8 +41,6 @@ class LoadJob(tornado.web.RequestHandler):
 
         self.db_conf = db_conf
         self.mem_conf = mem_conf
-        self.logger = logging.getLogger('osr')
-        self.logger.debug('Initialized')
 
     def get(self):
         """

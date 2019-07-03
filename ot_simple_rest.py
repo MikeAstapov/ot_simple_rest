@@ -11,12 +11,13 @@ from handlers.loadjob import LoadJob
 from handlers.makejob import MakeJob
 from handlers.makerolemodel import MakeRoleModel
 from handlers.saveotrest import SaveOtRest
+from handlers.pingpong import PingPong
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -76,6 +77,7 @@ def main():
 
     # Set TORNADO application with custom handlers.
     application = tornado.web.Application([
+        (r'/ping', PingPong),
         (r'/makejob', MakeJob, {"db_conf": db_conf}),
         (r'/loadjob', LoadJob, {"db_conf": db_conf, "mem_conf": mem_conf}),
         (r'/otrest', SaveOtRest, {"db_conf": db_conf, "mem_conf": mem_conf}),
