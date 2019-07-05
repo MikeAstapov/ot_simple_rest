@@ -10,7 +10,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -27,7 +27,7 @@ class Resolver:
     This is needed for calculation part of Dispatcher.
     """
 
-    # Patterns for tranformation.
+    # Patterns for transformation.
     subsearch_pattern = r'.+\[(.+?)\]'
     read_pattern_middle = r'\[\s*search (.+?)[\|\]]'
     read_pattern_start = r'^ *search ([^|]+)'
@@ -93,7 +93,7 @@ class Resolver:
         :return: String with replaces of FTS part.
         """
         query = match_object.group(1)
-        graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf= self.twf)
+        graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
         return '| read %s' % json.dumps(graph)
 
     @staticmethod
@@ -141,7 +141,8 @@ class Resolver:
 
 if __name__ == '__main__':
 
-    spl1 = """search index=main (GET AND 200) OR (POST AND 404) "asd   ertert xbfert"| timechart span=1w max(val) as val | 
+    spl1 = """search index=main (GET AND 200) OR (POST AND 404) "asd   ertert xbfert"| timechart span=1w max(val)
+     as val | 
     join val [search index=notmain 200 | table _time, val, _span] | join host [search index=second 400] | table _raw]"""
 
     spl2 = """search index=1st | search hua|  join type=left val [ search index=2nd | stats count by val |
@@ -149,29 +150,36 @@ if __name__ == '__main__':
 
     spl3 = """search index=asd"""
 
-    spl4 = """|makeresults |search index=main (GET AND 200) OR (POST AND 404) "asd   ertert xbfert"| timechart span=1w max(val) as val | 
+    spl4 = """|makeresults |search index=main (GET AND 200) OR (POST AND 404) "asd   ertert xbfert"| timechart span=1w
+     max(val) as val | 
     join val [search index=notmain 200 | table _time, val, _span] | join host [search index=second 400] | table _raw]"""
 
     spl5 = """otrest endpoint="/services/search/jobs/" | stats count """
 
     spl6 = """index = main | search 404 AND POST | table * """
 
+    spl7 = """index = main | foreach GBL_CPU_TOTAL_UTIL [eval &lt;&lt;FIELD&gt;&gt;=round('&lt;&lt;FIELD&gt;&gt;',2)]
+     | stats count"""
+
     default_indexes = ['main', '_internal']
 
-    resolver = Resolver(default_indexes)
+    resolver = Resolver(default_indexes, 0, 0)
     print(resolver.resolve(spl1))
 
-    resolver = Resolver(default_indexes)
+    resolver = Resolver(default_indexes, 0, 0)
     print(resolver.resolve(spl2))
 
-    resolver = Resolver(default_indexes)
+    resolver = Resolver(default_indexes, 0, 0)
     print(resolver.resolve(spl3))
 
-    resolver = Resolver(default_indexes)
+    resolver = Resolver(default_indexes, 0, 0)
     print(resolver.resolve(spl4))
 
-    resolver = Resolver(default_indexes)
+    resolver = Resolver(default_indexes, 0, 0)
     print(resolver.resolve(spl5))
 
-    resolver = Resolver(default_indexes)
+    resolver = Resolver(default_indexes, 0, 0)
     print(resolver.resolve(spl6))
+
+    resolver = Resolver(default_indexes, 0, 0)
+    print(resolver.resolve(spl7))
