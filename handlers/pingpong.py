@@ -1,6 +1,7 @@
 import json
 import logging
 import tornado.web
+from tornado.ioloop import IOLoop
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -17,16 +18,17 @@ class PingPong(tornado.web.RequestHandler):
     response = json.dumps({'response': 'pong'})
     logger = logging.getLogger('osr')
 
-    def post(self):
+    async def post(self):
         """
         It writes response to remote side.
         :return:
         """
 
         self.logger.debug('Ping Post.')
-        self.write(self.response)
+        future = IOLoop.current().run_in_executor(None, self._write)
+        await future
 
-    def get(self):
+    async def get(self):
         """
         It writes response to remote side.
 
@@ -34,4 +36,9 @@ class PingPong(tornado.web.RequestHandler):
         """
 
         self.logger.debug('Ping Get.')
+        future = IOLoop.current().run_in_executor(None, self._write)
+        await future
+
+    def _write(self):
         self.write(self.response)
+

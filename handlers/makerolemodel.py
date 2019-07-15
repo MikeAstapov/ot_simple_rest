@@ -1,6 +1,7 @@
 import json
 import tornado.web
 import psycopg2
+from tornado.ioloop import IOLoop
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -26,14 +27,14 @@ class MakeRoleModel(tornado.web.RequestHandler):
         """
         self.db_conf = db_conf
 
-    def post(self):
+    async def post(self):
         """
         It writes response to remote side.
 
         :return:
         """
-        response = self.make_role_model()
-        self.write(response)
+        future = IOLoop.current().run_in_executor(None, self.make_role_model)
+        await future
 
     def make_role_model(self):
         """
@@ -57,4 +58,5 @@ class MakeRoleModel(tornado.web.RequestHandler):
 
         conn.commit()
 
-        return {"status": "ok"}
+        response = {"status": "ok"}
+        self.write(response)

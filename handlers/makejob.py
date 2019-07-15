@@ -3,6 +3,7 @@ import logging
 
 import tornado.web
 import psycopg2
+from tornado.ioloop import IOLoop
 
 from parsers.spl_resolver.Resolver import Resolver
 
@@ -43,13 +44,15 @@ class MakeJob(tornado.web.RequestHandler):
 
         self.db_conf = db_conf
 
-    def post(self):
+    async def post(self):
         """
         It writes response to remote side.
         :return:
         """
-        response = self.make_job()
-        self.write(response)
+
+        future = IOLoop.current().run_in_executor(None, self.make_job)
+        await future
+
 
     @staticmethod
     def validate():
@@ -233,7 +236,7 @@ class MakeJob(tornado.web.RequestHandler):
             response = {"status": "fail", "error": "User has no access to index"}
 
         self.logger.debug('Response: %s' % response)
-        return response
+        self.write(response)
 
     # @staticmethod
     # def parse(original_spl):

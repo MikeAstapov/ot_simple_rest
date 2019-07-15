@@ -4,6 +4,7 @@ from hashlib import sha256
 
 import tornado.web
 import psycopg2
+from tornado.ioloop import IOLoop
 
 from utils.cachewriter import CacheWriter
 
@@ -35,13 +36,14 @@ class SaveOtRest(tornado.web.RequestHandler):
         self.db_conf = db_conf
         self.mem_conf = mem_conf
 
-    def post(self):
+    async def post(self):
         """
         It writes response to remote side.
         :return:
         """
-        response = self.save_to_cache()
-        self.write(response)
+        future = IOLoop.current().run_in_executor(None, self.save_to_cache)
+        await future
+
 
     @staticmethod
     def validate():
@@ -89,7 +91,7 @@ class SaveOtRest(tornado.web.RequestHandler):
         else:
             response = {"status": "fail", "error": "Validation failed"}
 
-        return response
+        self.write(response)
 
 
 

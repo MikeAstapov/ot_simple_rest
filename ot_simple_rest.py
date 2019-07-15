@@ -12,6 +12,7 @@ from handlers.makejob import MakeJob
 from handlers.makerolemodel import MakeRoleModel
 from handlers.saveotrest import SaveOtRest
 from handlers.pingpong import PingPong
+from handlers.blockingHandler import BlockingHandler
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -81,7 +82,8 @@ def main():
         (r'/makejob', MakeJob, {"db_conf": db_conf}),
         (r'/loadjob', LoadJob, {"db_conf": db_conf, "mem_conf": mem_conf}),
         (r'/otrest', SaveOtRest, {"db_conf": db_conf, "mem_conf": mem_conf}),
-        (r'/makerolemodel', MakeRoleModel, {"db_conf": db_conf})
+        (r'/makerolemodel', MakeRoleModel, {"db_conf": db_conf}),
+        (r'/blocking', BlockingHandler)
     ])
 
     logger.info('Starting server')
@@ -89,6 +91,7 @@ def main():
     # Start application.
     application.listen(50000)
     tornado.ioloop.IOLoop.current().start()
+
 
 
 if __name__ == '__main__':

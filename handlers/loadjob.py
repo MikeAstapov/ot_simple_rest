@@ -4,6 +4,7 @@ import re
 
 import tornado.web
 import psycopg2
+from tornado.ioloop import IOLoop
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -42,15 +43,15 @@ class LoadJob(tornado.web.RequestHandler):
         self.db_conf = db_conf
         self.mem_conf = mem_conf
 
-    def get(self):
+    async def get(self):
         """
         It writes response to remote side.
 
         :return:
         """
 
-        response = self.load_job()
-        self.write(response)
+        future = IOLoop.current().run_in_executor(None, self.load_job)
+        await future
 
     def load_job(self):
         """
@@ -108,8 +109,8 @@ class LoadJob(tornado.web.RequestHandler):
             # Return missed job error.
             response = {'status': 'fail', 'error': 'Job is not found'}
 
-        # Step 5. Return Job's status or results.
-        return response
+        # Step 5. Write Job's status or results.
+        self.write(response)
 
     def load_from_memcache(self, cid):
         """
