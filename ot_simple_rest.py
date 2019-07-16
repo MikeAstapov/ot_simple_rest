@@ -18,7 +18,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -91,7 +91,6 @@ def main():
     # Start application.
     application.listen(50000)
     tornado.ioloop.IOLoop.current().start()
-
 
 
 if __name__ == '__main__':

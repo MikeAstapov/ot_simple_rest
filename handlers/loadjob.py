@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import re
@@ -10,7 +11,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -91,42 +92,51 @@ class LoadJob(tornado.web.RequestHandler):
             if status == 'finished' and expiring_date:
 
                 # Step 4. Load results of Job from cache for transcending.
-                events = self.load_from_memcache(cid)
+                self.load_and_send_from_memcache(cid)
                 self.logger.info('Cache is %s loaded.' % cid)
-                response = {'status': 'success', 'events': events}
             elif status == 'finished' and not expiring_date:
                 response = {'status': 'nocache'}
+                self.write(response)
             elif status == 'running':
                 response = {'status': 'running'}
+                self.write(response)
             elif status == 'new':
                 response = {'status': 'new'}
-            elif status == 'fail':
+                self.write(response)
+            elif status == 'failed':
                 response = {'status': 'fail', 'error': 'Job is failed'}
+                self.write(response)
             else:
                 self.logger.warning('Unknown status of job: %s' % status)
-                response = {'status': 'fail', 'error': 'Unknown status: %s' % status}
+                response = {'status': 'fail', 'error': 'Unknown error: %s' % status}
+                self.write(response)
         else:
             # Return missed job error.
-            response = {'status': 'fail', 'error': 'Job is not found'}
+            response = {'status': 'notfound', 'error': 'Job is not found'}
+            self.write(response)
 
-        # Step 5. Write Job's status or results.
-        self.write(response)
-
-    def load_from_memcache(self, cid):
+    def load_and_send_from_memcache(self, cid):
         """
-        It loads result's cache from ramcache and then returns it to response writer.
+        It loads result's cache from ramcache and then writes batches.
         :param cid: Cache's id.
         :type cid: Integer.
         :return: List of cache table lines.
         """
+
         self.logger.debug('Started loading cache %s.' % cid)
-        events = {}
         path_to_cache_dir = '%s/search_%s.cache/' % (self.mem_conf['path'], cid)
         self.logger.debug('Path to cache %s.' % path_to_cache_dir)
         file_names = os.listdir(path_to_cache_dir)
-        for file_name in file_names:
+        self.write('{"status": "success", "events": {')
+        length = len(file_names)
+        for i in range(length):
+            file_name = file_names[i]
             self.logger.debug('Reading part: %s' % file_name)
             if file_name[-4:] == '.csv':
-                events[file_name] = open(path_to_cache_dir + file_name).read()
-        return events
-
+                # events[file_name] = open(path_to_cache_dir + file_name).read()
+                self.write('"%s": ' % file_name)
+                body = open(path_to_cache_dir + file_name).read()
+                self.write(json.dumps(body))
+                if i != length - 1:
+                    self.write(", ")
+        self.write('}}')
