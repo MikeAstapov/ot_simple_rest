@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-# -*-coding:utf-8-*-
-# makejob.py
-
 import re
 import logging
 
