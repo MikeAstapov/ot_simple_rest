@@ -3,6 +3,9 @@
 # ot_simple_rest.py
 
 import logging
+import os
+from configparser import ConfigParser
+
 
 import tornado.ioloop
 import tornado.web
@@ -50,28 +53,20 @@ def main():
     :return:
     """
 
-    logger = set_logger('DEBUG', './otsimplerest.log', 'osr')
 
     # # # # # # #  Configuration section  # # # # # # #
 
-    # TODO replace this section with config files
+    basedir = os.path.dirname(os.path.abspath(__file__))
 
-    # Configuration of Postgres DB.
-    db_conf = {
-        "host": "am.local",
-        "database": "dispatcher",
-        "user": "dispatcher",
-        "password": "P@$$w0rd"
-        # "async": True
-    }
+    config = ConfigParser()
+    config.read(os.path.join(basedir, 'ot_simple_rest.conf'))
 
-    # Configuration of ramcache.
-    mem_conf = {
-        "path": "/mnt/g1/caches/"
-    }
+    db_conf = dict(config['db_conf'])
+    mem_conf = dict(config['mem_conf'])
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+    logger = set_logger(config['general'].get('level', 'INFO'), './otsimplerest.log', 'osr')
     logger.info('DB configuration: %s' % db_conf)
     logger.info('MEM configuration: %s' % mem_conf)
 

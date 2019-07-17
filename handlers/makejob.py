@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# -*-coding:utf-8-*-
+# makejob.py
+
 import re
 import logging
 
@@ -11,7 +15,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -52,7 +56,6 @@ class MakeJob(tornado.web.RequestHandler):
 
         future = IOLoop.current().run_in_executor(None, self.make_job)
         await future
-
 
     @staticmethod
     def validate():
@@ -237,6 +240,3 @@ class MakeJob(tornado.web.RequestHandler):
 
         self.logger.debug('Response: %s' % response)
         self.write(response)
-
-    # @staticmethod
-    # def parse(original_spl):
