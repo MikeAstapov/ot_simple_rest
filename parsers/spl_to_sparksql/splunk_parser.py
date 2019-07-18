@@ -32,9 +32,11 @@ class SPLtoSQL:
             pass
 
         def comparisonexpression(self, args):
-            if "*" in args[2]:
-                return args[0] + " rlike " + args[2]
-            return args[0] + args[1] + args[2]
+            striped = str(args[2]).strip("\"\'")
+            if "*" in striped:
+                replaced = striped.replace('*', '[a-zA-Z0-9а-яА-Я_*-. ]*')
+                return args[0] + " rlike '" + replaced + "'"
+            return args[0] + args[1] + striped
 
         def leftb(self, args):
             return "("
@@ -64,8 +66,10 @@ class SPLtoSQL:
             super().__init__()
 
         def indexspecifier(self, args):
-            self.indexes[str(args[0])] = ""
-            return "index=" + args[0]
+            index_name = str(args[0]).strip("\"\'")
+            print(index_name)
+            self.indexes[index_name] = ""
+            return "index=" + index_name
 
         def logicalexpression(self, args):
             if len(args) >= 2:
@@ -93,7 +97,7 @@ class SPLtoSQL:
     @staticmethod
     def get_timestamp(time):
         if time == "now":
-            return int(datetime.utcnow().timestamp())
+            return int(datetime.now().timestamp())
         regex = r"(-|\+|^)(\d+)(s|m|h|d|w|M|y)"
         result =  re.match(regex, time)
         if result is not None:
@@ -109,11 +113,12 @@ class SPLtoSQL:
 			}
             now = datetime.now()
             delta = dict_delta[result.group(3)]
+            print(delta)
             if result.group(1) == "-":
                  res_time = now - delta
             else:
                  res_time = now + delta
-            return int(res_time.utcnow().timestamp())
+            return int(res_time.timestamp())
         return None
 
     @staticmethod
@@ -122,6 +127,7 @@ class SPLtoSQL:
          _twf = twf
          regex = r"(earliest|latest)=([a-zA-Z0-9_*-]+)"
          for (time_modifier, time) in re.findall(regex, spl):
+             print(time_modifier, time) 
              if (time_modifier == "earliest"):
                  _tws = SPLtoSQL.get_timestamp(time)
              if (time_modifier == "latest"):
@@ -145,7 +151,7 @@ class SPLtoSQL:
              comparisonexpression: STRING_INDEX CMP VALUE
              TIME_MODIFIER: "earliest" | "latest"
              FIELD: /(?:\"(.*|[^\\"])\")|[a-zA-Z0-9_*-]+/
-             STRING_INDEX:/[a-zA-Z0-9_*-.]+/
+             STRING_INDEX:/[a-zA-Z0-9_*-."']+/
              CMP:"="|"!="|"<"|"<="|">"|">="
              VALUE: /(?:\"(.*?)\")/ | NUM |  TERM
              TERM: /[a-zA-Z0-9_*-]+/
