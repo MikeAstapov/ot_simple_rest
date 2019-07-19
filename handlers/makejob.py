@@ -159,11 +159,13 @@ class MakeJob(tornado.web.RequestHandler):
         # Step 3. Get service OTL form of query from original SPL.
         tws = int(float(request['tws'][0]))
         twf = int(float(request['twf'][0]))
-        resolver = Resolver(indexes, tws, twf)
-        resolved_spl = resolver.resolve(original_spl)
-        self.logger.debug("Resolved_spl: %s" % resolved_spl)
+
         conn = psycopg2.connect(**self.db_conf)
         cur = conn.cursor()
+
+        resolver = Resolver(indexes, tws, twf, cur)
+        resolved_spl = resolver.resolve(original_spl)
+        self.logger.debug("Resolved_spl: %s" % resolved_spl)
 
         # Step 4. Check for Role Model Access to requested indexes.
         access_flag, indexes = self.user_have_right(username, indexes, cur)
