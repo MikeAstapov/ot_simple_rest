@@ -21,7 +21,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -53,7 +53,6 @@ def main():
     load Job's results from ramcache to OT.Simple Splunk app.
     :return:
     """
-
 
     # # # # # # #  Configuration section  # # # # # # #
 
