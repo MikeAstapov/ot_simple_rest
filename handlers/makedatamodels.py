@@ -7,7 +7,7 @@ from tornado.ioloop import IOLoop
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
-__credits__ = []
+__credits__ = ["Nikolay Ryabykh"]
 __license__ = ""
 __version__ = "0.0.1"
 __maintainer__ = "Andrey Starchenkov"

@@ -8,7 +8,7 @@ from parsers.spl_to_sparksql.splunk_parser import SPLtoSQL
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
-__credits__ = []
+__credits__ = ["Sergei Ermilov"]
 __license__ = ""
 __version__ = "0.2.0"
 __maintainer__ = "Andrey Starchenkov"
