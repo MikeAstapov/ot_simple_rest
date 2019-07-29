@@ -156,14 +156,15 @@ class MakeJob(tornado.web.RequestHandler):
         username = request['username'][0].decode()
         indexes = re.findall(r"index=(\S+)", original_spl)
 
-        # Step 3. Get service OTL form of query from original SPL.
         tws = int(float(request['tws'][0]))
         twf = int(float(request['twf'][0]))
+        sid = request['sid'][0].decode()
 
         conn = psycopg2.connect(**self.db_conf)
         cur = conn.cursor()
 
-        resolver = Resolver(indexes, tws, twf, cur)
+        # Step 3. Get service OTL form of query from original SPL.
+        resolver = Resolver(indexes, tws, twf, cur, sid)
         resolved_spl = resolver.resolve(original_spl)
         self.logger.debug("Resolved_spl: %s" % resolved_spl)
 
@@ -215,14 +216,23 @@ class MakeJob(tornado.web.RequestHandler):
                             (original_spl, service_spl, subsearches, tws, twf, cache_ttl, username) \
                             VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id, extract(epoch from creating_date);'
 
-                            stm_tuple = (search[0], search[1], subsearches,
-                                         tws, twf, cache_ttl, username)
+                            stm_tuple = (search[0], search[1], subsearches, tws, twf, cache_ttl, username)
                             self.logger.info(make_job_statement % stm_tuple)
                             cur.execute(make_job_statement, stm_tuple)
                             job_id, creating_date = cur.fetchone()
+
+                            # Add SID to DB if search is not subsearch.
+                            if search == searches[-1]:
+                                add_sid_statement = 'INSERT INTO SplunkSIDs (sid, src_ip, spl) VALUES (%s,%s,%s);'
+                                stm_tuple = (sid, self.request.remote_ip, original_spl)
+                                self.logger.info(add_sid_statement % stm_tuple)
+                                cur.execute(add_sid_statement, stm_tuple)
+
                             conn.commit()
+
                         # Return id of new Job.
                         response = {"_time": creating_date, "status": "success", "job_id": job_id}
+
                     else:
                         # Return validation error.
                         response = {"status": "fail", "error": "Validation failed"}
