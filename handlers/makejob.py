@@ -11,7 +11,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -158,7 +158,7 @@ class MakeJob(tornado.web.RequestHandler):
 
         tws = int(float(request['tws'][0]))
         twf = int(float(request['twf'][0]))
-        sid = request['sid'][0].decode()
+        sid = float(request['sid'][0])
 
         conn = psycopg2.connect(**self.db_conf)
         cur = conn.cursor()
