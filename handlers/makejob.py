@@ -11,7 +11,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -164,9 +164,17 @@ class MakeJob(tornado.web.RequestHandler):
         cur = conn.cursor()
 
         # Step 3. Get service OTL form of query from original SPL.
-        resolver = Resolver(indexes, tws, twf, cur, sid)
-        resolved_spl = resolver.resolve(original_spl)
-        self.logger.debug("Resolved_spl: %s" % resolved_spl)
+        try:
+            resolver = Resolver(indexes, tws, twf, cur, sid, self.request.remote_ip)
+            resolved_spl = resolver.resolve(original_spl)
+            self.logger.debug("Resolved_spl: %s" % resolved_spl)
+        except Exception as _error:
+            error = "Cant resolve SPL. Error: %s." % _error
+            self.logger.error(error)
+            response = {"status": "fail", "error": error}
+            self.write(response)
+            return
+            # raise _error
 
         # Step 4. Check for Role Model Access to requested indexes.
         access_flag, indexes = self.user_have_right(username, indexes, cur)
@@ -179,7 +187,7 @@ class MakeJob(tornado.web.RequestHandler):
             # Step 5. Make searches queue based on subsearches of main query.
             searches = []
             for search in resolved_spl['subsearches'].values():
-                if 'otrest' in search[0]:
+                if 'otrest' or 'otloadjob' in search[0]:
                     continue
                 searches.append(search)
 
