@@ -39,7 +39,7 @@ class SPLtoSQL:
             if "*" in striped:
                 replaced = striped.replace('*', '[a-zA-Z0-9а-яА-Я_*-. ]*')
                 return args[0] + " rlike '" + replaced + "'"
-            return args[0] + args[1] + striped
+            return args[0] + args[1] + '"' + striped + '"'
 
         def leftb(self, args):
             return "("
