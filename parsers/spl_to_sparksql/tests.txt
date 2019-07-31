@@ -1,10 +1,4 @@
-index=hpsm_db sourcetype=hpsm_incidents_new SUBCATEGORY="Инцидент"	{'hpsm_db': 'sourcetype=hpsm_incidents_new AND SUBCATEGORY="Инцидент"'}
-(index=incidents_local AND sourcetype=incident_json)  OR (index=ezsm_events_hist AND sourcetype=hpsm_incidents AND f_category="Инцидент")	{'incidents_local': 'sourcetype=incident_json', 'ezsm_events_hist': 'sourcetype=hpsm_incidents AND f_category="Инцидент"'}
-index=hpsm_db_stat SUBCATEGORY="Инцидент" OR SUBCATEGORY="Запрос информации"  HPC_AFFECTED_ITEM_NAME="ППРБ - Accounting Engine (CI00766650)"	{'hpsm_db_stat': 'SUBCATEGORY="Инцидент" OR SUBCATEGORY="Запрос информации" AND HPC_AFFECTED_ITEM_NAME="ППРБ - Accounting Engine (CI00766650)"'}
-index=incidents_local AND sourcetype=incident_json	{'incidents_local': 'sourcetype=incident_json'}
-index=ezsm_events_hist	{'ezsm_events_hist': ''}
-index=kssh_db_esbpslog sourcetype=ksshps_avg_duration	{'kssh_db_esbpslog': 'sourcetype=ksshps_avg_duration'}
-index=scom*	{'scom': '', 'scomab': '', 'scomcd': '', 'scomfe': ''}
-index=tivoli*	{'tivoliab': '', 'tivolicd': '', 'tivoli': ''}
-index=apacheLog GET	{'apacheLog': '(_raw like \'%GET%\')'}
-index=pprb_system sourcetype="oracle_db" cursor_version	{'pprb_system': 'sourcetype="oracle_db" AND (_raw like \'%cursor_version%\')'}
+sourcetype=pm_* index=hppm	{'hppm': {'query': "sourcetype rlike 'pm_[a-zA-Z0-9а-яА-Я_*-. ]*'", 'twf': 0, 'tws': 0}}
+sourcetype=pm* index=hppm	{'hppm': {'query': "sourcetype rlike 'pm[a-zA-Z0-9а-яА-Я_*-. ]*'", 'twf': 0, 'tws': 0}}
+host=har* index=tivoli*	{'tivoli': {'query': "host rlike 'har[a-zA-Z0-9а-яА-Я_*-. ]*'",'twf': 0,'tws': 0},'tivoliab': {'query': "host rlike 'har[a-zA-Z0-9а-яА-Я_*-. ]*'",'twf': 0,'tws': 0},'tivolicd': {'query': "host rlike 'har[a-zA-Z0-9а-яА-Я_*-. ]*'",'twf': 0,'tws': 0}}
+host="kanga*" index="pprbproc_business"	{'pprbproc_business': {'query': "host rlike 'kanga[a-zA-Z0-9а-яА-Я_*-. ]*'",'twf': 0, 'tws': 0}}
