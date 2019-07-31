@@ -25,7 +25,10 @@ class SPLtoSQL:
             if args[0] == "NOT":
                 return "NOT"
             if args[0][0] == '"' and args[0][-1] == '"':
-                return "(_raw like '%" + args[0][1:-1] + "%')"
+                return "(_raw rlike '" + args[0][1:-1] + "')"
+            if "*" in args[0]:
+                replaced = re.escape(args[0]).replace("\*", ".*")
+                return "(_raw rlike '" + replaced + "')"
             return "(_raw like '%" + args[0] + "%')"
 
         def logicalexpression(self, args):
@@ -150,7 +153,7 @@ class SPLtoSQL:
              indexexpression.3:  FIELD
              comparisonexpression: STRING_INDEX CMP VALUE
              TIME_MODIFIER: "earliest" | "latest"
-             FIELD: /(?:\"(.*|[^\\"])\")|[a-zA-Z0-9_*-]+/
+             FIELD: /(?:\"(.*?|[^\\"])\")|[a-zA-Z0-9_*-.]+/
              STRING_INDEX:/[a-zA-Z0-9_*-."']+/
              CMP:"="|"!="|"<"|"<="|">"|">="
              VALUE: /(?:\"(.*?)\")/ | NUM |  TERM
@@ -205,7 +208,7 @@ class SPLtoSQL:
              |  comparisonexpression
              indexexpression.3:  FIELD
              comparisonexpression: STRING_INDEX CMP VALUE
-             FIELD: /(?:\"(.*|[^\\"])\")|[a-zA-Z0-9_*-]+/
+             FIELD: /(?:\"(.*|[^\\"])\")|[a-zA-Z0-9_*-.]+/
              STRING_INDEX:/[a-zA-Z0-9_*-.]+/
              CMP:"="|"!="|"<"|"<="|">"|">="
              VALUE: /(?:\"(.*?)\")/ |TERM | NUM
