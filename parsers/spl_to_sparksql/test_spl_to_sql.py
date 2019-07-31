@@ -9,4 +9,4 @@ def test_pprb_dashboard():
         #print(test.split("\t"))
         test_case = test.split("\t")[0]
         result = test.split("\t")[1]
-        assert  SPLtoSQL.parse_read(test_case, av_indexes) == ast.literal_eval(result)
+        assert  SPLtoSQL.parse_read(test_case, av_indexes, 0, 0) == ast.literal_eval(result)
