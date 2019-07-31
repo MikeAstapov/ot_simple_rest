@@ -70,7 +70,6 @@ class SPLtoSQL:
 
         def indexspecifier(self, args):
             index_name = str(args[0]).strip("\"\'")
-            print(index_name)
             self.indexes[index_name] = ""
             return "index=" + index_name
 
@@ -231,10 +230,3 @@ class SPLtoSQL:
         result = {}
         result["query"] = st2
         return result
-
-if __name__ == "__main__":
-    import sys
-    #t = sys.argv[1]
-    t = """index = main KEK.* TROLOLO """
-    av_indexes = ['hpsm_db', 'incidents_local', 'hpsm_db_stat', 'ezsm_events_hist', 'kssh_db_esbpslog', 'scom', 'scomab','scomcd', 'scomfe', 'tivoliab', 'tivolicd', 'tivoli']
-    print(json.dumps(SPLtoSQL.parse_read(t, av_indexes, 0,0)))
