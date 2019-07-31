@@ -8,9 +8,9 @@ from parsers.spl_to_sparksql.splunk_parser import SPLtoSQL
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
-__credits__ = []
+__credits__ = ["Sergei Ermilov"]
 __license__ = ""
-__version__ = "0.1.2"
+__version__ = "0.3.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -32,7 +32,10 @@ class Resolver:
     read_pattern_middle = r'\[\s*search (.+?)[\|\]]'
     read_pattern_start = r'^ *search ([^|]+)'
     otrest_pattern = r'otrest\s+endpoint\s*?=\s*?"(\S+?)"'
-    filter_pattern = r'\|\s*search (.+?)\|'
+    filter_pattern = r'\|\s*search ([^\|$]+)'
+    otfrom_pattern = r'otfrom datamodel:?\s*([^\|$]+)'
+    otloadjob_pattern = r'otloadjob\s+(\d+\.\d+)'
+    otrestdo_pattern = r'otrestdo\s+endpoint\s*?=\s*?"(\S+?)"'
 
     # Service structures for escaping special symbols in original SPL queries.
     query_replacements = {
@@ -42,14 +45,21 @@ class Resolver:
 
     inverted_query_replacements = {v: k for (k, v) in query_replacements.items()}
 
-    def __init__(self, indexes, tws, twf):
+    def __init__(self, indexes, tws, twf, cur=None, sid=None, src_ip=None):
         """
-        Init with default available indexes.
+        Init with default available indexes, time window and cursor to DB for DataModels.
+
         :param indexes: list of default available indexes.
+        :param tws: Time Window Start.
+        :param twf: Time Window Finish.
+        :param cur: Cursor to Postgres DB.
         """
         self.indexes = indexes
         self.tws = tws
         self.twf = twf
+        self.cur = cur
+        self.sid = sid
+        self.src_ip = src_ip
         self.subsearches = {}
 
     def create_subsearch(self, match_object):
@@ -109,6 +119,43 @@ class Resolver:
         graph = SPLtoSQL.parse_filter(query)
         return '| filter %s' % json.dumps(graph)
 
+    def create_datamodels(self, match_object):
+        """
+        Transforms "| otfrom datamodel __NAME__" to "| search (index=__INDEX__ source=__SOURCE__)" or something like.
+
+        :param match_object: Re match object with original SPL.
+        :return: String with replaces of datamodel part.
+        """
+        datamodel_name = match_object.group(1)
+        get_datamodel_stm = """SELECT search FROM DataModels WHERE name = '%s';"""
+        self.cur.execute(get_datamodel_stm % (datamodel_name,))
+        fetch = self.cur.fetchone()
+        if fetch:
+            query = fetch[0]
+        else:
+            raise Exception('Can\'t find DATAMODEL. Update DATAMODELS DB or fix the name.')
+        return query[1:] if query[0] == '|' else query
+
+    def create_otloadjob(self, match_object):
+        """
+        Transforms "| otloadjob __SID__" to "| otloadjob spl="__SPL__" ".
+
+        :param match_object: Re match object with original SPL.
+        :return: String with replaces of datamodel part.
+        """
+        sid = match_object.group(1)
+        get_spl_stm = """SELECT spl FROM SplunkSIDs WHERE sid=%s AND src_ip='%s';"""
+        self.cur.execute(get_spl_stm % (sid, self.src_ip))
+        fetch = self.cur.fetchone()
+        if fetch:
+            spl = fetch[0]
+            otloadjob_sha256 = sha256(spl.strip().encode('utf-8')).hexdigest()
+            otloadjob_service = '| otloadjob subsearch=subsearch_%s' % otloadjob_sha256
+            self.subsearches['subsearch_%s' % otloadjob_sha256] = (spl, otloadjob_service)
+            return otloadjob_service
+        else:
+            raise Exception('Job sid is not found.')
+
     def resolve(self, spl):
         """
         Finds and replaces service patterns of original SPL.
@@ -129,12 +176,15 @@ class Resolver:
         for replacement in self.inverted_query_replacements:
             _spl = _spl.replace(replacement, self.inverted_query_replacements[replacement])
 
+        _spl = re.sub(self.otfrom_pattern, self.create_datamodels, _spl)
+
         _spl = re.sub(self.read_pattern_middle, self.create_read_graph, _spl)
         _spl = re.sub(self.read_pattern_start, self.create_read_graph, _spl)
 
         _spl = re.sub(self.otrest_pattern, self.create_otrest, _spl)
-
+        _spl = re.sub(self.otrestdo_pattern, self.create_otrest, _spl)
         _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl)
+        _spl = re.sub(self.otloadjob_pattern, self.create_otloadjob, _spl)
 
         return {'search': (spl, _spl), 'subsearches': self.subsearches}
 
@@ -161,6 +211,10 @@ if __name__ == '__main__':
     spl7 = """index = main | foreach GBL_CPU_TOTAL_UTIL [eval &lt;&lt;FIELD&gt;&gt;=round('&lt;&lt;FIELD&gt;&gt;',2)]
      | stats count"""
 
+    spl8 = """otfrom datamodel: NAME | stats count"""
+
+    spl9 = """otloadjob 123.25 | stats count"""
+
     default_indexes = ['main', '_internal']
 
     resolver = Resolver(default_indexes, 0, 0)
@@ -183,3 +237,9 @@ if __name__ == '__main__':
 
     resolver = Resolver(default_indexes, 0, 0)
     print(resolver.resolve(spl7))
+
+    resolver = Resolver(default_indexes, 0, 0)
+    print(resolver.resolve(spl8))
+
+    resolver = Resolver(default_indexes, 0, 0)
+    print(resolver.resolve(spl9))
