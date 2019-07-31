@@ -2,3 +2,4 @@ sourcetype=pm_* index=hppm	{'hppm': {'query': "sourcetype rlike 'pm_[a-zA-Z0-9а
 sourcetype=pm* index=hppm	{'hppm': {'query': "sourcetype rlike 'pm[a-zA-Z0-9а-яА-Я_*-. ]*'", 'twf': 0, 'tws': 0}}
 host=har* index=tivoli*	{'tivoli': {'query': "host rlike 'har[a-zA-Z0-9а-яА-Я_*-. ]*'",'twf': 0,'tws': 0},'tivoliab': {'query': "host rlike 'har[a-zA-Z0-9а-яА-Я_*-. ]*'",'twf': 0,'tws': 0},'tivolicd': {'query': "host rlike 'har[a-zA-Z0-9а-яА-Я_*-. ]*'",'twf': 0,'tws': 0}}
 host="kanga*" index="pprbproc_business"	{'pprbproc_business': {'query': "host rlike 'kanga[a-zA-Z0-9а-яА-Я_*-. ]*'",'twf': 0, 'tws': 0}}
+index=test  sourcetype=source1	{'test': {'query': "sourcetype=\"source1\"", 'twf': 0, 'tws': 0}}
