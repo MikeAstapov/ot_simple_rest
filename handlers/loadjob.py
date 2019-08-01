@@ -11,7 +11,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -67,6 +67,8 @@ class LoadJob(tornado.web.RequestHandler):
         original_spl = request["original_spl"][0].decode()
         original_spl = re.sub(r"\|\s*ot\s+(ttl=\d+)?\s*\|", "", original_spl)
         original_spl = re.sub(r"\|\s*simple.*", "", original_spl)
+        original_spl = original_spl.strip()
+
         # Get time window.
         tws = int(float(request['tws'][0]))
         twf = int(float(request['twf'][0]))
