@@ -12,7 +12,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -44,7 +44,6 @@ class SaveOtRest(tornado.web.RequestHandler):
         future = IOLoop.current().run_in_executor(None, self.save_to_cache)
         await future
 
-
     @staticmethod
     def validate():
         # TODO
@@ -56,13 +55,13 @@ class SaveOtRest(tornado.web.RequestHandler):
         :return:
         """
         request = self.request.body_arguments
-        endpoint = request['endpoint'][0].decode()
+        original_spl = request['original_spl'][0].decode()
+        sha_spl = 'otrest%s' % original_spl.split('otrest')[1]
         data = request['data'][0].decode()
-        self.logger.debug('Endpoint: %s.' % endpoint)
+        self.logger.debug('Original SPL: %s.' % original_spl)
         self.logger.debug('Data: %s.' % data)
         # Parses params for DB tables.
-        original_spl = '| otrest endpoint="%s"' % endpoint
-        service_spl = '| otrest subsearch=subsearch_%s' % sha256(endpoint.encode()).hexdigest()
+        service_spl = '| otrest subsearch=subsearch_%s' % sha256(sha_spl.encode()).hexdigest()
 
         if self.validate():
             conn = psycopg2.connect(**self.db_conf)
@@ -92,10 +91,3 @@ class SaveOtRest(tornado.web.RequestHandler):
             response = {"status": "fail", "error": "Validation failed"}
 
         self.write(response)
-
-
-
-
-
-
-

@@ -10,7 +10,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Sergei Ermilov"]
 __license__ = ""
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -91,7 +91,7 @@ class Resolver:
         :param match_object: Re match object with original SPL.
         :return: String with replaces of subsearches.
         """
-        otrest_sha256 = sha256(match_object.group(1).strip().encode('utf-8')).hexdigest()
+        otrest_sha256 = sha256(match_object.group(0).strip().encode('utf-8')).hexdigest()
         otrest_service = '| otrest subsearch=subsearch_%s' % otrest_sha256
         self.subsearches['subsearch_%s' % otrest_sha256] = ('| %s' % match_object.group(0), otrest_service)
         return otrest_service
