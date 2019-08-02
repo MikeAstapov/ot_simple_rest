@@ -31,12 +31,11 @@ class Resolver:
     subsearch_pattern = r'.+\[(.+?)\]'
     read_pattern_middle = r'\[\s*search (.+?)[\|\]]'
     read_pattern_start = r'^ *search ([^|]+)'
-    otrest_pattern = r'otrest\s+endpoint\s*?=\s*?"(\S+?)"'
+    otrest_pattern = r'otrest[^|]+url\s*?=\s*?([^\|\] ]+)'
     filter_pattern = r'\|\s*search ([^\|$]+)'
     otfrom_pattern = r'otfrom datamodel:?\s*([^\|$]+)'
     otloadjob_id_pattern = r'otloadjob\s+(\d+\.\d+)'
     otloadjob_spl_pattern = r'otloadjob\s+spl="(.+?[^\\])"'
-    otrestdo_pattern = r'otrestdo\s+endpoint\s*?=\s*?"(\S+?)"'
 
     # Service structures for escaping special symbols in original SPL queries.
     query_replacements = {
@@ -199,7 +198,6 @@ class Resolver:
         _spl = re.sub(self.read_pattern_start, self.create_read_graph, _spl)
 
         _spl = re.sub(self.otrest_pattern, self.create_otrest, _spl)
-        _spl = re.sub(self.otrestdo_pattern, self.create_otrest, _spl)
         _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl)
         _spl = re.sub(self.otloadjob_id_pattern, self.create_otloadjob_id, _spl)
         _spl = re.sub(self.otloadjob_spl_pattern, self.create_otloadjob_spl, _spl)
