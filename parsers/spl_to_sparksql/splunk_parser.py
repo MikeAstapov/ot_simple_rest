@@ -152,8 +152,8 @@ class SPLtoSQL:
              indexexpression.3:  FIELD
              comparisonexpression: STRING_INDEX CMP VALUE
              TIME_MODIFIER: "earliest" | "latest"
-             FIELD: /(?:\"(.*|[^\\"])\")|[a-zA-Z0-9_*-.]+/
-             STRING_INDEX:/[a-zA-Z0-9_*-."']+/
+             FIELD: /(?:\"(.*?|[^\\"])\")|[a-zA-Z0-9а-яА-Я_*-.]+/
+             STRING_INDEX:/[a-zA-Z0-9а-яА-Я_*-."']+/
              CMP:"="|"!="|"<"|"<="|">"|">="
              VALUE: /(?:\"(.*?)\")/ | NUM |  TERM
              TERM: /[a-zA-Z0-9_*-]+/
@@ -164,8 +164,10 @@ class SPLtoSQL:
              //EQUAL: "="
              leftb.5: "("
              rightb.5: ")"
-             %import common.WORD   // imports from terminal library
-             %ignore " "           // Disregard spaces in text
+             %import common.WORD
+             %import common.NEWLINE  
+             %ignore " "
+             %ignore NEWLINE     
          ''', parser='earley', debug=True)
         (spl_time, _tws, _twf) = SPLtoSQL.removetime(spl, tws, twf)
         tree = lark.parse(spl_time)
@@ -207,7 +209,7 @@ class SPLtoSQL:
              |  comparisonexpression
              indexexpression.3:  FIELD
              comparisonexpression: STRING_INDEX CMP VALUE
-             FIELD: /(?:\"(.*|[^\\"])\")|[a-zA-Z0-9_*-.]+/
+             FIELD: /(?:\"(.*?|[^\\"])\")|[a-zA-Z0-9_*-.]+/
              STRING_INDEX:/[a-zA-Z0-9_*-.]+/
              CMP:"="|"!="|"<"|"<="|">"|">="
              VALUE: /(?:\"(.*?)\")/ |TERM | NUM

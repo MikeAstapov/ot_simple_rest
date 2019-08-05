@@ -3,3 +3,5 @@ sourcetype=pm* index=hppm	{'hppm': {'query': "sourcetype rlike 'pm[a-zA-Z0-9а-�
 host=har* index=tivoli*	{'tivoli': {'query': "host rlike 'har[a-zA-Z0-9а-яА-Я_*-. ]*'",'twf': 0,'tws': 0},'tivoliab': {'query': "host rlike 'har[a-zA-Z0-9а-яА-Я_*-. ]*'",'twf': 0,'tws': 0},'tivolicd': {'query': "host rlike 'har[a-zA-Z0-9а-яА-Я_*-. ]*'",'twf': 0,'tws': 0}}
 host="kanga*" index="pprbproc_business"	{'pprbproc_business': {'query': "host rlike 'kanga[a-zA-Z0-9а-яА-Я_*-. ]*'",'twf': 0, 'tws': 0}}
 index=test  sourcetype=source1	{'test': {'query': "sourcetype=\"source1\"", 'twf': 0, 'tws': 0}}
+index=test "GET" OR "POST"	{'test': {'query': "(_raw rlike 'GET') OR (_raw rlike 'POST')", 'twf': 0, 'tws': 0}}
+index=test  тест Запрос AND TEST	{'test': {'query': "(_raw like '%тест%') AND (_raw like '%Запрос%') AND (_raw like '%TEST%')", 'twf': 0, 'tws': 0}}
