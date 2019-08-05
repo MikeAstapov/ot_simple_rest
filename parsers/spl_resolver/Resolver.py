@@ -10,7 +10,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Sergei Ermilov"]
 __license__ = ""
-__version__ = "0.3.3"
+__version__ = "0.3.4"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -179,7 +179,6 @@ class Resolver:
         :param spl: original SPL.
         :return: dict with search query params.
         """
-        spl = spl.replace('\n', ' ')
         for replacement in self.query_replacements:
             spl = spl.replace(replacement, self.query_replacements[replacement])
 
