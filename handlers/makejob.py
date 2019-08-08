@@ -11,7 +11,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.4.1"
+__version__ = "0.4.3"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -150,6 +150,7 @@ class MakeJob(tornado.web.RequestHandler):
         self.logger.debug("Original spl: %s" % original_spl)
         original_spl = re.sub(r"\|\s*ot\s+(ttl=\d+)?\s*\|", "", original_spl)
         original_spl = re.sub(r"\|\s*simple.*", "", original_spl)
+        original_spl = original_spl.strip()
         self.logger.debug('Fixed original_spl: %s' % original_spl)
 
         # Step 2. Get Role Model information about query and user.
@@ -158,7 +159,7 @@ class MakeJob(tornado.web.RequestHandler):
 
         tws = int(float(request['tws'][0]))
         twf = int(float(request['twf'][0]))
-        sid = float(request['sid'][0])
+        sid = request['sid'][0].decode()
 
         conn = psycopg2.connect(**self.db_conf)
         cur = conn.cursor()

@@ -10,7 +10,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Sergei Ermilov"]
 __license__ = ""
-__version__ = "0.3.0"
+__version__ = "0.3.4"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -31,11 +31,11 @@ class Resolver:
     subsearch_pattern = r'.+\[(.+?)\]'
     read_pattern_middle = r'\[\s*search (.+?)[\|\]]'
     read_pattern_start = r'^ *search ([^|]+)'
-    otrest_pattern = r'otrest\s+endpoint\s*?=\s*?"(\S+?)"'
+    otrest_pattern = r'otrest[^|]+url\s*?=\s*?([^\|\] ]+)'
     filter_pattern = r'\|\s*search ([^\|$]+)'
     otfrom_pattern = r'otfrom datamodel:?\s*([^\|$]+)'
-    otloadjob_pattern = r'otloadjob\s+(\d+\.\d+)'
-    otrestdo_pattern = r'otrestdo\s+endpoint\s*?=\s*?"(\S+?)"'
+    otloadjob_id_pattern = r'otloadjob\s+(\d+\.\d+)'
+    otloadjob_spl_pattern = r'otloadjob\s+spl="(.+?[^\\])"'
 
     # Service structures for escaping special symbols in original SPL queries.
     query_replacements = {
@@ -79,7 +79,9 @@ class Resolver:
         subsearch_query_service = re.sub(self.read_pattern_start, self.create_read_graph, subsearch_query_service)
 
         self.subsearches['subsearch_%s' % subsearch_sha256] = (subsearch_query, subsearch_query_service)
-        return match_object.group(0).replace('[%s]' % match_object.group(1), 'subsearch=subsearch_%s' % subsearch_sha256)
+        return match_object.group(0).replace(
+            '[%s]' % match_object.group(1), 'subsearch=subsearch_%s' % subsearch_sha256
+        )
 
     def create_otrest(self, match_object):
         """
@@ -89,7 +91,7 @@ class Resolver:
         :param match_object: Re match object with original SPL.
         :return: String with replaces of subsearches.
         """
-        otrest_sha256 = sha256(match_object.group(1).strip().encode('utf-8')).hexdigest()
+        otrest_sha256 = sha256(match_object.group(0).strip().encode('utf-8')).hexdigest()
         otrest_service = '| otrest subsearch=subsearch_%s' % otrest_sha256
         self.subsearches['subsearch_%s' % otrest_sha256] = ('| %s' % match_object.group(0), otrest_service)
         return otrest_service
@@ -136,9 +138,9 @@ class Resolver:
             raise Exception('Can\'t find DATAMODEL. Update DATAMODELS DB or fix the name.')
         return query[1:] if query[0] == '|' else query
 
-    def create_otloadjob(self, match_object):
+    def create_otloadjob_id(self, match_object):
         """
-        Transforms "| otloadjob __SID__" to "| otloadjob spl="__SPL__" ".
+        Transforms "| otloadjob __SID__" to "| otloadjob subsearch="subsearch___sha256__" ".
 
         :param match_object: Re match object with original SPL.
         :return: String with replaces of datamodel part.
@@ -156,6 +158,20 @@ class Resolver:
         else:
             raise Exception('Job sid is not found.')
 
+    def create_otloadjob_spl(self, match_object):
+        """
+        Transforms '| otloadjob spl="__SPL__"' to '| otloadjob subsearch="subsearch___sha256__"'.
+
+        :param match_object: Re match object with original SPL.
+        :return: String with replaces of datamodel part.
+        """
+        spl = match_object.group(1)
+        spl = spl.replace('\\"', '"')
+        otloadjob_sha256 = sha256(spl.strip().encode('utf-8')).hexdigest()
+        otloadjob_service = '| otloadjob subsearch=subsearch_%s' % otloadjob_sha256
+        self.subsearches['subsearch_%s' % otloadjob_sha256] = (spl, otloadjob_service)
+        return otloadjob_service
+
     def resolve(self, spl):
         """
         Finds and replaces service patterns of original SPL.
@@ -163,7 +179,6 @@ class Resolver:
         :param spl: original SPL.
         :return: dict with search query params.
         """
-        spl = spl.replace('\n', ' ')
         for replacement in self.query_replacements:
             spl = spl.replace(replacement, self.query_replacements[replacement])
 
@@ -182,64 +197,8 @@ class Resolver:
         _spl = re.sub(self.read_pattern_start, self.create_read_graph, _spl)
 
         _spl = re.sub(self.otrest_pattern, self.create_otrest, _spl)
-        _spl = re.sub(self.otrestdo_pattern, self.create_otrest, _spl)
         _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl)
-        _spl = re.sub(self.otloadjob_pattern, self.create_otloadjob, _spl)
+        _spl = re.sub(self.otloadjob_id_pattern, self.create_otloadjob_id, _spl)
+        _spl = re.sub(self.otloadjob_spl_pattern, self.create_otloadjob_spl, _spl)
 
         return {'search': (spl, _spl), 'subsearches': self.subsearches}
-
-
-if __name__ == '__main__':
-
-    spl1 = """search index=main (GET AND 200) OR (POST AND 404) "asd   ertert xbfert"| timechart span=1w max(val)
-     as val | 
-    join val [search index=notmain 200 | table _time, val, _span] | join host [search index=second 400] | table _raw]"""
-
-    spl2 = """search index=1st | search hua|  join type=left val [ search index=2nd | stats count by val |
-    join type=left val [ search index=3rd | stats max(val) as val, min(val) as minval ] | table 2] | table end"""
-
-    spl3 = """search index=asd"""
-
-    spl4 = """|makeresults |search index=main (GET AND 200) OR (POST AND 404) "asd   ertert xbfert"| timechart span=1w
-     max(val) as val | 
-    join val [search index=notmain 200 | table _time, val, _span] | join host [search index=second 400] | table _raw]"""
-
-    spl5 = """otrest endpoint="/services/search/jobs/" | stats count """
-
-    spl6 = """index = main | search 404 AND POST | table * """
-
-    spl7 = """index = main | foreach GBL_CPU_TOTAL_UTIL [eval &lt;&lt;FIELD&gt;&gt;=round('&lt;&lt;FIELD&gt;&gt;',2)]
-     | stats count"""
-
-    spl8 = """otfrom datamodel: NAME | stats count"""
-
-    spl9 = """otloadjob 123.25 | stats count"""
-
-    default_indexes = ['main', '_internal']
-
-    resolver = Resolver(default_indexes, 0, 0)
-    print(resolver.resolve(spl1))
-
-    resolver = Resolver(default_indexes, 0, 0)
-    print(resolver.resolve(spl2))
-
-    resolver = Resolver(default_indexes, 0, 0)
-    print(resolver.resolve(spl3))
-
-    resolver = Resolver(default_indexes, 0, 0)
-    print(resolver.resolve(spl4))
-
-    resolver = Resolver(default_indexes, 0, 0)
-    print(resolver.resolve(spl5))
-
-    resolver = Resolver(default_indexes, 0, 0)
-    print(resolver.resolve(spl6))
-
-    resolver = Resolver(default_indexes, 0, 0)
-    print(resolver.resolve(spl7))
-
-    resolver = Resolver(default_indexes, 0, 0)
-    print(resolver.resolve(spl8))
-
-    resolver = Resolver(default_indexes, 0, 0)
-    print(resolver.resolve(spl9))
