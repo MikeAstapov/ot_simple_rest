@@ -20,6 +20,8 @@ class SPLtoSQL:
             temp = "index="+str(index)
             if temp in st2:
                 indexes[index] += st2
+        if (not indexes):
+            indexes = {k: st2 for k in av_indexes}
         for key in indexes:
             regex = r'(AND|OR)*\s*index=[\w\*_"\']*\s*(AND|OR)?'
             indexes[key] = re.sub(regex, '', indexes[key])
