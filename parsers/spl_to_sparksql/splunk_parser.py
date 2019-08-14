@@ -1,9 +1,11 @@
 import re
-import internal.grammar
+
+import parsers.spl_to_sparksql.internal as internal
+
 from lark import Lark
-from internal.timerange import Timerange
-from internal.expressions.searchEvalExpression import SearchEvalExpression
-from internal.expressions.filterEvalExpression import FilterEvalExpression
+from parsers.spl_to_sparksql.internal.timerange import Timerange
+from parsers.spl_to_sparksql.internal.expressions.searchEvalExpression import SearchEvalExpression
+from parsers.spl_to_sparksql.internal.expressions.filterEvalExpression import FilterEvalExpression
 
 
 class SPLtoSQL:
