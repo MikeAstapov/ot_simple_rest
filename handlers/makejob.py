@@ -188,7 +188,7 @@ class MakeJob(tornado.web.RequestHandler):
             # Step 5. Make searches queue based on subsearches of main query.
             searches = []
             for search in resolved_spl['subsearches'].values():
-                if 'otrest' or 'otloadjob' in search[0]:
+                if ('otrest' or 'otloadjob') in search[0]:
                     continue
                 searches.append(search)
 
