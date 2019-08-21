@@ -13,7 +13,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -67,7 +67,8 @@ class LoadJob(tornado.web.RequestHandler):
         self.logger.debug(request)
         # Step 1. Remove OT.Simple Splunk app service data from SPL query.
         original_spl = request["original_spl"][0].decode()
-        cache_ttl = re.findall(r"\|\s*ot[^|]*ttl=(\d+)", original_spl)
+        cache_ttl = re.findall(r"\|\s*ot[^|]*ttl\s*=\s*(\d+)", original_spl)
+        field_extraction = re.findall(r"\|\s*ot[^|]*field_extraction\s*=\s*(\S+)", original_spl)
         original_spl = re.sub(r"\|\s*ot[^|]*\|", "", original_spl)
         original_spl = re.sub(r"\|\s*simple.*", "", original_spl)
         original_spl = original_spl.strip()
@@ -75,6 +76,9 @@ class LoadJob(tornado.web.RequestHandler):
         # Get time window.
         tws = int(float(request['tws'][0]))
         twf = int(float(request['twf'][0]))
+
+        # Get Field Extraction mode.
+        field_extraction = field_extraction[0] if field_extraction else False
 
         tws, twf = backlasher.discretize(tws, twf, int(cache_ttl[0]) if cache_ttl else 0)
         self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
@@ -85,10 +89,12 @@ class LoadJob(tornado.web.RequestHandler):
         # Step 2. Get Job's status based on (original_spl, tws, twf) parameters.
         check_job_status = 'SELECT splqueries.id, splqueries.status, cachesdl.expiring_date FROM splqueries ' \
                            'LEFT JOIN cachesdl ON splqueries.id = cachesdl.id WHERE splqueries.original_spl=%s AND ' \
-                           'splqueries.tws=%s AND splqueries.twf=%s ORDER BY splqueries.id DESC LIMIT 1 '
+                           'splqueries.tws=%s AND splqueries.twf=%s AND splqueries.field_extraction=%s ' \
+                           'ORDER BY splqueries.id DESC LIMIT 1 '
 
-        self.logger.info(check_job_status % (original_spl, tws, twf))
-        cur.execute(check_job_status, (original_spl, tws, twf))
+        stm_tuple = (original_spl, tws, twf, field_extraction)
+        self.logger.info(check_job_status % stm_tuple)
+        cur.execute(check_job_status, stm_tuple)
         fetch = cur.fetchone()
         self.logger.info(fetch)
 
