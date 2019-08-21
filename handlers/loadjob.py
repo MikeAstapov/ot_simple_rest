@@ -7,11 +7,13 @@ import tornado.web
 import psycopg2
 from tornado.ioloop import IOLoop
 
+from utils import backlasher
+
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.2.2"
+__version__ = "0.3.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -65,13 +67,17 @@ class LoadJob(tornado.web.RequestHandler):
         self.logger.debug(request)
         # Step 1. Remove OT.Simple Splunk app service data from SPL query.
         original_spl = request["original_spl"][0].decode()
-        original_spl = re.sub(r"\|\s*ot\s+(ttl=\d+)?\s*\|", "", original_spl)
+        cache_ttl = re.findall(r"\|\s*ot[^|]*ttl=(\d+)", original_spl)
+        original_spl = re.sub(r"\|\s*ot[^|]*\|", "", original_spl)
         original_spl = re.sub(r"\|\s*simple.*", "", original_spl)
         original_spl = original_spl.strip()
 
         # Get time window.
         tws = int(float(request['tws'][0]))
         twf = int(float(request['twf'][0]))
+
+        tws, twf = backlasher.discretize(tws, twf, int(cache_ttl[0]) if cache_ttl else 0)
+        self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
 
         conn = psycopg2.connect(**self.db_conf)
         cur = conn.cursor()

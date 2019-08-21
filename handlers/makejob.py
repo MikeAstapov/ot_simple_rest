@@ -6,12 +6,13 @@ import psycopg2
 from tornado.ioloop import IOLoop
 
 from parsers.spl_resolver.Resolver import Resolver
+from utils import backlasher
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.4.4"
+__version__ = "0.5.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -157,8 +158,17 @@ class MakeJob(tornado.web.RequestHandler):
         username = request['username'][0].decode()
         indexes = re.findall(r"index=(\S+)", original_spl)
 
+        # Get search time window.
         tws = int(float(request['tws'][0]))
         twf = int(float(request['twf'][0]))
+
+        # Get cache lifetime.
+        cache_ttl = int(request['cache_ttl'][0])
+
+        # Update time window to discrete value.
+        tws, twf = backlasher.discretize(tws, twf, cache_ttl if cache_ttl else 0)
+        self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
+
         sid = request['sid'][0].decode()
 
         conn = psycopg2.connect(**self.db_conf)
@@ -181,9 +191,6 @@ class MakeJob(tornado.web.RequestHandler):
         access_flag, indexes = self.user_have_right(username, indexes, cur)
 
         if access_flag:
-
-            # Get cache lifetime.
-            cache_ttl = int(request['cache_ttl'][0])
 
             # Step 5. Make searches queue based on subsearches of main query.
             searches = []
