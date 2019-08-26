@@ -13,7 +13,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -80,7 +80,7 @@ class LoadJob(tornado.web.RequestHandler):
         # Get Field Extraction mode.
         field_extraction = field_extraction[0] if field_extraction else False
 
-        tws, twf = backlasher.discretize(tws, twf, int(cache_ttl[0]) if cache_ttl else 0)
+        tws, twf = backlasher.discretize(tws, twf, int(cache_ttl[0]) if cache_ttl else int(request['cache_ttl'][0]))
         self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
 
         conn = psycopg2.connect(**self.db_conf)
