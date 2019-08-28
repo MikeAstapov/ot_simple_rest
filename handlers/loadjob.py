@@ -13,7 +13,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.4.1"
+__version__ = "0.5.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -80,6 +80,10 @@ class LoadJob(tornado.web.RequestHandler):
         # Get Field Extraction mode.
         field_extraction = field_extraction[0] if field_extraction else False
 
+        # Get preview mode.
+        preview = request['preview'][0]
+
+        # Update time window to discrete value.
         tws, twf = backlasher.discretize(tws, twf, int(cache_ttl[0]) if cache_ttl else int(request['cache_ttl'][0]))
         self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
 
@@ -90,9 +94,9 @@ class LoadJob(tornado.web.RequestHandler):
         check_job_status = 'SELECT splqueries.id, splqueries.status, cachesdl.expiring_date FROM splqueries ' \
                            'LEFT JOIN cachesdl ON splqueries.id = cachesdl.id WHERE splqueries.original_spl=%s AND ' \
                            'splqueries.tws=%s AND splqueries.twf=%s AND splqueries.field_extraction=%s ' \
-                           'ORDER BY splqueries.id DESC LIMIT 1 '
+                           'AND splqueries.preview=%s ORDER BY splqueries.id DESC LIMIT 1 '
 
-        stm_tuple = (original_spl, tws, twf, field_extraction)
+        stm_tuple = (original_spl, tws, twf, field_extraction, preview)
         self.logger.info(check_job_status % stm_tuple)
         cur.execute(check_job_status, stm_tuple)
         fetch = cur.fetchone()
