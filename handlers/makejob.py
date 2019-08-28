@@ -12,7 +12,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -190,6 +190,8 @@ class MakeJob(tornado.web.RequestHandler):
 
         # Get preview mode.
         preview = request['preview'][0]
+        preview = True if preview == b'True' else False
+
 
         # Update time window to discrete value.
         tws, twf = backlasher.discretize(tws, twf, cache_ttl if cache_ttl else 0)
@@ -257,7 +259,8 @@ class MakeJob(tornado.web.RequestHandler):
                             # Step 8. Register new Job in Dispatcher DB.
                             self.logger.debug('Search: %s. Subsearches: %s.' % (search[1], subsearches))
                             make_job_statement = 'INSERT INTO splqueries \
-                            (original_spl, service_spl, subsearches, tws, twf, cache_ttl, username, field_extraction) \
+                            (original_spl, service_spl, subsearches, tws, twf, cache_ttl, username, field_extraction,' \
+                                                 ' preview) \
                             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id, extract(epoch from creating_date);'
 
                             stm_tuple = (search[0], search[1], subsearches, tws, twf, cache_ttl, username,

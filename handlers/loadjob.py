@@ -13,7 +13,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -69,6 +69,7 @@ class LoadJob(tornado.web.RequestHandler):
         original_spl = request["original_spl"][0].decode()
         cache_ttl = re.findall(r"\|\s*ot[^|]*ttl\s*=\s*(\d+)", original_spl)
         field_extraction = re.findall(r"\|\s*ot[^|]*field_extraction\s*=\s*(\S+)", original_spl)
+        preview = re.findall(r"\|\s*ot[^|]*preview\s*=\s*(\S+)", original_spl)
         original_spl = re.sub(r"\|\s*ot[^|]*\|", "", original_spl)
         original_spl = re.sub(r"\|\s*simple.*", "", original_spl)
         original_spl = original_spl.strip()
@@ -81,7 +82,7 @@ class LoadJob(tornado.web.RequestHandler):
         field_extraction = field_extraction[0] if field_extraction else False
 
         # Get preview mode.
-        preview = request['preview'][0]
+        preview = preview[0] if preview else False
 
         # Update time window to discrete value.
         tws, twf = backlasher.discretize(tws, twf, int(cache_ttl[0]) if cache_ttl else int(request['cache_ttl'][0]))
