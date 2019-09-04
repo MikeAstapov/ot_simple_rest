@@ -28,7 +28,7 @@ class Resolver:
     """
 
     # Patterns for transformation.
-    subsearch_pattern = r'.+\[(.+?)\]'
+    subsearch_pattern = r'[^\||rex]+\|.+?\[(.+?)\]'
     read_pattern_middle = r'\[\s*search (.+?)[\|\]]'
     read_pattern_start = r'^ *search ([^|]+)'
     otrest_pattern = r'otrest[^|]+url\s*?=\s*?([^\|\] ]+)'
