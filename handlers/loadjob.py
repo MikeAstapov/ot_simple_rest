@@ -111,7 +111,8 @@ class LoadJob(tornado.web.RequestHandler):
         cur = conn.cursor()
 
         # Step 2. Get Job's status based on (original_spl, tws, twf) parameters.
-        check_job_status = 'SELECT splqueries.id, splqueries.status, cachesdl.expiring_date FROM splqueries ' \
+        check_job_status = 'SELECT splqueries.id, splqueries.status, cachesdl.expiring_date, splqueries.msg ' \
+                           'FROM splqueries ' \
                            'LEFT JOIN cachesdl ON splqueries.id = cachesdl.id WHERE splqueries.original_spl=%s AND ' \
                            'splqueries.tws=%s AND splqueries.twf=%s AND splqueries.field_extraction=%s ' \
                            'AND splqueries.preview=%s ORDER BY splqueries.id DESC LIMIT 1 '
@@ -124,11 +125,9 @@ class LoadJob(tornado.web.RequestHandler):
 
         # Check if such Job presents.
         if fetch:
-            cid, status, expiring_date = fetch
-
+            cid, status, expiring_date, msg = fetch
             # Step 3. Check Job's status and return it to OT.Simple Splunk app if it is not still ready.
             if status == 'finished' and expiring_date:
-
                 # Step 4. Load results of Job from cache for transcending.
                 self.load_and_send_from_memcache(cid)
                 self.logger.info('Cache is %s loaded.' % cid)
@@ -142,7 +141,7 @@ class LoadJob(tornado.web.RequestHandler):
                 response = {'status': 'new'}
                 self.write(response)
             elif status == 'failed':
-                response = {'status': 'fail', 'error': 'Job is failed'}
+                response = {'status': 'fail', 'error': msg}
                 self.write(response)
             else:
                 self.logger.warning('Unknown status of job: %s' % status)
