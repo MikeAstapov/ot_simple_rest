@@ -40,17 +40,34 @@ class CacheWriter:
         fieldnames = []
         for line in self.cache:
             fieldnames += list(line.keys())
-        fieldnames = list(set(fieldnames))
+        fieldnames = set(fieldnames)
         return fieldnames
 
-    def write(self):
+    def write_csv(self):
         """
         Writes the CSV file with cache data.
         :return:
         """
         with open(self.file_name, 'w') as fw:
-            fieldnames = self.get_fieldnames()
+            fieldnames = list(self.get_fieldnames())
             writer = csv.DictWriter(fw, fieldnames=fieldnames)
             writer.writeheader()
             for line in self.cache:
                 writer.writerow(line)
+
+    def write_json(self):
+        """
+        Writes the JSON Lines file with cache data.
+        :return:
+        """
+        with open(self.file_name, 'w') as fw:
+            fieldnames = self.get_fieldnames()
+            for line in self.cache:
+                keys = set(line.keys())
+                empty_keys = fieldnames - keys
+                for empty_key in empty_keys:
+                    line[empty_key] = ''
+                fw.write('%s\n' % json.dumps(line))
+
+    def write(self):
+        self.write_json()
