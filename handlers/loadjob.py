@@ -135,17 +135,17 @@ class LoadJob(tornado.web.RequestHandler):
                 response = {'status': 'nocache'}
                 self.write(response)
             elif status == 'running':
-                response = {'status': 'running'}
+                response = {'status': status}
                 self.write(response)
             elif status == 'new':
-                response = {'status': 'new'}
+                response = {'status': status}
                 self.write(response)
-            elif status == 'failed':
-                response = {'status': 'fail', 'error': msg}
+            elif status in ['failed', 'canceled']:
+                response = {'status': status, 'error': msg}
                 self.write(response)
             else:
                 self.logger.warning('Unknown status of job: %s' % status)
-                response = {'status': 'fail', 'error': 'Unknown error: %s' % status}
+                response = {'status': 'failed', 'error': 'Unknown error: %s' % status}
                 self.write(response)
         else:
             # Return missed job error.
