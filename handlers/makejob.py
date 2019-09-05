@@ -220,18 +220,6 @@ class MakeJob(tornado.web.RequestHandler):
         conn = psycopg2.connect(**self.db_conf)
         cur = conn.cursor()
 
-        # Step 3. Get service OTL form of query from original SPL.
-        # try:
-        #     resolver = Resolver(indexes, tws, twf, cur, sid, self.request.remote_ip)
-        #     resolved_spl = resolver.resolve(original_spl)
-        #     self.logger.debug("Resolved_spl: %s" % resolved_spl)
-        # except Exception as _error:
-        #     error = "Cant resolve SPL. Error: %s." % _error
-        #     self.logger.error(error)
-        #     response = {"status": "fail", "error": error}
-        #     self.write(response)
-        #     return
-        #     # raise _error
         resolver = Resolver(indexes, tws, twf, cur, sid, self.request.remote_ip)
         resolved_spl = resolver.resolve(original_spl)
         self.logger.debug("Resolved_spl: %s" % resolved_spl)
