@@ -176,12 +176,25 @@ class Resolver:
         return otloadjob_service
 
     def hide_rex(self, match_object):
+        """
+        Sometimes '|rex field=_raw "asd[ghj]123"' contains [] so it breaks subsearch extraction. Function hides it and
+        then will return back.
+
+        :param match_object: Re match object with original SPL.
+        :return: String with replaces of rex part.
+        """
         spl = match_object.group(1)
         rex_sha256 = sha256(spl.strip().encode('utf-8')).hexdigest()
         self.hidden_rex[rex_sha256] = spl
         return match_object.group(0).replace(spl, rex_sha256)
 
     def return_rex(self, match_object):
+        """
+        Returns hidden parts of rex.
+
+        :param match_object: Re match object with original SPL.
+        :return: String with replaces of rex part.
+        """
         rex_sha256 = match_object.group(1)
         return match_object.group(0).replace(rex_sha256, self.hidden_rex[rex_sha256])
 
