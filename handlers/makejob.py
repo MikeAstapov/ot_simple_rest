@@ -12,7 +12,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.7.1"
+__version__ = "0.8.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -44,6 +44,25 @@ class MakeJob(tornado.web.RequestHandler):
         """
 
         self.db_conf = db_conf
+
+    def write_error(self, status_code: int, **kwargs) -> None:
+        """Override to implement custom error pages.
+
+        ``write_error`` may call `write`, `render`, `set_header`, etc
+        to produce output as usual.
+
+        If this error was caused by an uncaught exception (including
+        HTTPError), an ``exc_info`` triple will be available as
+        ``kwargs["exc_info"]``.  Note that this exception may not be
+        the "current" exception for purposes of methods like
+        ``sys.exc_info()`` or ``traceback.format_exc``.
+        """
+        if "exc_info" in kwargs:
+            error = str(kwargs["exc_info"][1])
+            error_msg = {"status": "rest_error", "server_error": self._reason, "status_code": status_code,
+                         "error": error}
+            self.logger.debug('Error_msg: %s' % error_msg)
+            self.finish(error_msg)
 
     async def post(self):
         """
@@ -192,7 +211,6 @@ class MakeJob(tornado.web.RequestHandler):
         preview = request['preview'][0]
         preview = True if preview == b'True' else False
 
-
         # Update time window to discrete value.
         tws, twf = backlasher.discretize(tws, twf, cache_ttl if cache_ttl else 0)
         self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
@@ -202,18 +220,9 @@ class MakeJob(tornado.web.RequestHandler):
         conn = psycopg2.connect(**self.db_conf)
         cur = conn.cursor()
 
-        # Step 3. Get service OTL form of query from original SPL.
-        try:
-            resolver = Resolver(indexes, tws, twf, cur, sid, self.request.remote_ip)
-            resolved_spl = resolver.resolve(original_spl)
-            self.logger.debug("Resolved_spl: %s" % resolved_spl)
-        except Exception as _error:
-            error = "Cant resolve SPL. Error: %s." % _error
-            self.logger.error(error)
-            response = {"status": "fail", "error": error}
-            self.write(response)
-            return
-            # raise _error
+        resolver = Resolver(indexes, tws, twf, cur, sid, self.request.remote_ip)
+        resolved_spl = resolver.resolve(original_spl)
+        self.logger.debug("Resolved_spl: %s" % resolved_spl)
 
         # Step 4. Check for Role Model Access to requested indexes.
         access_flag, indexes = self.user_have_right(username, indexes, cur)

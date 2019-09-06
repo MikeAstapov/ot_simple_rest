@@ -63,6 +63,7 @@ def main():
 
     db_conf = dict(config['db_conf'])
     mem_conf = dict(config['mem_conf'])
+    disp_conf = dict(config['dispatcher'])
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -74,7 +75,7 @@ def main():
     application = tornado.web.Application([
         (r'/ping', PingPong),
         (r'/makejob', MakeJob, {"db_conf": db_conf}),
-        (r'/loadjob', LoadJob, {"db_conf": db_conf, "mem_conf": mem_conf}),
+        (r'/loadjob', LoadJob, {"db_conf": db_conf, "mem_conf": mem_conf, "disp_conf": disp_conf}),
         (r'/otrest', SaveOtRest, {"db_conf": db_conf, "mem_conf": mem_conf}),
         (r'/makerolemodel', MakeRoleModel, {"db_conf": db_conf}),
         (r'/makedatamodels', MakeDataModels, {"db_conf": db_conf})

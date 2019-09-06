@@ -36,6 +36,25 @@ class SaveOtRest(tornado.web.RequestHandler):
         self.db_conf = db_conf
         self.mem_conf = mem_conf
 
+    def write_error(self, status_code: int, **kwargs) -> None:
+        """Override to implement custom error pages.
+
+        ``write_error`` may call `write`, `render`, `set_header`, etc
+        to produce output as usual.
+
+        If this error was caused by an uncaught exception (including
+        HTTPError), an ``exc_info`` triple will be available as
+        ``kwargs["exc_info"]``.  Note that this exception may not be
+        the "current" exception for purposes of methods like
+        ``sys.exc_info()`` or ``traceback.format_exc``.
+        """
+        if "exc_info" in kwargs:
+            error = str(kwargs["exc_info"][1])
+            error_msg = {"status": "rest_error", "server_error": self._reason, "status_code": status_code,
+                         "error": error}
+            self.logger.debug('Error_msg: %s' % error_msg)
+            self.finish(error_msg)
+
     async def post(self):
         """
         It writes response to remote side.

@@ -13,7 +13,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.5.1"
+__version__ = "0.6.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -32,7 +32,7 @@ class LoadJob(tornado.web.RequestHandler):
 
     logger = logging.getLogger('osr')
 
-    def initialize(self, db_conf, mem_conf):
+    def initialize(self, db_conf, mem_conf, disp_conf):
         """
         Gets config and init logger.
 
@@ -40,11 +40,34 @@ class LoadJob(tornado.web.RequestHandler):
         :type db_conf: Dictionary.
         :param mem_conf: RAM cache configuration.
         :type mem_conf: Dictionary.
+        :param disp_conf: SuperDispatcher configuration.
+        :type disp_conf: Dictionary.
+
         :return:
         """
 
         self.db_conf = db_conf
         self.mem_conf = mem_conf
+        self.tracker_max_interval = float(disp_conf['tracker_max_interval'])
+
+    def write_error(self, status_code: int, **kwargs) -> None:
+        """Override to implement custom error pages.
+
+        ``write_error`` may call `write`, `render`, `set_header`, etc
+        to produce output as usual.
+
+        If this error was caused by an uncaught exception (including
+        HTTPError), an ``exc_info`` triple will be available as
+        ``kwargs["exc_info"]``.  Note that this exception may not be
+        the "current" exception for purposes of methods like
+        ``sys.exc_info()`` or ``traceback.format_exc``.
+        """
+        if "exc_info" in kwargs:
+            error = str(kwargs["exc_info"][1])
+            error_msg = {"status": "rest_error", "server_error": self._reason, "status_code": status_code,
+                         "error": error}
+            self.logger.debug('Error_msg: %s' % error_msg)
+            self.finish(error_msg)
 
     async def get(self):
         """
@@ -56,6 +79,18 @@ class LoadJob(tornado.web.RequestHandler):
         future = IOLoop.current().run_in_executor(None, self.load_job)
         await future
 
+    def check_dispatcher_status(self, cur):
+        check_disp_status = """SELECT (extract(epoch from CURRENT_TIMESTAMP) - extract(epoch from lastcheck)) as delta 
+        from ticks ORDER BY lastcheck DESC LIMIT 1;"""
+        cur.execute(check_disp_status)
+        fetch = cur.fetchone()
+        self.logger.debug("Dispatcher last check: %s." % fetch)
+        if fetch:
+            delta = fetch[0]
+            if delta <= self.tracker_max_interval:
+                return True
+        return False
+
     def load_job(self):
         """
         It checks for Job's status then downloads the result.
@@ -63,75 +98,81 @@ class LoadJob(tornado.web.RequestHandler):
         :return:
         """
 
-        request = self.request.arguments
-        self.logger.debug(request)
-        # Step 1. Remove OT.Simple Splunk app service data from SPL query.
-        original_spl = request["original_spl"][0].decode()
-        cache_ttl = re.findall(r"\|\s*ot[^|]*ttl\s*=\s*(\d+)", original_spl)
-        field_extraction = re.findall(r"\|\s*ot[^|]*field_extraction\s*=\s*(\S+)", original_spl)
-        preview = re.findall(r"\|\s*ot[^|]*preview\s*=\s*(\S+)", original_spl)
-        original_spl = re.sub(r"\|\s*ot[^|]*\|", "", original_spl)
-        original_spl = re.sub(r"\|\s*simple.*", "", original_spl)
-        original_spl = original_spl.strip()
-
-        # Get time window.
-        tws = int(float(request['tws'][0]))
-        twf = int(float(request['twf'][0]))
-
-        # Get Field Extraction mode.
-        field_extraction = field_extraction[0] if field_extraction else False
-
-        # Get preview mode.
-        preview = preview[0] if preview else False
-
-        # Update time window to discrete value.
-        tws, twf = backlasher.discretize(tws, twf, int(cache_ttl[0]) if cache_ttl else int(request['cache_ttl'][0]))
-        self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
-
         conn = psycopg2.connect(**self.db_conf)
         cur = conn.cursor()
 
-        # Step 2. Get Job's status based on (original_spl, tws, twf) parameters.
-        check_job_status = 'SELECT splqueries.id, splqueries.status, cachesdl.expiring_date FROM splqueries ' \
-                           'LEFT JOIN cachesdl ON splqueries.id = cachesdl.id WHERE splqueries.original_spl=%s AND ' \
-                           'splqueries.tws=%s AND splqueries.twf=%s AND splqueries.field_extraction=%s ' \
-                           'AND splqueries.preview=%s ORDER BY splqueries.id DESC LIMIT 1 '
+        dispatcher_status = self.check_dispatcher_status(cur)
+        if dispatcher_status:
+            request = self.request.arguments
+            self.logger.debug(request)
+            # Step 1. Remove OT.Simple Splunk app service data from SPL query.
+            original_spl = request["original_spl"][0].decode()
+            cache_ttl = re.findall(r"\|\s*ot[^|]*ttl\s*=\s*(\d+)", original_spl)
+            field_extraction = re.findall(r"\|\s*ot[^|]*field_extraction\s*=\s*(\S+)", original_spl)
+            preview = re.findall(r"\|\s*ot[^|]*preview\s*=\s*(\S+)", original_spl)
+            original_spl = re.sub(r"\|\s*ot[^|]*\|", "", original_spl)
+            original_spl = re.sub(r"\|\s*simple.*", "", original_spl)
+            original_spl = original_spl.strip()
 
-        stm_tuple = (original_spl, tws, twf, field_extraction, preview)
-        self.logger.info(check_job_status % stm_tuple)
-        cur.execute(check_job_status, stm_tuple)
-        fetch = cur.fetchone()
-        self.logger.info(fetch)
+            # Get time window.
+            tws = int(float(request['tws'][0]))
+            twf = int(float(request['twf'][0]))
 
-        # Check if such Job presents.
-        if fetch:
-            cid, status, expiring_date = fetch
+            # Get Field Extraction mode.
+            field_extraction = field_extraction[0] if field_extraction else False
 
-            # Step 3. Check Job's status and return it to OT.Simple Splunk app if it is not still ready.
-            if status == 'finished' and expiring_date:
+            # Get preview mode.
+            preview = preview[0] if preview else False
 
-                # Step 4. Load results of Job from cache for transcending.
-                self.load_and_send_from_memcache(cid)
-                self.logger.info('Cache is %s loaded.' % cid)
-            elif status == 'finished' and not expiring_date:
-                response = {'status': 'nocache'}
-                self.write(response)
-            elif status == 'running':
-                response = {'status': 'running'}
-                self.write(response)
-            elif status == 'new':
-                response = {'status': 'new'}
-                self.write(response)
-            elif status == 'failed':
-                response = {'status': 'fail', 'error': 'Job is failed'}
-                self.write(response)
+            # Update time window to discrete value.
+            tws, twf = backlasher.discretize(tws, twf, int(cache_ttl[0]) if cache_ttl else int(request['cache_ttl'][0]))
+            self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
+
+            # Step 2. Get Job's status based on (original_spl, tws, twf) parameters.
+            check_job_status = 'SELECT splqueries.id, splqueries.status, cachesdl.expiring_date, splqueries.msg ' \
+                               'FROM splqueries ' \
+                               'LEFT JOIN cachesdl ON splqueries.id = cachesdl.id WHERE splqueries.original_spl=%s AND ' \
+                               'splqueries.tws=%s AND splqueries.twf=%s AND splqueries.field_extraction=%s ' \
+                               'AND splqueries.preview=%s ORDER BY splqueries.id DESC LIMIT 1 '
+
+            stm_tuple = (original_spl, tws, twf, field_extraction, preview)
+            self.logger.info(check_job_status % stm_tuple)
+            cur.execute(check_job_status, stm_tuple)
+            fetch = cur.fetchone()
+            self.logger.info(fetch)
+
+            # Check if such Job presents.
+            if fetch:
+                cid, status, expiring_date, msg = fetch
+                # Step 3. Check Job's status and return it to OT.Simple Splunk app if it is not still ready.
+                if status == 'finished' and expiring_date:
+                    # Step 4. Load results of Job from cache for transcending.
+                    self.load_and_send_from_memcache(cid)
+                    self.logger.info('Cache is %s loaded.' % cid)
+                elif status == 'finished' and not expiring_date:
+                    response = {'status': 'nocache'}
+                    self.write(response)
+                elif status == 'running':
+                    response = {'status': status}
+                    self.write(response)
+                elif status == 'new':
+                    response = {'status': status}
+                    self.write(response)
+                elif status in ['failed', 'canceled']:
+                    response = {'status': status, 'error': msg}
+                    self.write(response)
+                else:
+                    self.logger.warning('Unknown status of job: %s' % status)
+                    response = {'status': 'failed', 'error': 'Unknown error: %s' % status}
+                    self.write(response)
             else:
-                self.logger.warning('Unknown status of job: %s' % status)
-                response = {'status': 'fail', 'error': 'Unknown error: %s' % status}
+                # Return missed job error.
+                response = {'status': 'notfound', 'error': 'Job is not found'}
                 self.write(response)
         else:
-            # Return missed job error.
-            response = {'status': 'notfound', 'error': 'Job is not found'}
+            msg = 'SuperDispatcher is offline. Please check Spark Cluster.'
+            self.logger.warning(msg)
+            response = {'status': 'failed', 'error': msg}
             self.write(response)
 
     def load_and_send_from_memcache(self, cid):
