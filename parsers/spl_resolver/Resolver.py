@@ -78,10 +78,8 @@ class Resolver:
         subsearch_query_service = re.sub(self.read_pattern_middle, self.create_read_graph, subsearch_query)
         subsearch_query_service = re.sub(self.read_pattern_start, self.create_read_graph, subsearch_query_service)
 
-        print(subsearch_query, '---', subsearch_query_service)
         _subsearch_query = re.sub(self.rex_return_pattern, self.return_rex, subsearch_query)
         _subsearch_query_service = re.sub(self.rex_return_pattern, self.return_rex, subsearch_query_service)
-        print(_subsearch_query, '===', _subsearch_query_service)
 
         self.subsearches['subsearch_%s' % subsearch_sha256] = (_subsearch_query, _subsearch_query_service)
         return match_object.group(0).replace(
@@ -218,5 +216,4 @@ class Resolver:
         _spl = re.sub(self.otloadjob_id_pattern, self.create_otloadjob_id, _spl)
         _spl = re.sub(self.otloadjob_spl_pattern, self.create_otloadjob_spl, _spl)
 
-        print({'search': (spl, _spl), 'subsearches': self.subsearches})
         return {'search': (spl, _spl), 'subsearches': self.subsearches}
