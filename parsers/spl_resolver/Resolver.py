@@ -27,7 +27,9 @@ class Resolver:
     This is needed for calculation part of Dispatcher.
     """
     # Patterns for transformation.
-    subsearch_pattern = r'[^\||rex]+\|.+?\[(.+?)\]'
+    rex_hide_pattern = r'\|\s*rex (.+?)\|'
+    rex_return_pattern = r'\|\s*rex (.+?)\|'
+    subsearch_pattern = r'.+\[(.+?)\]'
     read_pattern_middle = r'\[\s*search (.+?)[\|\]]'
     read_pattern_start = r'^ *search ([^|]+)'
     otrest_pattern = r'otrest[^|]+url\s*?=\s*?([^\|\] ]+)'
