@@ -10,7 +10,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Sergei Ermilov"]
 __license__ = ""
-__version__ = "0.3.7"
+__version__ = "0.3.8"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -101,6 +101,18 @@ class Resolver:
         self.subsearches['subsearch_%s' % otrest_sha256] = ('| %s' % match_object.group(0), otrest_service)
         return otrest_service
 
+    @staticmethod
+    def hide_subsearch_before_read(query):
+
+        subsearch = re.findall(r' subsearch=subsearch_\w+', query)
+        if subsearch:
+            subsearch = subsearch[0]
+        else:
+            subsearch = ''
+
+        query = query.replace(subsearch, "")
+        return query, subsearch
+
     def create_read_graph(self, match_object):
         """
         Finds "search __fts_query__" and transforms it to service form.
@@ -110,8 +122,11 @@ class Resolver:
         :return: String with replaces of FTS part.
         """
         query = match_object.group(1)
+
+        query, subsearch = self.hide_subsearch_before_read(query)
+        print('query', query)
         graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
-        return '| read %s' % json.dumps(graph)
+        return '| read %s%s' % (json.dumps(graph), subsearch)
 
     @staticmethod
     def create_filter_graph(match_object):
@@ -230,5 +245,5 @@ class Resolver:
         _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl)
         _spl = re.sub(self.otloadjob_id_pattern, self.create_otloadjob_id, _spl)
         _spl = re.sub(self.otloadjob_spl_pattern, self.create_otloadjob_spl, _spl)
-
+        print({'search': (spl, _spl), 'subsearches': self.subsearches})
         return {'search': (spl, _spl), 'subsearches': self.subsearches}
