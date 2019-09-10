@@ -12,7 +12,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -80,7 +80,7 @@ class MakeJob(tornado.web.RequestHandler):
 
     def check_cache(self, cache_ttl, original_spl, tws, twf, cur, field_extraction, preview):
         """
-        It checks if the sqme query Job is already finished and it's cache is ready to be downloaded. This way it will
+        It checks if the same query Job is already finished and it's cache is ready to be downloaded. This way it will
         return it's id for OT.Simple Splunk app JobLoader to download it's cache.
 
         :param original_spl: Original SPL query.
