@@ -39,3 +39,12 @@ class TestResolver(unittest.TestCase):
         print('result', result)
         print('target', target)
         self.assertDictEqual(result, target)
+
+    def test_subsearch_with_otoutputlookup(self):
+        spl = """search index=test_index | otoutputlookup testoutputlookup.csv"""
+        target = {'search': ('search index=test_index | otoutputlookup testoutputlookup.csv', '| read {"test_index": {"query": "", "tws": 0, "twf": 0}}| otoutputlookup testoutputlookup.csv'), 'subsearches': {}}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
+
