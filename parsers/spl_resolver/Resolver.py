@@ -10,7 +10,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Sergei Ermilov"]
 __license__ = ""
-__version__ = "0.3.9"
+__version__ = "0.3.10"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -28,7 +28,7 @@ class Resolver:
     """
     # Patterns for transformation.
     quoted_hide_pattern = r'"(.+?)"'
-    quoted_return_pattern = r'"_quoted_text_(\S+)"'
+    quoted_return_pattern = r'_quoted_text_(\w+)'
     subsearch_pattern = r'.+\[(.+?)\]'
     read_pattern_middle = r'\[\s*search (.+?)[\|\]]'
     read_pattern_start = r'^ *search ([^|]+)'

@@ -48,3 +48,10 @@ class TestResolver(unittest.TestCase):
         print('target', target)
         self.assertDictEqual(result, target)
 
+    def test_subsearch_with_append(self):
+        spl = """search index=test_index | table _time, serialField, random_Field, WordField, junkField| append [search index=test_index junkField="word"]"""
+        target = {'search': ('search index=test_index | table _time, serialField, random_Field, WordField, junkField| append [search index=test_index junkField="word"]', '| read {"test_index": {"query": "", "tws": 0, "twf": 0}}| table _time, serialField, random_Field, WordField, junkField| append subsearch=subsearch_110c2b2fb62279fbc26900d477d7a9ca460a566213c797503e701020e366134f'), 'subsearches': {'subsearch_110c2b2fb62279fbc26900d477d7a9ca460a566213c797503e701020e366134f': ('search index=test_index junkField="word"', '| read {"test_index": {"query": "junkField=\\"word\\"", "tws": 0, "twf": 0}}')}}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
