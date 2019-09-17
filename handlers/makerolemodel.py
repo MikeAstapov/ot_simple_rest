@@ -7,7 +7,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Nikolay Ryabykh"]
 __license__ = ""
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -53,8 +53,15 @@ class MakeRoleModel(tornado.web.RequestHandler):
         conn.commit()
 
         for rm in role_model:
+            username = rm['username']
+            roles = rm['roles']
+            indexes = rm['indexes']
+
+            roles = roles if type(roles) is list else [roles]
+            indexes = indexes if type(indexes) is list else [indexes]
+
             role_stm = "INSERT INTO RoleModel (username, roles, indexes) VALUES (%s, %s, %s)"
-            cur.execute(role_stm, (rm['username'], rm['roles'].split('\n'), rm['indexes'].split('\n')))
+            cur.execute(role_stm, (username, roles, indexes))
 
         conn.commit()
 
