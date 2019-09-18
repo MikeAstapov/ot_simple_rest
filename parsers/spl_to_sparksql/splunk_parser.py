@@ -11,7 +11,7 @@ from parsers.spl_to_sparksql.internal.expressions.filterEvalExpression import Fi
 class SPLtoSQL:
     @staticmethod
     def parse_read(spl, av_indexes, tws, twf):
-        lark = Lark(internal.grammar.read, parser='earley')
+        lark = Lark(grammar.read, parser='earley')
         (spl_time, _tws, _twf) = Timerange.removetime(spl, tws, twf)
         tree = lark.parse(spl_time)
         evalexpr = SearchEvalExpression()
@@ -29,15 +29,15 @@ class SPLtoSQL:
             indexes[key] = re.sub(regex, '', indexes[key])
             indexes[key] = indexes[key].strip()
         result = {}
+        isMaskIndex = (("*" in av_indexes) and (len(av_indexes)==1))
         for key in indexes:
-            if '*' in key and av_indexes:
+            if '*' in key and not isMaskIndex::
                 regex = key.replace('*', r"(\w)*")
                 pattern = re.compile(regex)
                 for index in av_indexes:
                     if pattern.match(index):
                         result[index] = indexes[key]
             else:
-                print(indexes[key])
                 result[key] = indexes[key]
         map_with_time = {}
         for key in result:
