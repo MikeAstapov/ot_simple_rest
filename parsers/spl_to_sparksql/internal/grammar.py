@@ -7,8 +7,8 @@ read = r'''start:_le
           | indexexpression
           | comparisonexpression
              _searchmodifier.2:  indexspecifier
-             indexspecifier.2: "index" "=" STRING_INDEX
-             indexexpression.3:  FIELD
+             indexspecifier: "index" "=" VALUE
+             indexexpression.3:  VALUE
              comparisonexpression: STRING_INDEX CMP VALUE
              TIME_MODIFIER: "earliest" | "latest"
              FIELD: ESCAPED_STRING | /[a-zA-Z0-9а-яА-Я_*-.]+/

@@ -9,7 +9,7 @@ class BaseEvalExpressions(Transformer):
     def le_not(self, args):
         return "NOT"
 
-    def inverted(s):
+    def inverted(self, s):
         return "!" + s
 
     def le_or(self, args):

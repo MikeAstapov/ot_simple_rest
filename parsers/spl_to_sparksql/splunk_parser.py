@@ -9,7 +9,7 @@ from internal.expressions.filterEvalExpression import FilterEvalExpression
 class SPLtoSQL:
     @staticmethod
     def parse_read(spl, av_indexes, tws, twf):
-        lark = Lark(internal.grammar.read, parser='earley', debug=True)
+        lark = Lark(internal.grammar.read, parser='earley')
         (spl_time, _tws, _twf) = Timerange.removetime(spl, tws, twf)
         tree = lark.parse(spl_time)
         evalexpr = SearchEvalExpression()
@@ -28,13 +28,14 @@ class SPLtoSQL:
             indexes[key] = indexes[key].strip()
         result = {}
         for key in indexes:
-            if '*' in key:
+            if '*' in key and av_indexes:
                 regex = key.replace('*', r"(\w)*")
                 pattern = re.compile(regex)
                 for index in av_indexes:
                     if pattern.match(index):
                         result[index] = indexes[key]
             else:
+                print(indexes[key])
                 result[key] = indexes[key]
         map_with_time = {}
         for key in result:
