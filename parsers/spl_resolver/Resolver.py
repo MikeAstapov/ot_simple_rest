@@ -10,7 +10,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Sergei Ermilov"]
 __license__ = ""
-__version__ = "0.3.4"
+__version__ = "0.3.10"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -26,8 +26,9 @@ class Resolver:
 
     This is needed for calculation part of Dispatcher.
     """
-
     # Patterns for transformation.
+    quoted_hide_pattern = r'"(.+?)"'
+    quoted_return_pattern = r'_quoted_text_(\w+)'
     subsearch_pattern = r'.+\[(.+?)\]'
     read_pattern_middle = r'\[\s*search (.+?)[\|\]]'
     read_pattern_start = r'^ *search ([^|]+)'
@@ -36,14 +37,6 @@ class Resolver:
     otfrom_pattern = r'otfrom datamodel:?\s*([^\|$]+)'
     otloadjob_id_pattern = r'otloadjob\s+(\d+\.\d+)'
     otloadjob_spl_pattern = r'otloadjob\s+spl="(.+?[^\\])"'
-
-    # Service structures for escaping special symbols in original SPL queries.
-    query_replacements = {
-        "\\[": "&&OPENSQUAREBRACKET",
-        "\\]": "&&CLOSESQUAREBRACKET"
-    }
-
-    inverted_query_replacements = {v: k for (k, v) in query_replacements.items()}
 
     def __init__(self, indexes, tws, twf, cur=None, sid=None, src_ip=None):
         """
@@ -61,6 +54,8 @@ class Resolver:
         self.sid = sid
         self.src_ip = src_ip
         self.subsearches = {}
+        self.hidden_rex = {}
+        self.hidden_quoted_text = {}
 
     def create_subsearch(self, match_object):
         """
@@ -70,17 +65,19 @@ class Resolver:
         :param match_object: Re match object with original SPL.
         :return: String with replaces of subsearches.
         """
-        subsearch_sha256 = sha256(match_object.group(1).strip().encode('utf-8')).hexdigest()
         subsearch_query = match_object.group(1)
-        for replacement in self.inverted_query_replacements:
-            subsearch_query = subsearch_query.replace(replacement, self.inverted_query_replacements[replacement])
 
         subsearch_query_service = re.sub(self.read_pattern_middle, self.create_read_graph, subsearch_query)
         subsearch_query_service = re.sub(self.read_pattern_start, self.create_read_graph, subsearch_query_service)
 
-        self.subsearches['subsearch_%s' % subsearch_sha256] = (subsearch_query, subsearch_query_service)
+        _subsearch_query = re.sub(self.quoted_return_pattern, self.return_quoted, subsearch_query)
+        _subsearch_query_service = re.sub(self.quoted_return_pattern, self.return_quoted, subsearch_query_service)
+
+        subsearch_sha256 = sha256(_subsearch_query.strip().encode('utf-8')).hexdigest()
+
+        self.subsearches['subsearch_%s' % subsearch_sha256] = (_subsearch_query, _subsearch_query_service)
         return match_object.group(0).replace(
-            '[%s]' % match_object.group(1), 'subsearch=subsearch_%s' % subsearch_sha256
+            '[%s]' % subsearch_query, 'subsearch=subsearch_%s' % subsearch_sha256
         )
 
     def create_otrest(self, match_object):
@@ -96,6 +93,18 @@ class Resolver:
         self.subsearches['subsearch_%s' % otrest_sha256] = ('| %s' % match_object.group(0), otrest_service)
         return otrest_service
 
+    @staticmethod
+    def hide_subsearch_before_read(query):
+
+        subsearch = re.findall(r' subsearch=subsearch_\w+', query)
+        if subsearch:
+            subsearch = subsearch[0]
+        else:
+            subsearch = ''
+
+        query = query.replace(subsearch, "")
+        return query, subsearch
+
     def create_read_graph(self, match_object):
         """
         Finds "search __fts_query__" and transforms it to service form.
@@ -105,8 +114,10 @@ class Resolver:
         :return: String with replaces of FTS part.
         """
         query = match_object.group(1)
+
+        query, subsearch = self.hide_subsearch_before_read(query)
         graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
-        return '| read %s' % json.dumps(graph)
+        return '| read %s%s' % (json.dumps(graph), subsearch)
 
     @staticmethod
     def create_filter_graph(match_object):
@@ -172,6 +183,21 @@ class Resolver:
         self.subsearches['subsearch_%s' % otloadjob_sha256] = (spl, otloadjob_service)
         return otloadjob_service
 
+    def hide_quoted(self, match_object):
+
+        quoted_text = match_object.group(1)
+        quoted_text_sha256 = sha256(quoted_text.encode('utf-8')).hexdigest()
+        self.hidden_quoted_text[quoted_text_sha256] = quoted_text
+
+        return match_object.group(0).replace(quoted_text, '_quoted_text_%s' % quoted_text_sha256)
+
+    def return_quoted(self, match_object):
+        quoted_text_sha256 = match_object.group(1)
+        return match_object.group(0).replace(
+            '_quoted_text_%s' % quoted_text_sha256,
+            self.hidden_quoted_text[quoted_text_sha256]
+        )
+
     def resolve(self, spl):
         """
         Finds and replaces service patterns of original SPL.
@@ -179,17 +205,13 @@ class Resolver:
         :param spl: original SPL.
         :return: dict with search query params.
         """
-        for replacement in self.query_replacements:
-            spl = spl.replace(replacement, self.query_replacements[replacement])
 
-        _spl = (spl, 1)
+        _spl = re.sub(self.quoted_hide_pattern, self.hide_quoted, spl)
+        _spl = (_spl, 1)
         while _spl[1]:
             _spl = re.subn(self.subsearch_pattern, self.create_subsearch, _spl[0])
 
-        _spl = _spl[0]
-
-        for replacement in self.inverted_query_replacements:
-            _spl = _spl.replace(replacement, self.inverted_query_replacements[replacement])
+        _spl = re.sub(self.quoted_return_pattern, self.return_quoted, _spl[0])
 
         _spl = re.sub(self.otfrom_pattern, self.create_datamodels, _spl)
 
@@ -200,5 +222,4 @@ class Resolver:
         _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl)
         _spl = re.sub(self.otloadjob_id_pattern, self.create_otloadjob_id, _spl)
         _spl = re.sub(self.otloadjob_spl_pattern, self.create_otloadjob_spl, _spl)
-
         return {'search': (spl, _spl), 'subsearches': self.subsearches}

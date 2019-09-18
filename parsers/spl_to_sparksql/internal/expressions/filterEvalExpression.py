@@ -1,4 +1,4 @@
-from internal.expressions.baseEvalExpression import BaseEvalExpressions
+from parsers.spl_to_sparksql.internal.expressions.baseEvalExpression import BaseEvalExpressions
 
 
 class FilterEvalExpression(BaseEvalExpressions):

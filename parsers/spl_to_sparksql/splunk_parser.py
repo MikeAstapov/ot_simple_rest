@@ -1,9 +1,11 @@
 import re
-import internal.grammar
+
+from parsers.spl_to_sparksql.internal import grammar
+
 from lark import Lark
-from internal.timerange import Timerange
-from internal.expressions.searchEvalExpression import SearchEvalExpression
-from internal.expressions.filterEvalExpression import FilterEvalExpression
+from parsers.spl_to_sparksql.internal.timerange import Timerange
+from parsers.spl_to_sparksql.internal.expressions.searchEvalExpression import SearchEvalExpression
+from parsers.spl_to_sparksql.internal.expressions.filterEvalExpression import FilterEvalExpression
 
 
 class SPLtoSQL:
@@ -45,7 +47,7 @@ class SPLtoSQL:
 
     @staticmethod
     def parse_filter(spl):
-        lark = Lark(internal.grammar.filter, parser='earley', debug=True)
+        lark = Lark(grammar.filter, parser='earley', debug=True)
         tree = lark.parse(spl)
         evalexpr = FilterEvalExpression()
         tree2 = evalexpr.transform(tree)
