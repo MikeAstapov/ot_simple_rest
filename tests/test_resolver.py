@@ -55,3 +55,28 @@ class TestResolver(unittest.TestCase):
         print('result', result)
         print('target', target)
         self.assertDictEqual(result, target)
+
+    def test_pain_subsearch_1(self):
+        spl = """| ot ttl=60 | search index=pprbcore_business audit.state.name=* 
+| bucket _time span=1m 
+| dedup _time,host 
+| fields _time, host 
+| join host 
+    [| otinputlookup pprb_hosts_list.csv 
+    | where module_name="audit2" and stend="prom" and like(kontur,"%") 
+    | eval host=mvzip(host_name,p_custodian, ":")] 
+| stats distinct_count(host) as prc by _time 
+| eval 
+    [| otinputlookup pprb_hosts_list.csv 
+    | where module_name="audit2" and stend="prom" and like(kontur,"%") 
+    | stats distinct_count(host_name) as total_hosts 
+    | return 1 total_hosts] 
+| eval prc=round(100*prc /total_hosts, 2) 
+| timechart span=1m min(prc) as "% доступности"
+| eval baseline = 100 | simple"""
+        target = {}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
+
