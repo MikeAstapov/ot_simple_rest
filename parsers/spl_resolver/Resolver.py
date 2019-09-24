@@ -23,7 +23,7 @@ class Resolver:
     1. search -> | read "{__fts_json__}"
     2. | otrest endpoint=/any/path/to/api/ -> | otrest subsearch=subsearch_id
     3. any_command [subsearch] -> any_command subsearch=subsearch_id
-
+    # TODO Write all others SPL manipulations.
     This is needed for calculation part of Dispatcher.
     """
     # Patterns for transformation.
@@ -179,8 +179,9 @@ class Resolver:
         spl = match_object.group(1)
         spl = spl.replace('\\"', '"')
         otloadjob_sha256 = sha256(spl.strip().encode('utf-8')).hexdigest()
-        otloadjob_service = '| otloadjob subsearch=subsearch_%s' % otloadjob_sha256
-        self.subsearches['subsearch_%s' % otloadjob_sha256] = (spl, otloadjob_service)
+        otloadjob_service = 'otloadjob subsearch=subsearch_%s' % otloadjob_sha256
+        _otloadjob_service = Resolver(self.indexes, self.tws, self.twf, self.cur, self.sid, self.src_ip).resolve(spl)
+        self.subsearches['subsearch_%s' % otloadjob_sha256] = (spl, _otloadjob_service['search'][1])
         return otloadjob_service
 
     def hide_quoted(self, match_object):
@@ -218,8 +219,9 @@ class Resolver:
         _spl = re.sub(self.read_pattern_middle, self.create_read_graph, _spl)
         _spl = re.sub(self.read_pattern_start, self.create_read_graph, _spl)
 
-        _spl = re.sub(self.otrest_pattern, self.create_otrest, _spl)
-        _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl)
         _spl = re.sub(self.otloadjob_id_pattern, self.create_otloadjob_id, _spl)
         _spl = re.sub(self.otloadjob_spl_pattern, self.create_otloadjob_spl, _spl)
+
+        _spl = re.sub(self.otrest_pattern, self.create_otrest, _spl)
+        _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl)
         return {'search': (spl, _spl), 'subsearches': self.subsearches}
