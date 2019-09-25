@@ -8,17 +8,25 @@ class TestResolver(unittest.TestCase):
         self.maxDiff = None
         self.resolver = Resolver.Resolver(['index1', 'index2'], 0, 0)
 
+    def test_read_some_empty(self):
+        spl = """search index=main2 SUCCESS host="h1 bla" OR host="" OR host=h3"""
+        target = {'search': ('search index=main2 SUCCESS host="h1 bla" OR host="" OR host=h3', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\') AND host=\\"h1 bla\\" OR host=\\"\\" OR host=\\"h3\\"", "tws": 0, "twf": 0}}'), 'subsearches': {}}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
+
     def test_read_some_or(self):
-        spl = """search index=main2 SUCCESS host=h1 OR host=h2 OR host=h3"""
-        target = {'search': ('search index=main2 SUCCESS host=h1 OR host=h2 OR host=h3', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\') AND host=\\"h1\\" OR host=\\"h2\\" OR host=\\"h3\\"", "tws": 0, "twf": 0}}'), 'subsearches': {}}
+        spl = """search index=main2 SUCCESS host="h1" OR host="h2" OR host=h3"""
+        target = {'search': ('search index=main2 SUCCESS host="h1" OR host="h2" OR host=h3', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\') AND host=\\"h1\\" OR host=\\"h2\\" OR host=\\"h3\\"", "tws": 0, "twf": 0}}'), 'subsearches': {}}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
         self.assertDictEqual(result, target)
 
     def test_read_many_or(self):
-        spl = """search index=main2 SUCCESS host=h1 OR host=h2 OR host=h3 OR host=h4 OR host=h5 OR host=h6 OR host=h7 OR host=h8 OR host=h9 OR host=h10"""
-        target = {'search': ('search index=main2 SUCCESS host=h1 OR host=h2 OR host=h3 OR host=h4 OR host=h5 OR host=h6 OR host=h7 OR host=h8 OR host=h9 OR host=h10', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}}| rex field=host "^(?<host>[^\\.\\:]+).*\\:[0-9]" | stats count by host'), 'subsearches': {}}
+        spl = """search index=main2 SUCCESS host="h1" OR host="h2" OR host=h3 OR host=h4 OR host=h5 OR host=h6 OR host=h7 OR host=h8 OR host=h9 OR host=h10"""
+        target = {'search': ('search index=main2 SUCCESS host="h1" OR host="h2" OR host=h3 OR host=h4 OR host=h5 OR host=h6 OR host=h7 OR host=h8 OR host=h9 OR host=h10', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\') AND host=\\"h1\\" OR host=\\"h2\\" OR host=\\"h3\\" OR host=\\"h4\\" OR host=\\"h5\\" OR host=\\"h6\\" OR host=\\"h7\\" OR host=\\"h8\\" OR host=\\"h9\\" OR host=\\"h10\\"", "tws": 0, "twf": 0}}'), 'subsearches': {}}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
