@@ -1,7 +1,6 @@
 import ast
 from splunk_parser import SPLtoSQL
 
-
 def test_pprb_dashboard():
     av_indexes = ['hpsm_db', 'incidents_local', 'hpsm_db_stat',
                   'ezsm_events_hist', 'kssh_db_esbpslog', 'scom', 'scomab',

@@ -2,46 +2,43 @@ import re
 
 from parsers.spl_to_sparksql.internal import grammar
 
-from lark import Lark
+from parglare import Parser, Grammar
 from parsers.spl_to_sparksql.internal.timerange import Timerange
-from parsers.spl_to_sparksql.internal.expressions.searchEvalExpression import SearchEvalExpression
 from parsers.spl_to_sparksql.internal.expressions.filterEvalExpression import FilterEvalExpression
+from parsers.spl_to_sparksql.internal.expressions.baseEvalExpression import BaseEvalExpressions
 
 
 class SPLtoSQL:
+    
     @staticmethod
     def parse_read(spl, av_indexes, tws, twf):
-        lark = Lark(grammar.read, parser='earley', debug=True)
+        #print ('ARGS ', spl, av_indexes, tws, twf)
         (spl_time, _tws, _twf) = Timerange.removetime(spl, tws, twf)
-        tree = lark.parse(spl_time)
-        evalexpr = SearchEvalExpression()
-        tree2 = evalexpr.transform(tree)
-        st2 = tree2.children[0]
-        indexes = evalexpr.indexes
-        for index in indexes.keys():
-            temp = "index="+str(index)
-            if temp in st2:
-                indexes[index] += st2
-        if (not indexes):
-            indexes = {k: st2 for k in av_indexes}
-        for key in indexes:
-            regex = r'(AND|OR)*\s*index=[\w\*_"\']*\s*(AND|OR)?'
-            indexes[key] = re.sub(regex, '', indexes[key])
-            indexes[key] = indexes[key].strip()
-        result = {}
-        for key in indexes:
-            if '*' in key:
-                regex = key.replace('*', r"(\w)*")
-                pattern = re.compile(regex)
-                for index in av_indexes:
-                    if pattern.match(index):
-                        result[index] = indexes[key]
-            else:
-                result[key] = indexes[key]
-        map_with_time = {}
-        for key in result:
-            map_with_time[key] = {"query": result[key],
-                                  "tws": _tws, "twf": _twf}
+        #print ('SPL', spl)
+        #print('SPL TIME', spl_time)
+        #return
+        indexString = ''
+        evalExpr = BaseEvalExpressions(indexString)
+        spl = evalExpr.splPreprocessing(spl)
+        #print (grammar.smlGrammar)
+        #return 
+        lalrGrammar = Grammar.from_string(grammar.smlGrammar)
+        lalrParser = Parser(lalrGrammar, debug=False, build_tree=True, actions={ 'I' : evalExpr.indexParse,
+                                                                           	 'Q' : evalExpr.equalParse,
+                                                                           	 'A' : evalExpr.andParse,
+                                                                           	 'O' : evalExpr.orParse,
+                                                                           	 'N' : evalExpr.notParse,
+                                                                           	 'C' : evalExpr.compareParse,
+                                                                           	 'B' : evalExpr.bracketsParse,
+                                                                           	 'S' : evalExpr.stringParse })
+        tree = lalrParser.parse(spl)
+        #print(tree.tree_str())
+        queryString = lalrParser.call_actions(tree)
+        if (queryString == None): queryString = ''
+        #print (queryString.replace('""','"'))
+        indexString = evalExpr.indexString
+        map_with_time = {indexString : {'query' : queryString, 'tws' : tws, 'twf' : twf}}
+        #print(map_with_time)
         return map_with_time
 
     @staticmethod
