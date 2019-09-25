@@ -79,3 +79,11 @@ class TestResolver(unittest.TestCase):
         print('result', result)
         print('target', target)
         self.assertDictEqual(result, target)
+
+    def test_otloadjob_spl(self):
+        spl = """| ot ttl=60 | otloadjob spl="search index=alerts sourcetype!=alert_metadata | fields - _raw | dedup full_id | where alert=\\"pprb_*\\" status!=\\"*resolved\\" status!=\\"suppressed\\" app=\\"*\\" urgency=\\"*\\" summary=\\"*kb.main*\\"| stats count(alert) by alert" | simple"""
+        target = {'search': ('| ot ttl=60 | otloadjob spl="search index=alerts sourcetype!=alert_metadata | fields - _raw | dedup full_id | where alert=\\"pprb_*\\" status!=\\"*resolved\\" status!=\\"suppressed\\" app=\\"*\\" urgency=\\"*\\" summary=\\"*kb.main*\\"| stats count(alert) by alert" | simple', '| ot ttl=60 | otloadjob subsearch=subsearch_e08d9facf3d89bc4a22b743303e6aedaf983debb8ebcda68338cd09b0744047a | simple'), 'subsearches': {'subsearch_e08d9facf3d89bc4a22b743303e6aedaf983debb8ebcda68338cd09b0744047a': ('search index=alerts sourcetype!=alert_metadata | fields - _raw | dedup full_id | where alert="pprb_*" status!="*resolved" status!="suppressed" app="*" urgency="*" summary="*kb.main*"| stats count(alert) by alert', '| read {"alerts": {"query": "sourcetype!=\\"alert_metadata\\"", "tws": 0, "twf": 0}}| fields - _raw | dedup full_id | where alert="pprb_*" status!="*resolved" status!="suppressed" app="*" urgency="*" summary="*kb.main*"| stats count(alert) by alert')}}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
