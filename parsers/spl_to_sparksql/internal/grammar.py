@@ -9,7 +9,7 @@ smlGrammar = r'''
                 | S;
                 
                 I: 'index=' VALUE;
-                Q: STRING "=" STRING;
+                Q: STRING "=" V;
                 A: E "AND" E;
                 O: E "OR" E;
                 N: "NOT" E;
@@ -20,33 +20,23 @@ smlGrammar = r'''
                 | E "==" E
                 | E "!=" E;
                 B: "(" E ")";
-                S: STRING+;
+                V: STRING+
+                | '"'SPACESTR'"'
+                | '""'
+                | EMPTY;
+                S: STRING+
+                | '"'SPACESTR'"'
+                | '""'
+                | EMPTY;
 
                 terminals
                 VALUE: /[a-zA-Z0-9а-яА-Я_*-.:]+/;
-                STRING: /[a-zA-Z0-9а-яА-Я_*.-:"]+/;
+                SPACESTR: /[a-zA-Z0-9а-яА-Я_*.-: ]+/;
+                STRING: /[a-zA-Z0-9а-яА-Я_*.-:]+/;
                 '''
 
-filter = r'''start:_le
-             _le:  logicalexpression
-             logicalexpression: leftb _le rightb
-             | le_not logicalexpression
-             | _le [le_and|le_or] _le
-             |  indexexpression
-             |  comparisonexpression
-             indexexpression.3:  FIELD
-             comparisonexpression: STRING_INDEX CMP VALUE
-             FIELD: ESCAPED_STRING|/[a-zA-Z0-9_*-.]+/
-             STRING_INDEX:/[a-zA-Z0-9_*-.]+/
-             CMP:"="|"!="|"<"|"<="|">"|">="
-             VALUE: ESCAPED_STRING |TERM | NUM
-             TERM: /[a-zA-Z0-9_*-]+/
-             NUM: /-?\d+(?:\.\d+)*/
-             le_or.4: "OR"
-             le_and.4: "AND"
-             le_not.4: "NOT"
-             leftb.5: "("
-             rightb.5: ")"
-             %import common.WORD
-             %ignore " "
-         '''
+
+
+#EMPTY: /^(?![\s\S])/;
+
+#                | STRING "=" '"'S'"';
