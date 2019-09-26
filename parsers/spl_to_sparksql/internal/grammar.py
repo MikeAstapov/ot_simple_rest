@@ -5,11 +5,13 @@ smlGrammar = r'''
                 | A {left, 2}
                 | Q {left, 3}
                 | I
+                | G
                 | C {left, 3}
                 | S;
                 
                 I: 'index=' VALUE;
                 Q: STRING "=" V;
+                G: E "," E;
                 A: E "AND" E;
                 O: E "OR" E;
                 N: "NOT" E;
@@ -31,7 +33,7 @@ smlGrammar = r'''
 
                 terminals
                 VALUE: /[a-zA-Z0-9а-яА-Я_*-.:]+/;
-                SPACESTR: /[a-zA-Z0-9а-яА-Я_*.-: ]+/;
+                SPACESTR: /[a-zA-Z0-9а-яА-Я_*.,-: ]+/;
                 STRING: /[a-zA-Z0-9а-яА-Я_*.-:]+/;
                 '''
 

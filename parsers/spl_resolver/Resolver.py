@@ -117,7 +117,7 @@ class Resolver:
 
         query, subsearch = self.hide_subsearch_before_read(query)
         graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
-        return '| read %s%s' % (json.dumps(graph), subsearch)
+        return ('| read %s%s' % (json.dumps(graph), subsearch)) #.replace('\\"\\"','\\"')
 
     @staticmethod
     def create_filter_graph(match_object):

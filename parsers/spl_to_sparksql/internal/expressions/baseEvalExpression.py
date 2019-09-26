@@ -4,8 +4,8 @@ from parglare import Parser, Grammar
 
 
 class BaseEvalExpressions():
-    def __init__(self, indexString):
-        self.indexString = indexString
+    def __init__(self, indicesList):
+        self.indicesList = indicesList
 #        super().__init__()
 
     def splPreprocessing(self, spl):
@@ -30,7 +30,7 @@ class BaseEvalExpressions():
 
     def indexParse(self, context, nodes):
         #print ('Index ', nodes)
-        self.indexString = nodes[1]
+        self.indicesList.insert(0, nodes[1])
         return
 
     def equalParse(self, context, nodes):
@@ -88,6 +88,14 @@ class BaseEvalExpressions():
     def bracketsParse(self, context, nodes):
         #print ('Brackets ', nodes)
         return "(" + nodes[1] + ")"
+
+    def commaParse(self, context, nodes):
+        if nodes[0] == None:
+            return nodes[2]
+        elif nodes[2] == None:
+            return nodes[0]
+        else:
+            return nodes[0] + " AND " + nodes[2]
 
     def valueParse(self, context, nodes):
         #print ('Value ', nodes)
