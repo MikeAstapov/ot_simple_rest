@@ -6,7 +6,7 @@ class TestResolver(unittest.TestCase):
 
     def setUp(self) -> None:
         self.maxDiff = None
-        self.resolver = Resolver.Resolver(['index1', 'index2'], 0, 0)
+        self.resolver = Resolver.Resolver(['main1', 'main2'], 0, 0)
 
     def test_read_some_empty(self):
         spl = """search index=main2 SUCCESS host="h1 bla" OR host="" OR host=h3"""
@@ -14,7 +14,7 @@ class TestResolver(unittest.TestCase):
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
-        self.assertDictEqual(result, target)
+        self.assertDictEqual(target, result)
 
     def test_read_some_or(self):
         spl = """search index=main2 SUCCESS host="h1" OR host="h2" OR host=h3"""
@@ -22,7 +22,7 @@ class TestResolver(unittest.TestCase):
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
-        self.assertDictEqual(result, target)
+        self.assertDictEqual(target, result)
 
     def test_read_many_or(self):
         spl = """search index=main2 SUCCESS host="h1" OR host="h2" OR host=h3 OR host=h4 OR host=h5 OR host=h6 OR host=h7 OR host=h8 OR host=h9 OR host=h10"""
@@ -30,7 +30,7 @@ class TestResolver(unittest.TestCase):
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
-        self.assertDictEqual(result, target)
+        self.assertDictEqual(target, result)
 
     def test_rex(self):
         spl = """search index=main2 SUCCESS | rex field=host "^(?<host>[^\.\:]+).*\:[0-9]" | stats count by host"""
@@ -38,7 +38,7 @@ class TestResolver(unittest.TestCase):
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
-        self.assertDictEqual(result, target)
+        self.assertDictEqual(target, result)
 
     def test_subsearche_general(self):
         spl = """search index=main FAIL | join host [search index=main2 SUCCESS | stats count by host]"""
@@ -46,7 +46,7 @@ class TestResolver(unittest.TestCase):
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
-        self.assertDictEqual(result, target)
+        self.assertDictEqual(target, result)
 
     def test_subsearch_with_rex(self):
         spl = """search index=main FAIL | join host [search index=main2 SUCCESS | rex field=host "^(?<host>[^\.\:]+).*\:[0-9]" | stats count by host]"""
@@ -54,7 +54,7 @@ class TestResolver(unittest.TestCase):
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
-        self.assertDictEqual(result, target)
+        self.assertDictEqual(target, result)
 
     def test_susbearch_with_return(self):
         spl = """search index=main [search index=main2 | return random_Field]"""
@@ -62,7 +62,7 @@ class TestResolver(unittest.TestCase):
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
-        self.assertDictEqual(result, target)
+        self.assertDictEqual(target, result)
 
     def test_subsearch_with_otoutputlookup(self):
         spl = """search index=test_index | otoutputlookup testoutputlookup.csv"""
@@ -70,7 +70,7 @@ class TestResolver(unittest.TestCase):
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
-        self.assertDictEqual(result, target)
+        self.assertDictEqual(target, result)
 
     def test_subsearch_with_append(self):
         spl = """search index=test_index | table _time, serialField, random_Field, WordField, junkField| append [search index=test_index junkField="word"]"""
@@ -78,12 +78,20 @@ class TestResolver(unittest.TestCase):
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
-        self.assertDictEqual(result, target)
+        self.assertDictEqual(target, result)
 
-    def test_otloadjob_spl(self):
-        spl = """| ot ttl=60 | otloadjob spl="search index=alerts sourcetype!=alert_metadata | fields - _raw | dedup full_id | where alert=\\"pprb_*\\" status!=\\"*resolved\\" status!=\\"suppressed\\" app=\\"*\\" urgency=\\"*\\" summary=\\"*kb.main*\\"| stats count(alert) by alert" | simple"""
-        target = {'search': ('| ot ttl=60 | otloadjob spl="search index=alerts sourcetype!=alert_metadata | fields - _raw | dedup full_id | where alert=\\"pprb_*\\" status!=\\"*resolved\\" status!=\\"suppressed\\" app=\\"*\\" urgency=\\"*\\" summary=\\"*kb.main*\\"| stats count(alert) by alert" | simple', '| ot ttl=60 | otloadjob subsearch=subsearch_e08d9facf3d89bc4a22b743303e6aedaf983debb8ebcda68338cd09b0744047a | simple'), 'subsearches': {'subsearch_e08d9facf3d89bc4a22b743303e6aedaf983debb8ebcda68338cd09b0744047a': ('search index=alerts sourcetype!=alert_metadata | fields - _raw | dedup full_id | where alert="pprb_*" status!="*resolved" status!="suppressed" app="*" urgency="*" summary="*kb.main*"| stats count(alert) by alert', '| read {"alerts": {"query": "sourcetype!=\\"alert_metadata\\"", "tws": 0, "twf": 0}}| fields - _raw | dedup full_id | where alert="pprb_*" status!="*resolved" status!="suppressed" app="*" urgency="*" summary="*kb.main*"| stats count(alert) by alert')}}
+    def test_read_several_indexes(self):
+        spl = """search index=main1 OR index=main2 SUCCESS"""
+        target = {'search': ('search index=main1 OR index=main2 SUCCESS', '| read {"main1": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}, "main2": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}}'), 'subsearches': {}}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
-        self.assertDictEqual(result, target)
+        self.assertDictEqual(target, result)
+
+    def test_read_indexes_with_wildcards(self):
+        spl = """search index=main* SUCCESS"""
+        target = {'search': ('search index=main* SUCCESS', '| read {"main1": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}, "main2": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}}'), 'subsearches': {}}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(target, result)
