@@ -98,15 +98,15 @@ class TestResolver(unittest.TestCase):
 
     def test_filter_some(self):
         spl = """search index=main2 SUCCESS | search host="h1 bla" OR host="" OR host=h3"""
-        target = {'search': ('search index=main2 SUCCESS | search host="h1 bla" OR host="" OR host=h3', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}} | filter {"query": "(host=\\"h1 bla\\" OR host=\\"\\" OR host=\\"h3\\""}'), 'subsearches': {}}
+        target = {'search': ('search index=main2 SUCCESS | search host="h1 bla" OR host="" OR host=h3', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}}| filter {"query": "host=\\"h1 bla\\" OR host=\\"\\" OR host=\\"h3\\""}'), 'subsearches': {}}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
         self.assertDictEqual(result, target)
 
     def test_read_some_and(self):
-        spl = """search index=main2 SUCCESS, FAIL host="h1" AND host="h2" host=h3, host="h4", host="zxc, 123" """
-        target = {'search': ('search index=main2 SUCCESS, FAIL host="h1" OR host="h2" OR host=h3, host="h4", host="zxc, 123" ', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\') AND (_raw like \'%FAIL%\') AND host=\\"h1\\" OR host=\\"h2\\" OR host=\\"h3\\" OR host=\\"h4\\" OR host=\\"zxc, 123\\"", "tws": 0, "twf": 0}}'), 'subsearches': {}}
+        spl = """search index=main2 SUCCESS, FAIL field1=h3, field2="h4", field3="zxc, 123" """
+        target = {'search': ('search index=main2 SUCCESS, FAIL field1=h3, field2="h4", field3="zxc, 123" ', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\') AND (_raw like \'%FAIL%\') AND field1=\\"h3\\" AND field2=\\"h4\\" AND field3=\\"zxc, 123\\"", "tws": 0, "twf": 0}}'), 'subsearches': {}}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
