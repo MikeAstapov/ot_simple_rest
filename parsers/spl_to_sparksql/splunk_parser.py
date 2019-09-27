@@ -52,7 +52,7 @@ class SPLtoSQL:
 
         for indexString in fullIndicesList:
             map_with_time[indexString] = {'query' : queryString, 'tws' : tws, 'twf' : twf}
-        #print(map_with_time)
+#        print(map_with_time)
         return map_with_time
 
     @staticmethod

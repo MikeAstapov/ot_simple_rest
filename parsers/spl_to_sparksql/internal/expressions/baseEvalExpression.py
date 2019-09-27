@@ -30,7 +30,12 @@ class BaseEvalExpressions():
 
     def indexParse(self, context, nodes):
         #print ('Index ', nodes)
-        self.indicesList.insert(0, nodes[1])
+        if (len(nodes) == 2):
+            ind = nodes[1].replace('"', '').replace("'", '')
+            self.indicesList.insert(0, ind)
+        if (len(nodes) == 4):
+            ind = nodes[2].replace('"', '').replace("'", '')
+            self.indicesList.insert(0, ind)
         return
 
     def equalParse(self, context, nodes):

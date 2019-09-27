@@ -9,7 +9,8 @@ smlGrammar = r'''
                 | C {left, 3}
                 | S;
                 
-                I: 'index=' VALUE;
+                I: 'index=' VALUE
+                | 'index=' '"'VALUESPC'"';
                 Q: STRING "=" V;
                 G: E "," E;
                 A: E "AND" E;
@@ -33,6 +34,7 @@ smlGrammar = r'''
 
                 terminals
                 VALUE: /[a-zA-Z0-9а-яА-Я_*-.:]+/;
+                VALUESPC: /[a-zA-Z0-9а-яА-Я_*-.: ]+/;
                 SPACESTR: /[a-zA-Z0-9а-яА-Я_*.,-: ]+/;
                 STRING: /[a-zA-Z0-9а-яА-Я_*.-:]+/;
                 '''
