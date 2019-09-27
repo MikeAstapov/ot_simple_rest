@@ -111,3 +111,19 @@ class TestResolver(unittest.TestCase):
         print('result', result)
         print('target', target)
         self.assertDictEqual(result, target)
+
+    def test_read_several_indexes_with_quotes(self):
+        spl = """search index="main1" OR index=main2 SUCCESS"""
+        target = {'search': ('search index="main1" OR index=main2 SUCCESS', '| read {"main1": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}, "main2": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}}'), 'subsearches': {}}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(target, result)
+
+    def test_read_indexes_with_wildcards(self):
+        spl = """search index="main*" SUCCESS"""
+        target = {'search': ('search index="main*" SUCCESS', '| read {"main": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}, "main1": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}, "main2": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}}'), 'subsearches': {}}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(target, result)
