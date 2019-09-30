@@ -188,7 +188,7 @@ class MakeJob(tornado.web.RequestHandler):
         original_spl = request['original_spl'][0].decode()
         self.logger.debug("Original spl: %s" % original_spl)
         original_spl = re.sub(r"\|\s*ot\s[^|]*\|", "", original_spl)
-        original_spl = re.sub(r"\|\s*simple.*", "", original_spl)
+        original_spl = re.sub(r"\|\s*simple[^|]*", "", original_spl)
         original_spl = original_spl.strip()
         self.logger.debug('Fixed original_spl: %s' % original_spl)
 
