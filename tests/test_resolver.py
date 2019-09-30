@@ -1,4 +1,6 @@
 import unittest
+
+import logging
 import parsers.spl_resolver.Resolver as Resolver
 
 
@@ -7,6 +9,10 @@ class TestResolver(unittest.TestCase):
     def setUp(self) -> None:
         self.maxDiff = None
         self.resolver = Resolver.Resolver(['main', 'main1', 'main2'], 0, 0)
+        logging.basicConfig(
+            level='DEBUG',
+            format="%(asctime)s %(levelname)-s PID=%(process)d %(module)s:%(lineno)d \
+    func=%(funcName)s - %(message)s")
 
     def test_read_some_empty(self):
         spl = """search index=main2 SUCCESS host="h1 bla" OR host="" OR host=h3"""
@@ -120,9 +126,9 @@ class TestResolver(unittest.TestCase):
         print('target', target)
         self.assertDictEqual(target, result)
 
-    def test_read_indexes_with_wildcards(self):
-        spl = """search index="main*" SUCCESS"""
-        target = {'search': ('search index="main*" SUCCESS', '| read {"main": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}, "main1": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}, "main2": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}}'), 'subsearches': {}}
+    def test_otloadjob(self):
+        spl = """| ot ttl=60 | otloadjob spl="| ot ttl=60 | search index=\\"pprbepk_business\\" "  ___token___="host=\\"marica20:1111\\" OR host=\\"marica21:1111\\" OR host=\\"marica22:1111\\" OR host=\\"marica23:1111\\" OR host=\\"marica24:1111\\" OR host=\\"marica25:1111\\" OR host=\\"marica26:1111\\" OR host=\\"marica27:1111\\" OR host=\\"marica28:1111\\" OR host=\\"marica29:1111\\" OR host=\\"marica30:1111\\" OR host=\\"marica31:1111\\" OR host=\\"marica32:1111\\" OR host=\\"marica33:1111\\" OR host=\\"marica34:1111\\" OR host=\\"marica35:1111\\" OR host=\\"marica36:1111\\" OR host=\\"marica37:1111\\"" ___tail___=" | fields - _raw | fields _time, host, ucp.Ucp*.success.sampleCount, ucp.Ucp*.errors.sampleCount, ucp.Ucp*.latency.sampleCount, ucp.Ucp*.latency.value | sort 0 host, _time | streamstats first(ucp.Ucp*.success.sampleCount) as ucp.Ucp*.success.sampleCount_prev, first(ucp.Ucp*.errors.sampleCount) as ucp.Ucp*.errors.sampleCount_prev2 window=2 by host| rename ucp.Ucp*.latency.sampleCount as ucp.Ucp*.latency.value_prev3 | addtotals delta_ucp.Ucp*.success.sampleCount | fields - ucp.Ucp*.success.sampleCount, ucp.Ucp*.errors.sampleCount, ucp.Ucp*.latency.sampleCount, ucp.Ucp*.latency.value, delta_ucp.Ucp*.success.sampleCount, *_prev, *_prev2 | timechart span=15s sum(Total) as \\"\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e\\", sum(delta_*.errors.sampleCount) as \\"\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e *\\", max(tot_*.latency.value) as \\"max_*\\" | simple" | timechart span=15s sum("Количество") as "Количество" | simple"""
+        target = {}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)

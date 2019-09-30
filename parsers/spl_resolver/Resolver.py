@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # resolver.py
 import json
+import logging
 import re
 from hashlib import sha256
 from parsers.spl_to_sparksql.splunk_parser import SPLtoSQL
@@ -26,6 +27,9 @@ class Resolver:
 
     This is needed for calculation part of Dispatcher.
     """
+
+    logger = logging.getLogger('osr')
+
     # Patterns for transformation.
     quoted_hide_pattern = r'"(.+?)"'
     quoted_return_pattern = r'_quoted_text_(\w+)'
@@ -36,7 +40,7 @@ class Resolver:
     filter_pattern = r'\|\s*search ([^\|$]+)'
     otfrom_pattern = r'otfrom datamodel:?\s*([^\|$]+)'
     otloadjob_id_pattern = r'otloadjob\s+(\d+\.\d+)'
-    otloadjob_spl_pattern = r'otloadjob\s+spl="(.+?[^\\])"'
+    otloadjob_spl_pattern = r'otloadjob\s+spl=\"(.+?[^\\])\"(\s+?___token___=\"(.+?[^\\])\")?(\s+?___tail___=\"(.+?[^\\])\")?'
 
     def __init__(self, indexes, tws, twf, cur=None, sid=None, src_ip=None):
         """
@@ -117,7 +121,7 @@ class Resolver:
 
         query, subsearch = self.hide_subsearch_before_read(query)
         graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
-        return ('| read %s%s' % (json.dumps(graph), subsearch)) #.replace('\\"\\"','\\"')
+        return '| read %s%s' % (json.dumps(graph), subsearch)
 
     @staticmethod
     def create_filter_graph(match_object):
@@ -171,13 +175,32 @@ class Resolver:
 
     def create_otloadjob_spl(self, match_object):
         """
-        Transforms '| otloadjob spl="__SPL__"' to '| otloadjob subsearch="subsearch___sha256__"'.
+        Transforms '| otloadjob spl="__SPL__" ___token___="__TOKEN__" ___tail___="__SPL__"' to '| otloadjob subsearch="subsearch___sha256__"'.
 
         :param match_object: Re match object with original SPL.
         :return: String with replaces of datamodel part.
         """
         spl = match_object.group(1)
+        token = match_object.group(3)
+        tail = match_object.group(5)
+        self.logger.debug('SPL: %s.' % spl)
+        self.logger.debug('Token: %s.' % token)
+        self.logger.debug('Tail: %s.' % tail)
+        # spl = json.loads(spl)
+        # token = json.loads(token)
+        # tail = json.loads(tail)
+
         spl = spl.replace('\\"', '"')
+        token = token.replace('\\"', '"')
+        tail = tail.replace('\\"', '"')
+
+        self.logger.debug('Unescaped SPL: %s.' % spl)
+        self.logger.debug('Unescaped Token: %s.' % token)
+        self.logger.debug('Unescaped Tail: %s.' % tail)
+
+        spl = spl + token + tail
+        self.logger.debug('Concatenated SPL for subsearch: %s.' % spl)
+
         otloadjob_sha256 = sha256(spl.strip().encode('utf-8')).hexdigest()
         otloadjob_service = '| otloadjob subsearch=subsearch_%s' % otloadjob_sha256
         self.subsearches['subsearch_%s' % otloadjob_sha256] = (spl, otloadjob_service)
@@ -206,7 +229,8 @@ class Resolver:
         :return: dict with search query params.
         """
 
-        _spl = re.sub(self.quoted_hide_pattern, self.hide_quoted, spl)
+        _spl = re.sub(self.otloadjob_spl_pattern, self.create_otloadjob_spl, spl)
+        _spl = re.sub(self.quoted_hide_pattern, self.hide_quoted, _spl)
         _spl = (_spl, 1)
         while _spl[1]:
             _spl = re.subn(self.subsearch_pattern, self.create_subsearch, _spl[0])
@@ -221,5 +245,4 @@ class Resolver:
         _spl = re.sub(self.otrest_pattern, self.create_otrest, _spl)
         _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl)
         _spl = re.sub(self.otloadjob_id_pattern, self.create_otloadjob_id, _spl)
-        _spl = re.sub(self.otloadjob_spl_pattern, self.create_otloadjob_spl, _spl)
         return {'search': (spl, _spl), 'subsearches': self.subsearches}
