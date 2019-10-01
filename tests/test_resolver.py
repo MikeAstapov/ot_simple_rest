@@ -133,3 +133,11 @@ class TestResolver(unittest.TestCase):
         print('result', result)
         print('target', target)
         self.assertDictEqual(target, result)
+
+    def test_foreach(self):
+        spl = """|makeresults 1| eval total=0 | eval test1=1 | eval test2=2 | eval test3=3 | foreach test* [eval total=total + <<FIELD>>]"""
+        target = {'search': ('|makeresults 1| eval total=0 | eval test1=1 | eval test2=2 | eval test3=3 | foreach test* [eval total=total + <<FIELD>>]', '|makeresults 1| eval total=0 | eval test1=1 | eval test2=2 | eval test3=3 | foreach test* [eval total=total + <<FIELD>>]'), 'subsearches': {}}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(target, result)

@@ -33,6 +33,7 @@ class Resolver:
     # Patterns for transformation.
     quoted_hide_pattern = r'"(.+?)"'
     quoted_return_pattern = r'_quoted_text_(\w+)'
+    no_subsearch_return_pattern = r'_hidden_text_(\w+)'
     subsearch_pattern = r'.+\[(.+?)\]'
     read_pattern_middle = r'\[\s*search (.+?)[\|\]]'
     read_pattern_start = r'^ *search ([^|]+)'
@@ -60,6 +61,7 @@ class Resolver:
         self.subsearches = {}
         self.hidden_rex = {}
         self.hidden_quoted_text = {}
+        self.hidden_no_subsearches = {}
 
     def create_subsearch(self, match_object):
         """
@@ -219,6 +221,33 @@ class Resolver:
             self.hidden_quoted_text[quoted_text_sha256]
         )
 
+    def _hide_no_subsearch_command(self, match_object):
+        hidden_text = match_object.group(1)
+        hidden_text_sha256 = sha256(hidden_text.encode('utf-8')).hexdigest()
+        self.hidden_no_subsearches[hidden_text_sha256] = hidden_text
+
+        return match_object.group(0).replace(hidden_text, '_hidden_text_%s' % hidden_text_sha256)
+
+    def _return_no_subsearch_command(self, match_object):
+        hidden_text_sha256 = match_object.group(1)
+        return match_object.group(0).replace(
+            '_hidden_text_%s' % hidden_text_sha256,
+            self.hidden_no_subsearches[hidden_text_sha256]
+        )
+
+    def hide_no_subsearch_commands(self, spl):
+        commands = ['foreach', 'appendpipe']
+        raw_str = '\|\s+%s[^\[]+(\[.+\])'
+        patterns = [re.compile(raw_str % command) for command in commands]
+        self.logger.debug('Patterns: %s.' % patterns)
+        for pattern in patterns:
+            spl = pattern.sub(self._hide_no_subsearch_command, spl)
+        return spl
+
+    def return_no_subsearch_commands(self, spl):
+        spl = re.sub(self.no_subsearch_return_pattern, self._return_no_subsearch_command, spl)
+        return spl
+
     def resolve(self, spl):
         """
         Finds and replaces service patterns of original SPL.
@@ -229,11 +258,13 @@ class Resolver:
 
         _spl = re.sub(self.otloadjob_spl_pattern, self.create_otloadjob_spl, spl)
         _spl = re.sub(self.quoted_hide_pattern, self.hide_quoted, _spl)
+        _spl = self.hide_no_subsearch_commands(_spl)
         _spl = (_spl, 1)
         while _spl[1]:
             _spl = re.subn(self.subsearch_pattern, self.create_subsearch, _spl[0])
 
         _spl = re.sub(self.quoted_return_pattern, self.return_quoted, _spl[0])
+        _spl = self.return_no_subsearch_commands(_spl)
 
         _spl = re.sub(self.otfrom_pattern, self.create_datamodels, _spl)
 
