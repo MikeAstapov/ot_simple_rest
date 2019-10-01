@@ -8,7 +8,7 @@ class TestResolver(unittest.TestCase):
 
     def setUp(self) -> None:
         self.maxDiff = None
-        self.resolver = Resolver.Resolver(['main', 'main1', 'main2'], 0, 0)
+        self.resolver = Resolver.Resolver(['main', 'main1', 'main2'], 0, 0, no_subsearch_commands='foreach,appendpipe')
         logging.basicConfig(
             level='DEBUG',
             format="%(asctime)s %(levelname)-s PID=%(process)d %(module)s:%(lineno)d \

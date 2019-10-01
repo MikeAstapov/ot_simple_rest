@@ -11,7 +11,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Sergei Ermilov", "Anastasiya Safonova"]
 __license__ = ""
-__version__ = "0.3.11"
+__version__ = "0.3.12"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -43,7 +43,7 @@ class Resolver:
     otloadjob_id_pattern = r'otloadjob\s+(\d+\.\d+)'
     otloadjob_spl_pattern = r'otloadjob\s+spl=\"(.+?[^\\])\"(\s+?___token___=\"(.+?[^\\])\")?(\s+?___tail___=\"(.+?[^\\])\")?'
 
-    def __init__(self, indexes, tws, twf, cur=None, sid=None, src_ip=None):
+    def __init__(self, indexes, tws, twf, cur=None, sid=None, src_ip=None, no_subsearch_commands=None):
         """
         Init with default available indexes, time window and cursor to DB for DataModels.
 
@@ -58,6 +58,8 @@ class Resolver:
         self.cur = cur
         self.sid = sid
         self.src_ip = src_ip
+        self.no_subsearch_commands = no_subsearch_commands
+
         self.subsearches = {}
         self.hidden_rex = {}
         self.hidden_quoted_text = {}
@@ -236,12 +238,13 @@ class Resolver:
         )
 
     def hide_no_subsearch_commands(self, spl):
-        commands = ['foreach', 'appendpipe']
-        raw_str = '\|\s+%s[^\[]+(\[.+\])'
-        patterns = [re.compile(raw_str % command) for command in commands]
-        self.logger.debug('Patterns: %s.' % patterns)
-        for pattern in patterns:
-            spl = pattern.sub(self._hide_no_subsearch_command, spl)
+        if self.no_subsearch_commands is not None:
+            commands = self.no_subsearch_commands.split(',')
+            raw_str = r'\|\s+%s[^\[]+(\[.+\])'
+            patterns = [re.compile(raw_str % command) for command in commands]
+            self.logger.debug('Patterns: %s.' % patterns)
+            for pattern in patterns:
+                spl = pattern.sub(self._hide_no_subsearch_command, spl)
         return spl
 
     def return_no_subsearch_commands(self, spl):

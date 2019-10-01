@@ -35,15 +35,18 @@ class MakeJob(tornado.web.RequestHandler):
 
     logger = logging.getLogger('osr')
 
-    def initialize(self, db_conf):
+    def initialize(self, db_conf, resolver_conf):
         """
         Gets config and init logger.
+        :param resolver_conf: Resolver config.
+        :type resolver_conf: Dictionary.
         :param db_conf: DB config.
         :type db_conf: Dictionary.
         :return:
         """
 
         self.db_conf = db_conf
+        self.resolver_conf = resolver_conf
 
     def write_error(self, status_code: int, **kwargs) -> None:
         """Override to implement custom error pages.
@@ -220,7 +223,8 @@ class MakeJob(tornado.web.RequestHandler):
         conn = psycopg2.connect(**self.db_conf)
         cur = conn.cursor()
 
-        resolver = Resolver(indexes, tws, twf, cur, sid, self.request.remote_ip)
+        resolver = Resolver(indexes, tws, twf, cur, sid, self.request.remote_ip,
+                            self.resolver_conf.get('no_subsearch_commands'))
         resolved_spl = resolver.resolve(original_spl)
         self.logger.debug("Resolved_spl: %s" % resolved_spl)
 
