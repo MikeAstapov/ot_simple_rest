@@ -12,7 +12,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.8.2"
+__version__ = "0.8.3"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -188,7 +188,7 @@ class MakeJob(tornado.web.RequestHandler):
         original_spl = request['original_spl'][0].decode()
         self.logger.debug("Original spl: %s" % original_spl)
         original_spl = re.sub(r"\|\s*ot\s[^|]*\|", "", original_spl)
-        original_spl = re.sub(r"\|\s*simple.*", "", original_spl)
+        original_spl = re.sub(r"\|\s*simple", "", original_spl)
         original_spl = original_spl.strip()
         self.logger.debug('Fixed original_spl: %s' % original_spl)
 
