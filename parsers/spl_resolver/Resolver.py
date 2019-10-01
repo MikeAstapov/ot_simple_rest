@@ -9,7 +9,7 @@ from parsers.spl_to_sparksql.splunk_parser import SPLtoSQL
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
-__credits__ = ["Sergei Ermilov"]
+__credits__ = ["Sergei Ermilov", "Anastasiya Safonova"]
 __license__ = ""
 __version__ = "0.3.11"
 __maintainer__ = "Andrey Starchenkov"
