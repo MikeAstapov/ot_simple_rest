@@ -203,7 +203,8 @@ class Resolver:
 
         otloadjob_sha256 = sha256(spl.strip().encode('utf-8')).hexdigest()
         otloadjob_service = '| otloadjob subsearch=subsearch_%s' % otloadjob_sha256
-        self.subsearches['subsearch_%s' % otloadjob_sha256] = (spl, otloadjob_service)
+        _otloadjob_service = self.resolve(spl)
+        self.subsearches['subsearch_%s' % otloadjob_sha256] = (spl, _otloadjob_service['search'][1])
         return otloadjob_service
 
     def hide_quoted(self, match_object):
