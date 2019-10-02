@@ -265,7 +265,7 @@ class MakeJob(tornado.web.RequestHandler):
                             # Form the list of subsearches for each search.
                             subsearches = []
                             if 'subsearch=' in search[1]:
-                                _subsearches = re.findall(r'subsearch=(\S+)', search[1])
+                                _subsearches = re.findall(r'subsearch=([\w\d]+)', search[1])
                                 for each in _subsearches:
                                     subsearches.append(resolved_spl['subsearches'][each][0])
 
