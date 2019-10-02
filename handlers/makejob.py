@@ -12,7 +12,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.8.3"
+__version__ = "0.8.4"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -223,13 +223,14 @@ class MakeJob(tornado.web.RequestHandler):
         conn = psycopg2.connect(**self.db_conf)
         cur = conn.cursor()
 
+        access_flag, indexes = self.user_have_right(username, indexes, cur)
+
         resolver = Resolver(indexes, tws, twf, cur, sid, self.request.remote_ip,
                             self.resolver_conf.get('no_subsearch_commands'))
         resolved_spl = resolver.resolve(original_spl)
         self.logger.debug("Resolved_spl: %s" % resolved_spl)
 
         # Step 4. Check for Role Model Access to requested indexes.
-        access_flag, indexes = self.user_have_right(username, indexes, cur)
 
         if access_flag:
 
