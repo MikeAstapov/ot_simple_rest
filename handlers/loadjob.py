@@ -13,7 +13,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -111,7 +111,7 @@ class LoadJob(tornado.web.RequestHandler):
             field_extraction = re.findall(r"\|\s*ot[^|]*field_extraction\s*=\s*(\S+)", original_spl)
             preview = re.findall(r"\|\s*ot[^|]*preview\s*=\s*(\S+)", original_spl)
             original_spl = re.sub(r"\|\s*ot\s[^|]*\|", "", original_spl)
-            original_spl = re.sub(r"\|\s*simple.*", "", original_spl)
+            original_spl = re.sub(r"\|\s*simple[^\"]*", "", original_spl)
             original_spl = original_spl.strip()
 
             # Get time window.
