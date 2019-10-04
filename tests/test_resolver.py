@@ -144,7 +144,15 @@ class TestResolver(unittest.TestCase):
 
     def test_filter_with_percent_string(self):
         spl = """| ot ttl=60 | search index=pprb_stuff sourcetype=oracle_db source=pprb_oracle_state_infra_p2p_* | search METRIC_NAME="Host CPU Utilization (%)"| eval VALUE=round(VALUE,2)| stats last(VALUE) as "Host CPU Utilization (%)" by host | simple"""
-        target = {}
+        target = {'search': ('| ot ttl=60 | search index=pprb_stuff sourcetype=oracle_db '
+             'source=pprb_oracle_state_infra_p2p_* | search METRIC_NAME="Host '
+             'CPU Utilization (%)"| eval VALUE=round(VALUE,2)| stats '
+             'last(VALUE) as "Host CPU Utilization (%)" by host | simple',
+             '| ot ttl=60 | filter {"query": "sourcetype=\\"oracle_db\\" AND '
+             '(source rlike \'pprb_oracle_state_infra_p2p_.*\')"}| filter '
+             '{"query": "METRIC_NAME=\\"Host CPU Utilization (%)\\""}| eval '
+             'VALUE=round(VALUE,2)| stats last(VALUE) as "Host CPU Utilization '
+             '(%)" by host | simple'), 'subsearches': {}}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
