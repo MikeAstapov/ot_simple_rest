@@ -192,8 +192,14 @@ class Resolver:
         self.logger.debug('Tail: %s.' % tail)
 
         spl = spl.replace('\\"', '"')
-        token = token.replace('\\"', '"')
-        tail = tail.replace('\\"', '"')
+        if token is None:
+            token = ''
+        else:
+            token = token.replace('\\"', '"')
+        if tail is None:
+            tail = ''
+        else:
+            tail = tail.replace('\\"', '"')
 
         self.logger.debug('Unescaped SPL: %s.' % spl)
         self.logger.debug('Unescaped Token: %s.' % token)
@@ -203,7 +209,7 @@ class Resolver:
         self.logger.debug('Concatenated SPL for subsearch: %s.' % spl)
 
         otloadjob_sha256 = sha256(spl.strip().encode('utf-8')).hexdigest()
-        otloadjob_service = '| otloadjob subsearch=subsearch_%s' % otloadjob_sha256
+        otloadjob_service = 'otloadjob subsearch=subsearch_%s' % otloadjob_sha256
         _otloadjob_service = self.resolve(spl)
         self.subsearches['subsearch_%s' % otloadjob_sha256] = (spl, _otloadjob_service['search'][1])
         return otloadjob_service
