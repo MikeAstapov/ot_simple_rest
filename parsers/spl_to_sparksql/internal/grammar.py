@@ -1,4 +1,6 @@
-smlGrammar = r'''
+# LALR Grammar string for SPL to SQL Parser
+
+SPLGrammar = r'''
                 E: B
                 | N {left, 3}
                 | O {left, 1}
@@ -9,8 +11,8 @@ smlGrammar = r'''
                 | C {left, 3}
                 | S;
                 
-                I: 'index=' VALUE
-                | 'index=' '"'VALUESPC'"';
+                I: 'index=' INDEX
+                | 'index=' '"'SPACEDINDEX'"';
                 Q: STRING "=" V;
                 G: E "," E;
                 A: E "AND" E;
@@ -24,23 +26,17 @@ smlGrammar = r'''
                 | E "!=" E;
                 B: "(" E ")";
                 V: STRING+
-                | '"'SPACESTR'"'
+                | '"'SPACEDSTR'"'
                 | '""'
                 | EMPTY;
                 S: STRING+
-                | '"'SPACESTR'"'
+                | '"'SPACEDSTR'"'
                 | '""'
                 | EMPTY;
 
                 terminals
-                VALUE: /[a-zA-Z0-9а-яА-Я_*-.:]+/;
-                VALUESPC: /[a-zA-Z0-9а-яА-Я_*-.: ]+/;
-                SPACESTR: /[a-zA-Z0-9а-яА-Я_*.,-: ]+/;
-                STRING: /[a-zA-Z0-9а-яА-Я_*.-:]+/;
+                INDEX: /[^ "'=%()&\-\\\/,]+/;
+                SPACEDINDEX: /[^"'=]+/;
+                SPACEDSTR: /[^"'=]+/;
+                STRING: /[^ "'=%()&\-\\\/,]+/;
                 '''
-
-
-
-#EMPTY: /^(?![\s\S])/;
-
-#                | STRING "=" '"'S'"';
