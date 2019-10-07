@@ -157,3 +157,11 @@ class TestResolver(unittest.TestCase):
         print('result', result)
         print('target', target)
         self.assertDictEqual(target, result)
+
+    def test_filter_with_SEARCH_NOT(self):
+        spl = """index=main | SEARCH NOT sourcetype=splunkd_ui_access"""
+        target = {}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(target, result)
