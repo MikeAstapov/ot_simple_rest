@@ -38,7 +38,7 @@ class Resolver:
     read_pattern_middle = r'\[\s*[sS][eE][aA][rR][cC][hH] (.+?)[\|\]]'
     read_pattern_start = r'^ *[sS][eE][aA][rR][cC][hH] ([^|]+)'
     otrest_pattern = r'otrest[^|]+url\s*?=\s*?([^\|\] ]+)'
-    filter_pattern = r'\|\s*search ([^\|$]+)'
+    filter_pattern = r'\|\s*[sS][eE][aA][rR][cC][hH] ([^\|$]+)'
     otfrom_pattern = r'otfrom datamodel:?\s*([^\|$]+)'
     otloadjob_id_pattern = r'otloadjob\s+(\d+\.\d+)'
     otloadjob_spl_pattern = r'otloadjob\s+spl=\"(.+?[^\\])\"(\s+?___token___=\"(.+?[^\\])\")?(\s+?___tail___=\"(.+?[^\\])\")?'
