@@ -167,7 +167,15 @@ class TestResolver(unittest.TestCase):
         self.assertDictEqual(target, result)
 
     def test_filter_with_wildcards(self):
-        spl = """search index=pprb_system_bak sourcetype!=alert_metadata | fields - _raw| dedup full_id| search alert="pprb_*" status!="*resolved" status!="suppressed" app="*" urgency="*" summary="*kb.main*"| stats count(alert) by alert """
+        spl = """search index=main | search alert="pprb_*" status!="*resolved" status!="suppressed" app="*" urgency="*" summary="*kb.main* """
+        target = {}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(target, result)
+
+    def test_read_with_not_equal(self):
+        spl = """search index=main sourcetype!=alert_metadata"""
         target = {}
         result = self.resolver.resolve(spl)
         print('result', result)
