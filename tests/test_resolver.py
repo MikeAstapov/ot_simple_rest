@@ -165,3 +165,11 @@ class TestResolver(unittest.TestCase):
         print('result', result)
         print('target', target)
         self.assertDictEqual(target, result)
+
+    def test_inputlookup_filter(self):
+        spl = """| otinputlookup test.csv where field>5"""
+        target = {}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
