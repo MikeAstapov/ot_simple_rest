@@ -167,7 +167,7 @@ class TestResolver(unittest.TestCase):
         self.assertDictEqual(target, result)
 
     def test_inputlookup_filter(self):
-        spl = """| otinputlookup test.csv where field>5"""
+        spl = """| otinputlookup test.csv where field1=1 OR (field2>2 AND field3<30) OR field4"""
         target = {}
         result = self.resolver.resolve(spl)
         print('result', result)
