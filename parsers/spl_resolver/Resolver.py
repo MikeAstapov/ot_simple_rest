@@ -39,6 +39,7 @@ class Resolver:
     read_pattern_start = r'^ *search ([^|]+)'
     otrest_pattern = r'otrest[^|]+url\s*?=\s*?([^\|\] ]+)'
     filter_pattern = r'\|\s*search ([^\|$]+)'
+    otinputlookup_where_pattern = r'\|\s*otinputlookup[^\|$]+where\s+([^\|$]+)'
     otfrom_pattern = r'otfrom datamodel:?\s*([^\|$]+)'
     otloadjob_id_pattern = r'otloadjob\s+(\d+\.\d+)'
     otloadjob_spl_pattern = r'otloadjob\s+spl=\"(.+?[^\\])\"(\s+?___token___=\"(.+?[^\\])\")?(\s+?___tail___=\"(.+?[^\\])\")?'
@@ -139,6 +140,19 @@ class Resolver:
         query = match_object.group(1)
         graph = SPLtoSQL.parse_filter(query)
         return '| filter %s' % json.dumps(graph)
+
+    @staticmethod
+    def create_inputlookup_filter(match_object):
+        """
+        Finds "| search __filter_query__" and transforms it to service form.
+        | search -> | filter "{__filter_json__}"
+
+        :param match_object: Re match object with original SPL.
+        :return: String with replaces of filter part.
+        """
+        query = match_object.group(1)
+        graph = SPLtoSQL.parse_filter(query)
+        return '| otinputlookup where %s' % json.dumps(graph)
 
     def create_datamodels(self, match_object):
         """
@@ -282,5 +296,6 @@ class Resolver:
 
         _spl = re.sub(self.otrest_pattern, self.create_otrest, _spl)
         _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl)
+        _spl = re.sub(self.otinputlookup_where_pattern, self.create_inputlookup_filter, _spl)
         _spl = re.sub(self.otloadjob_id_pattern, self.create_otloadjob_id, _spl)
         return {'search': (spl, _spl), 'subsearches': self.subsearches}
