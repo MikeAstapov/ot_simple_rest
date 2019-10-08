@@ -102,6 +102,14 @@ class TestResolver(unittest.TestCase):
         print('target', target)
         self.assertDictEqual(target, result)
 
+    def test_read_asterisk_instead_of_indexes(self):
+        spl = """search index=* SUCCESS"""
+        target = {'search': ('search index=* SUCCESS', '| read {"main": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}, "main1": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}, "main2": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}}'), 'subsearches': {}}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(target, result)
+
     def test_filter_some(self):
         spl = """search index=main2 SUCCESS | search host="h1 bla" OR host="" OR host=h3"""
         target = {'search': ('search index=main2 SUCCESS | search host="h1 bla" OR host="" OR host=h3', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}}| filter {"query": "host=\\"h1 bla\\" OR host=\\"\\" OR host=\\"h3\\""}'), 'subsearches': {}}
