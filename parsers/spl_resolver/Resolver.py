@@ -291,11 +291,11 @@ class Resolver:
 
         _spl = re.sub(self.otfrom_pattern, self.create_datamodels, _spl)
 
-        _spl = re.sub(self.read_pattern_middle, self.create_read_graph, _spl)
-        _spl = re.sub(self.read_pattern_start, self.create_read_graph, _spl)
+        _spl = re.sub(self.read_pattern_middle, self.create_read_graph, _spl, flags=re.I)
+        _spl = re.sub(self.read_pattern_start, self.create_read_graph, _spl, flags=re.I)
 
         _spl = re.sub(self.otrest_pattern, self.create_otrest, _spl)
-        _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl)
+        _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl, flags=re.I)
         _spl = re.sub(self.otinputlookup_where_pattern, self.create_inputlookup_filter, _spl)
         _spl = re.sub(self.otloadjob_id_pattern, self.create_otloadjob_id, _spl)
         return {'search': (spl, _spl), 'subsearches': self.subsearches}
