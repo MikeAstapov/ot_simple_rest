@@ -192,7 +192,7 @@ class TestResolver(unittest.TestCase):
 
     def test_filter_with_SEARCH_NOT(self):
         spl = """index=main | SEARCH NOT sourcetype=splunkd_ui_access"""
-        target = {}
+        target = {'search': ('index=main | SEARCH NOT sourcetype=splunkd_ui_access', 'index=main | filter {"query": "!(sourcetype=\\"splunkd_ui_access\\")"}'), 'subsearches': {}}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
