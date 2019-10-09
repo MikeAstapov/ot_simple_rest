@@ -15,7 +15,6 @@ class BaseEvalExpressions():
         return spl
 
     def spl_replace_case(self, spl):
-        #print('\n\n\nSPL', spl)
         operators = ["NOT", "OR", "AND"]
         result = ''
         spl_list = re.findall(r'(?:[^\s,"]|"(?:\\.|[^"])*")+', spl)
@@ -24,7 +23,6 @@ class BaseEvalExpressions():
                 result = result + spl_list[index].upper() + ' '
             else:
                 result = result + spl_list[index] + ' '
-        #print('REPLACE CASE', result, '\n\n\n')
         return result
 
     def spl_replace_ws_with_and(self, spl):
@@ -42,7 +40,6 @@ class BaseEvalExpressions():
             else:
                 result = result + spl_list[index] + ' '
         result = result + spl_list[-1]
-        #print('REPLACE WS', result, '\n\n\n')
         return result
 
     def remove_index(self, context, nodes):
@@ -239,7 +236,7 @@ class BaseEvalExpressions():
             return ''
         if (nodes[0] == '"') and (nodes[len(nodes)-1] == '"'):
             if (len(nodes) == 3):
-                return '(_raw rlike \'' + nodes[2] + '\')'
+                return '(_raw rlike \'' + nodes[1] + '\')'
             else: return '""'
         else:
             return '(_raw like \'%' + nodes[0][0] + '%\')'

@@ -118,6 +118,22 @@ class TestResolver(unittest.TestCase):
         print('target', target)
         self.assertDictEqual(result, target)
 
+    def test_filter_fts(self):
+        spl = """search index=main2 SUCCESS | search raw_search """
+        target = {'search': ('search index=main2 SUCCESS | search raw_search ', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}}| filter {"query": "(_raw like \'%raw_search%\')"}'), 'subsearches': {}}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
+
+    def test_filter_fts_escaped(self):
+        spl = """search index=main2 SUCCESS | search "raw search" """
+        target = {'search': ('search index=main2 SUCCESS | search "raw search" ', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}}| filter {"query": "(_raw rlike \'raw search\')"}'), 'subsearches': {}}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
+
     def test_read_some_and(self):
         spl = """search index=main2 SUCCESS, FAIL field1=h3, field2="h4", field3="zxc, 123" """
         target = {'search': ('search index=main2 SUCCESS, FAIL field1=h3, field2="h4", field3="zxc, 123" ', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\') AND (_raw like \'%FAIL%\') AND field1=\\"h3\\" AND field2=\\"h4\\" AND field3=\\"zxc, 123\\"", "tws": 0, "twf": 0}}'), 'subsearches': {}}

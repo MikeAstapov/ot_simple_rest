@@ -70,7 +70,7 @@ class SPLtoSQL:
         spl = expressions.spl_preprocessing(spl)
         LALR_grammar = Grammar.from_string(grammar.SPLGrammar)#, ignore_case=True)
         
-        LALR_parser = Parser(LALR_grammar, debug=False, build_tree=True,
+        LALR_parser = Parser(LALR_grammar, debug=True, build_tree=True,
                                  actions={'I' : expressions.remove_index,
                                           'Q' : expressions.transform_equal,
                                           'A' : expressions.transform_and,
