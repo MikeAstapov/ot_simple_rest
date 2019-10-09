@@ -37,6 +37,6 @@ SPLGrammar = r'''
                 terminals
                 INDEX: /[^ !"'=%()&\-\\\/,]+/;
                 SPACEDINDEX: /[^!"'=]+/;
-                SPACEDSTR: /[^!"'=]+/;
+                SPACEDSTR: /[^!"'=\\]+/;
                 STRING: /[^! <>"'=%()&\-\\\/,]+/;
                 '''

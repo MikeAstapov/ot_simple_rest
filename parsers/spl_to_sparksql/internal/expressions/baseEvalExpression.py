@@ -94,7 +94,7 @@ class BaseEvalExpressions():
             return result
             
         if (nodes[2].find('*') >= 0):
-            result = "(" + nodes[0] +  ' rlike \'' + nodes[2] + '\')'
+            result = "!(" + nodes[0] +  ' rlike \'' + nodes[2] + '\')'
             pos = result.rfind('*')
             while (pos >= 0):
                 result = result[:pos] + '.' + result[pos:]
@@ -231,7 +231,7 @@ class BaseEvalExpressions():
         nodes(list): Nodes of the parse tree on this iteration
         
         '''
-        
+
         if len(nodes) == 0:
             return ''
         if (nodes[0] == '"') and (nodes[len(nodes)-1] == '"'):
