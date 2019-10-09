@@ -206,6 +206,14 @@ class TestResolver(unittest.TestCase):
         print('target', target)
         self.assertDictEqual(target, result)
 
+    def test_filter_escaped_quotes(self):
+        spl = """search index=main | search alert=\\"pprb_*\\" status!=\\"*resolved\\" status!=\\"suppressed\\" app=\\"*\\" urgency=\\"*\\" summary=\\"*kb.main*\\" """
+        target = {}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(target, result)
+
     def test_filter_with_SEARCH_NOT(self):
         spl = """index=main | SEARCH NOT sourcetype=splunkd_ui_access"""
         target = {'search': ('index=main | SEARCH NOT sourcetype=splunkd_ui_access', 'index=main | filter {"query": "!(sourcetype=\\"splunkd_ui_access\\")"}'), 'subsearches': {}}
