@@ -22,7 +22,7 @@ class SPLtoSQL:
         indices_list = []
         expressions = BaseEvalExpressions(indices_list)
         spl = expressions.spl_preprocessing(spl)
-        LALR_grammar = Grammar.from_string(grammar.SPLGrammar)
+        LALR_grammar = Grammar.from_string(grammar.SPLGrammar)#, ignore_case=True)
         
         LALR_parser = Parser(LALR_grammar, debug=False, build_tree=True,
                                  actions={'I' : expressions.remove_index,
@@ -68,7 +68,7 @@ class SPLtoSQL:
         indices_list = []
         expressions = BaseEvalExpressions(indices_list)
         spl = expressions.spl_preprocessing(spl)
-        LALR_grammar = Grammar.from_string(grammar.SPLGrammar)
+        LALR_grammar = Grammar.from_string(grammar.SPLGrammar)#, ignore_case=True)
         
         LALR_parser = Parser(LALR_grammar, debug=False, build_tree=True,
                                  actions={'I' : expressions.remove_index,

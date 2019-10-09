@@ -9,9 +9,23 @@ class BaseEvalExpressions():
 
     def spl_preprocessing(self, spl):
         '''Returns preprocessed SPL string'''
-        
+
+        spl = self.spl_replace_case(spl)
         spl = self.spl_replace_ws_with_and(spl)
-        return spl  
+        return spl
+
+    def spl_replace_case(self, spl):
+        #print('\n\n\nSPL', spl)
+        operators = ["NOT", "OR", "AND"]
+        result = ''
+        spl_list = re.findall(r'(?:[^\s,"]|"(?:\\.|[^"])*")+', spl)
+        for index in range(0, len(spl_list)):
+            if (spl_list[index].upper() in operators):
+                result = result + spl_list[index].upper() + ' '
+            else:
+                result = result + spl_list[index] + ' '
+        #print('REPLACE CASE', result, '\n\n\n')
+        return result
 
     def spl_replace_ws_with_and(self, spl):
         '''Returns SPL string where whitespaces replaced with logical AND'''
@@ -28,6 +42,7 @@ class BaseEvalExpressions():
             else:
                 result = result + spl_list[index] + ' '
         result = result + spl_list[-1]
+        #print('REPLACE WS', result, '\n\n\n')
         return result
 
     def remove_index(self, context, nodes):
@@ -139,7 +154,7 @@ class BaseEvalExpressions():
         if nodes[1][:1] == '!':
             return nodes[1][1:]
         else:
-            return "!" + nodes[1]
+            return "!(" + nodes[1] + ")"
 
     def transform_comparison(self, context, nodes):
         '''Transforms comparison expressions from SPL format to SQL format
