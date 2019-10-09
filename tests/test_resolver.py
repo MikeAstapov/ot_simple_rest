@@ -207,7 +207,7 @@ class TestResolver(unittest.TestCase):
         self.assertDictEqual(target, result)
 
     def test_filter_escaped_quotes(self):
-        spl = """search index=main | search alert=\\"pprb_*\\" status!=\\"*resolved\\" status!=\\"suppressed\\" app=\\"*\\" urgency=\\"*\\" summary=\\"*kb.main*\\" """
+        spl = """search index=main* sourcetype!=alert_metadata| fields - _raw| dedup full_id | search alert="pprb_*" status!="*resolved" status!="suppressed" app="*" urgency="*"| stats count(alert) by alert |  where like(alert,"pprb_appcore_namedcounter%")| stats count"""
         target = {}
         result = self.resolver.resolve(spl)
         print('result', result)
