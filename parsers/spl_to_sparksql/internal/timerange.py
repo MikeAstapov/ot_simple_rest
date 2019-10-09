@@ -23,7 +23,6 @@ class Timerange:
                          }
             now = datetime.now()
             delta = dict_delta[result.group(3)]
-            print(delta)
             if result.group(1) == "-":
                 res_time = now - delta
             else:
