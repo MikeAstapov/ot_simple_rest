@@ -20,10 +20,10 @@ SPLGrammar = r'''
                 O: E "OR" E;
                 N: "NOT" E;
                 NQ: STRING "!=" V;
-                C: E ">" E
-                | E ">=" E
-                | E "<" E
-                | E "<=" E;
+                C: STRING ">" V
+                | STRING ">=" V
+                | STRING "<" V
+                | STRING "<=" V;
                 B: "(" E ")";
                 V: STRING+
                 | '"'SPACEDSTR'"'
@@ -38,5 +38,5 @@ SPLGrammar = r'''
                 INDEX: /[^ !"'=%()&\-\\\/,]+/;
                 SPACEDINDEX: /[^!"'=]+/;
                 SPACEDSTR: /[^!"'=]+/;
-                STRING: /[^! "'=%()&\-\\\/,]+/;
+                STRING: /[^! <>"'=%()&\-\\\/,]+/;
                 '''
