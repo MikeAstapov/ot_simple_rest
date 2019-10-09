@@ -35,10 +35,10 @@ class Resolver:
     quoted_return_pattern = r'_quoted_text_(\w+)'
     no_subsearch_return_pattern = r'_hidden_text_(\w+)'
     subsearch_pattern = r'.+\[(.+?)\]'
-    read_pattern_middle = r'\[\s*[sS][eE][aA][rR][cC][hH] (.+?)[\|\]]'
-    read_pattern_start = r'^ *[sS][eE][aA][rR][cC][hH] ([^|]+)'
+    read_pattern_middle = r'\[\s*search (.+?)[\|\]]'
+    read_pattern_start = r'^ *search ([^|]+)'
     otrest_pattern = r'otrest[^|]+url\s*?=\s*?([^\|\] ]+)'
-    filter_pattern = r'\|\s*[sS][eE][aA][rR][cC][hH] ([^\|$]+)'
+    filter_pattern = r'\|\s*search ([^\|$]+)'
     otfrom_pattern = r'otfrom datamodel:?\s*([^\|$]+)'
     otloadjob_id_pattern = r'otloadjob\s+(\d+\.\d+)'
     otloadjob_spl_pattern = r'otloadjob\s+spl=\"(.+?[^\\])\"(\s+?___token___=\"(.+?[^\\])\")?(\s+?___tail___=\"(.+?[^\\])\")?'
@@ -277,10 +277,10 @@ class Resolver:
 
         _spl = re.sub(self.otfrom_pattern, self.create_datamodels, _spl)
 
-        _spl = re.sub(self.read_pattern_middle, self.create_read_graph, _spl)
-        _spl = re.sub(self.read_pattern_start, self.create_read_graph, _spl)
+        _spl = re.sub(self.read_pattern_middle, self.create_read_graph, _spl, flags=re.I)
+        _spl = re.sub(self.read_pattern_start, self.create_read_graph, _spl, flags=re.I)
 
         _spl = re.sub(self.otrest_pattern, self.create_otrest, _spl)
-        _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl)
+        _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl, flags=re.I)
         _spl = re.sub(self.otloadjob_id_pattern, self.create_otloadjob_id, _spl)
         return {'search': (spl, _spl), 'subsearches': self.subsearches}
