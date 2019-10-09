@@ -2,6 +2,7 @@
 
 SPLGrammar = r'''
                 E: B
+                | NQ {left, 3}
                 | N {left, 3}
                 | O {left, 1}
                 | A {left, 2}
@@ -18,12 +19,11 @@ SPLGrammar = r'''
                 A: E "AND" E;
                 O: E "OR" E;
                 N: "NOT" E;
+                NQ: STRING "!=" V;
                 C: E ">" E
                 | E ">=" E
                 | E "<" E
-                | E "<=" E
-                | E "==" E
-                | E "!=" E;
+                | E "<=" E;
                 B: "(" E ")";
                 V: STRING+
                 | '"'SPACEDSTR'"'
@@ -35,8 +35,8 @@ SPLGrammar = r'''
                 | EMPTY;
 
                 terminals
-                INDEX: /[^ "'=%()&\-\\\/,]+/;
-                SPACEDINDEX: /[^"'=]+/;
-                SPACEDSTR: /[^"'=]+/;
-                STRING: /[^ "'=%()&\-\\\/,]+/;
+                INDEX: /[^ !"'=%()&\-\\\/,]+/;
+                SPACEDINDEX: /[^!"'=]+/;
+                SPACEDSTR: /[^!"'=]+/;
+                STRING: /[^! "'=%()&\-\\\/,]+/;
                 '''

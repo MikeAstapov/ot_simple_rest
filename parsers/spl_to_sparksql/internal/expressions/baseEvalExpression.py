@@ -55,7 +55,7 @@ class BaseEvalExpressions():
         nodes(list): Nodes of the parse tree on this iteration
         
         '''
-        
+
         result = ''
         if (len(nodes) == 5):
             result = nodes[0] + '=' + nodes[2] + nodes[3] + nodes[4]
@@ -63,13 +63,36 @@ class BaseEvalExpressions():
             
         if (nodes[2].find('*') >= 0):
             result = "(" + nodes[0] +  ' rlike \'' + nodes[2] + '\')'
-            result = result[:result.find('*')] + '.' + result[result.find('*'):]
+            pos = result.rfind('*')
+            while (pos >= 0):
+                result = result[:pos] + '.' + result[pos:]
+                pos = result[:pos].rfind('*')
         elif (nodes[2] == ''):
             result = nodes[0] + '=""'
         elif (nodes[2][:1] == '"') and (nodes[2][-1:] == '"'):
             result = nodes[0] + '=' + nodes[2]
         else:
             result = nodes[0] + "=\"" + nodes[2] + "\""
+        return result
+
+    def transform_not_equal(self, context, nodes):
+        result = ''
+        if (len(nodes) == 5):
+            result = '!(' + nodes[0] + '=' + nodes[2] + nodes[3] + nodes[4] + ')'
+            return result
+            
+        if (nodes[2].find('*') >= 0):
+            result = "(" + nodes[0] +  ' rlike \'' + nodes[2] + '\')'
+            pos = result.rfind('*')
+            while (pos >= 0):
+                result = result[:pos] + '.' + result[pos:]
+                pos = result[:pos].rfind('*')
+        elif (nodes[2] == ''):
+            result = '!(' + nodes[0] + '="")'
+        elif (nodes[2][:1] == '"') and (nodes[2][-1:] == '"'):
+            result = '!(' + nodes[0] + '=' + nodes[2] + ')'
+        else:
+            result = '!(' + nodes[0] + "=\"" + nodes[2] + "\"" + ')'
         return result
 
     def transform_and(self, context, nodes):
@@ -175,13 +198,18 @@ class BaseEvalExpressions():
         nodes(list): Nodes of the parse tree on this iteration
         
         '''
-        
-        if (type(nodes[0]) == list):
+
+        if (len(nodes) == 0):
+            return ''
+        elif (type(nodes[0]) == list):
             return nodes[0][0]
         elif (len(nodes) == 1):
             return nodes[0]
         elif (len(nodes) == 3):
-            return nodes[0] + nodes[1] + nodes[2]
+            if (nodes[1].find('*') >= 0):
+                return nodes[1]
+            else:
+                return nodes[0] + nodes[1] + nodes[2]
 
     def return_string(self, context, nodes):
         '''Returns terminal string, optionally with _raw like or _raw rlike

@@ -136,7 +136,7 @@ class TestResolver(unittest.TestCase):
 
     def test_otloadjob(self):
         spl = """| ot ttl=60 | otloadjob spl="| ot ttl=60 | search index=alerts* sourcetype!=alert_metadata | fields - _raw| dedup full_id| search alert=\\"pprb_*\\" status!=\\"*resolved\\" status!=\\"suppressed\\" app=\\"*\\" urgency=\\"*\\" summary=\\"*kb.main*\\"| stats count(alert) by alert | simple" | where like(alert,"pprb_appcore_cdm%")| stats count | simple"""
-        target = {'search': ('| ot ttl=60 | otloadjob spl="| ot ttl=60 | search index=alerts* sourcetype!=alert_metadata | fields - _raw| dedup full_id| search alert=\\"pprb_*\\" status!=\\"*resolved\\" status!=\\"suppressed\\" app=\\"*\\" urgency=\\"*\\" summary=\\"*kb.main*\\"| stats count(alert) by alert | simple" | where like(alert,"pprb_appcore_cdm%")| stats count | simple', '| ot ttl=60 | otloadjob subsearch=subsearch_ee49b9572c63942b175269e757b88e44bc94d8980181058fbbe6a1482a1f6742 | where like(alert,"pprb_appcore_cdm%")| stats count | simple'), 'subsearches': {'subsearch_ee49b9572c63942b175269e757b88e44bc94d8980181058fbbe6a1482a1f6742': ('| ot ttl=60 | search index=alerts* sourcetype!=alert_metadata | fields - _raw| dedup full_id| search alert="pprb_*" status!="*resolved" status!="suppressed" app="*" urgency="*" summary="*kb.main*"| stats count(alert) by alert | simple', '| ot ttl=60 | filter {"query": "(_raw like \'%sourcetype%\')!=(_raw like \'%alert_metadata%\')"}| fields - _raw| dedup full_id| filter {"query": "(alert rlike \'\\"pprb_.*\\"\') AND (_raw like \'%status%\')!=(_raw rlike \'\\"\') AND (_raw like \'%status%\')!=(_raw rlike \'\\"\') AND (app rlike \'\\".*\\"\') AND (urgency rlike \'\\".*\\"\') AND (summary rlike \'\\".*kb.main*\\"\')"}| stats count(alert) by alert | simple')}}
+        target = {'search': ('| ot ttl=60 | otloadjob spl="| ot ttl=60 | search index=alerts* sourcetype!=alert_metadata | fields - _raw| dedup full_id| search alert=\\"pprb_*\\" status!=\\"*resolved\\" status!=\\"suppressed\\" app=\\"*\\" urgency=\\"*\\" summary=\\"*kb.main*\\"| stats count(alert) by alert | simple" | where like(alert,"pprb_appcore_cdm%")| stats count | simple', '| ot ttl=60 | otloadjob subsearch=subsearch_ee49b9572c63942b175269e757b88e44bc94d8980181058fbbe6a1482a1f6742 | where like(alert,"pprb_appcore_cdm%")| stats count | simple'), 'subsearches': {'subsearch_ee49b9572c63942b175269e757b88e44bc94d8980181058fbbe6a1482a1f6742': ('| ot ttl=60 | search index=alerts* sourcetype!=alert_metadata | fields - _raw| dedup full_id| search alert="pprb_*" status!="*resolved" status!="suppressed" app="*" urgency="*" summary="*kb.main*"| stats count(alert) by alert | simple', '| ot ttl=60 | filter {"query": "!(sourcetype=\\"alert_metadata\\")"}| fields - _raw| dedup full_id| filter {"query": "(alert rlike \'pprb_.*\') AND (status rlike \'.*resolved\') AND !(status=\\"suppressed\\") AND (app rlike \'.*\') AND (urgency rlike \'.*\') AND (summary rlike \'.*kb.main.*\')"}| stats count(alert) by alert | simple')}}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
@@ -167,8 +167,8 @@ class TestResolver(unittest.TestCase):
         self.assertDictEqual(target, result)
 
     def test_filter_with_wildcards(self):
-        spl = """search index=main | search alert="pprb_*" status!="*resolved" status!="suppressed" app="*" urgency="*" summary="*kb.main* """
-        target = {}
+        spl = """search index=main | search alert="pprb_*" status!="*resolved" status!="suppressed" app="*" urgency="*" summary="*kb.main*" """
+        target = {'search': ('search index=main | search alert="pprb_*" status!="*resolved" status!="suppressed" app="*" urgency="*" summary="*kb.main*" ', '| read {"main": {"query": "", "tws": 0, "twf": 0}}| filter {"query": "(alert rlike \'pprb_.*\') AND (status rlike \'.*resolved\') AND !(status=\\"suppressed\\") AND (app rlike \'.*\') AND (urgency rlike \'.*\') AND (summary rlike \'.*kb.main.*\')"}'), 'subsearches': {}}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
@@ -176,7 +176,7 @@ class TestResolver(unittest.TestCase):
 
     def test_read_with_not_equal(self):
         spl = """search index=main sourcetype!=alert_metadata"""
-        target = {}
+        target = {'search': ('search index=main sourcetype!=alert_metadata', '| read {"main": {"query": "!(sourcetype=\\"alert_metadata\\")", "tws": 0, "twf": 0}}'), 'subsearches': {}}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)

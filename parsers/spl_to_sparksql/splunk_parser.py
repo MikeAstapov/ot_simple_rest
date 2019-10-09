@@ -34,7 +34,8 @@ class SPLtoSQL:
                                           'C' : expressions.transform_comparison,
                                           'B' : expressions.transform_brackets,
                                           'V' : expressions.return_value,
-                                          'S' : expressions.return_string
+                                          'S' : expressions.return_string,
+                                          'NQ' : expressions.transform_not_equal
                                           })
         
         tree = LALR_parser.parse(spl)
@@ -79,10 +80,12 @@ class SPLtoSQL:
                                           'C' : expressions.transform_comparison,
                                           'B' : expressions.transform_brackets,
                                           'V' : expressions.return_value,
-                                          'S' : expressions.return_string
+                                          'S' : expressions.return_string,
+                                          'NQ' : expressions.transform_not_equal
                                           })
         
         tree = LALR_parser.parse(spl)
+        #print (tree.tree_str())
         query_string = LALR_parser.call_actions(tree)
         if (query_string == None): query_string = ''
         result = {'query' : query_string}
