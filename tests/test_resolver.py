@@ -128,7 +128,7 @@ class TestResolver(unittest.TestCase):
 
     def test_filter_fts_escaped(self):
         spl = """search index=main2 SUCCESS | search "raw search" """
-        target = {'search': ('search index=main2 SUCCESS | search raw_search ', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}}| filter {"query": "(_raw like \'%raw search%\')"}'), 'subsearches': {}}
+        target = {'search': ('search index=main2 SUCCESS | search "raw search" ', '| read {"main2": {"query": "(_raw like \'%SUCCESS%\')", "tws": 0, "twf": 0}}| filter {"query": "(_raw rlike \'raw search\')"}'), 'subsearches': {}}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
