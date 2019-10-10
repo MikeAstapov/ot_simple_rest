@@ -11,7 +11,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Sergei Ermilov", "Anastasiya Safonova"]
 __license__ = ""
-__version__ = "0.3.14"
+__version__ = "0.3.15"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -39,7 +39,7 @@ class Resolver:
     read_pattern_start = r'^ *search ([^|]+)'
     otrest_pattern = r'otrest[^|]+url\s*?=\s*?([^\|\] ]+)'
     filter_pattern = r'\|\s*search ([^\|$]+)'
-    otinputlookup_where_pattern = r'\|\s*otinputlookup[^\|$]+where\s+([^\|$]+)'
+    otinputlookup_where_pattern = r'\|\s*otinputlookup([^\|$]+)where\s+([^\|$]+)'
     otfrom_pattern = r'otfrom datamodel:?\s*([^\|$]+)'
     otloadjob_id_pattern = r'otloadjob\s+(\d+\.\d+)'
     otloadjob_spl_pattern = r'otloadjob\s+spl=\"(.+?[^\\])\"(\s+?___token___=\"(.+?[^\\])\")?(\s+?___tail___=\"(.+?[^\\])\")?'
@@ -150,9 +150,9 @@ class Resolver:
         :param match_object: Re match object with original SPL.
         :return: String with replaces of filter part.
         """
-        query = match_object.group(1)
+        query = match_object.group(2)
         graph = SPLtoSQL.parse_filter(query)
-        return '| otinputlookup where %s' % json.dumps(graph)
+        return '| otinputlookup%swhere %s' % (match_object.group(1), json.dumps(graph))
 
     def create_datamodels(self, match_object):
         """
