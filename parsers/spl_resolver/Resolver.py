@@ -39,7 +39,7 @@ class Resolver:
     read_pattern_start = r'^ *search ([^|]+)'
     otrest_pattern = r'otrest[^|]+url\s*?=\s*?([^\|\] ]+)'
     filter_pattern = r'\|\s*search ([^\|$]+)'
-    otinputlookup_where_pattern = r'\|\s*otinputlookup([^\|$]+)where\s+([^\|$]+)'
+    otinputlookup_where_pattern = r'otinputlookup([^\|$]+)where\s+([^\|$]+)'
     otfrom_pattern = r'otfrom datamodel:?\s*([^\|$]+)'
     otloadjob_id_pattern = r'otloadjob\s+(\d+\.\d+)'
     otloadjob_spl_pattern = r'otloadjob\s+spl=\"(.+?[^\\])\"(\s+?___token___=\"(.+?[^\\])\")?(\s+?___tail___=\"(.+?[^\\])\")?'
