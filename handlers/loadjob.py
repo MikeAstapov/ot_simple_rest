@@ -13,7 +13,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.6.2"
+__version__ = "0.7.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -187,13 +187,16 @@ class LoadJob(tornado.web.RequestHandler):
         path_to_cache_dir = '%s/search_%s.cache/' % (self.mem_conf['path'], cid)
         self.logger.debug('Path to cache %s.' % path_to_cache_dir)
         file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
-        self.write('{"status": "success", "events": {')
+        with open(path_to_cache_dir + "_SCHEMA") as fr:
+            df_schema = fr.read()
+        self.write('{"status": "success", "schema": "%s", "events": {' % df_schema.strip())
         length = len(file_names)
         for i in range(length):
             file_name = file_names[i]
             self.logger.debug('Reading part: %s' % file_name)
             self.write('"%s": ' % file_name)
-            body = open(path_to_cache_dir + file_name).read()
+            with open(path_to_cache_dir + file_name) as fr:
+                body = fr.read()
             self.write(json.dumps(body))
             if i != length - 1:
                 self.write(", ")
