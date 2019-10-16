@@ -246,7 +246,7 @@ class TestResolver(unittest.TestCase):
         print('target', target)
         self.assertDictEqual(result, target)
 
-    def test_read_field_filter_with_quotes(self):
+    def test_read_field_filter_without_quotes(self):
         spl = """search index=test_index junkField=asd.a-2:13"""
         target = {'search': ('search index=test_index junkField=asd.a-2:13', '| read {"test_index": {"query": "junkField=\\"asd.a-2:13\\"", "tws": 0, "twf": 0}}'), 'subsearches': {}}
         result = self.resolver.resolve(spl)
