@@ -237,3 +237,19 @@ class TestResolver(unittest.TestCase):
         print('result', result)
         print('target', target)
         self.assertDictEqual(result, target)
+
+    def test_read_with_special_symbols_in_filter(self):
+        spl = """search index=test_index junkField="asd.a-2:13=123" junkField2!="asd.a-2:13=123" """
+        target = {}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
+
+    def test_read_field_filter_with_quotes(self):
+        spl = """search index=test_index junkField=asd.a-2:13"""
+        target = {}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
