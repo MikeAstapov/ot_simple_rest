@@ -152,7 +152,7 @@ class Resolver:
         """
         query = match_object.group(2)
         graph = SPLtoSQL.parse_filter(query)
-        return '| otinputlookup%swhere %s' % (match_object.group(1), json.dumps(graph))
+        return 'otinputlookup%swhere %s' % (match_object.group(1), json.dumps(graph))
 
     def create_datamodels(self, match_object):
         """

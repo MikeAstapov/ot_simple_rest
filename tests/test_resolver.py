@@ -224,7 +224,7 @@ class TestResolver(unittest.TestCase):
 
     def test_inputlookup_filter(self):
         spl = """| otinputlookup test.csv where field1=1 OR (field2>2 AND field3<30) OR field4"""
-        target = {'search': ('| otinputlookup test.csv where field1=1 OR (field2>2 AND field3<30) OR field4', '| otinputlookup where {"query": "field1=\\"1\\" OR (field2>2 AND field3<30) OR (_raw like \'%field4%\')"}'), 'subsearches': {}}
+        target = {'search': ('| otinputlookup test.csv where field1=1 OR (field2>2 AND field3<30) OR field4', '| otinputlookup test.csv where {"query": "field1=\\"1\\" OR (field2>2 AND field3<30) OR (_raw like \'%field4%\')"}'), 'subsearches': {}}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
