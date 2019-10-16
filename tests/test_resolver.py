@@ -240,7 +240,7 @@ class TestResolver(unittest.TestCase):
 
     def test_read_with_special_symbols_in_filter(self):
         spl = """search index=test_index junkField="asd.a-2:13=123" junkField2!="asd.a-2:13=123" """
-        target = {}
+        target = {'search': ('search index=test_index junkField="asd.a-2:13=123" junkField2!="asd.a-2:13=123" ', '| read {"test_index": {"query": "junkField=\\"asd.a-2:13=123\\" AND !(junkField2=\\"asd.a-2:13=123\\")", "tws": 0, "twf": 0}}'), 'subsearches': {}}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)
@@ -248,7 +248,7 @@ class TestResolver(unittest.TestCase):
 
     def test_read_field_filter_with_quotes(self):
         spl = """search index=test_index junkField=asd.a-2:13"""
-        target = {}
+        target = {'search': ('search index=test_index junkField=asd.a-2:13', '| read {"test_index": {"query": "junkField=\\"asd.a-2:13\\"", "tws": 0, "twf": 0}}'), 'subsearches': {}}
         result = self.resolver.resolve(spl)
         print('result', result)
         print('target', target)

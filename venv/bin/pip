@@ -1,4 +1,4 @@
-#!/home/andrey/PycharmProjects/ot_simple_rest/venv/bin/python
+#!/Users/anastasiasafonova/ot_rest/ot_simple_rest/venv/bin/python
 # EASY-INSTALL-ENTRY-SCRIPT: 'pip==19.0.3','console_scripts','pip'
 __requires__ = 'pip==19.0.3'
 import re
