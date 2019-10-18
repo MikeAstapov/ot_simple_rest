@@ -1,20 +1,31 @@
 import re
-from parglare import Parser, Grammar #, get_collector
 
-#action = get_collector()
+# Class with actions for parsing SPL expression to SQL
 
 class BaseEvalExpressions():
     def __init__(self, indices_list):
         self.indices_list = indices_list
 
     def spl_preprocessing(self, spl):
-        '''Returns preprocessed SPL string'''
+        '''Transforms all logical expressions to upper case.
+        Replaces whitespaces with logical AND.
+
+        :param spl: input SPL string
+        :return: preprocessed SPL string
+
+        '''
 
         spl = self.spl_replace_case(spl)
         spl = self.spl_replace_ws_with_and(spl)
         return spl
 
     def spl_replace_case(self, spl):
+        '''Transforms all logical expressions to upper case
+
+        :param spl: input SPL string
+        :return: preprocessed SPL string
+
+        '''
         operators = ["NOT", "OR", "AND"]
         result = ''
         spl_list = re.findall(r'(?:[^\s,"]|"(?:\\.|[^"])*")+', spl)
@@ -26,7 +37,12 @@ class BaseEvalExpressions():
         return result
 
     def spl_replace_ws_with_and(self, spl):
-        '''Returns SPL string where whitespaces replaced with logical AND'''
+        ''' Replaces whitespaces with logical AND
+
+        :param spl: input SPL string
+        :return: preprocessed SPL string
+
+        '''
         
         operators = ["NOT", "OR", "AND"]
         result = ''
@@ -45,10 +61,10 @@ class BaseEvalExpressions():
     def remove_index(self, context, nodes):
         '''Removes indices from SPL request and save index contents in self.indices_list
 
-        Arguments:
-        context(Context): An object used to keep parser context info
-        nodes(list): Nodes of the parse tree on this iteration
-        
+        :param context: An object used to keep parser context info
+        :param nodes: Nodes of the parse tree on this iteration
+        :return: None
+
         '''
         
         if (len(nodes) == 2):
@@ -62,10 +78,10 @@ class BaseEvalExpressions():
     def transform_equal(self, context, nodes):
         '''Transforms equal expressions from SPL format to SQL format
 
-        Arguments:
-        context(Context): An object used to keep parser context info
-        nodes(list): Nodes of the parse tree on this iteration
-        
+        :param context: An object used to keep parser context info
+        :param nodes: Nodes of the parse tree on this iteration
+        :return: Transformed equal expression
+
         '''
 
         result = ''
@@ -88,6 +104,14 @@ class BaseEvalExpressions():
         return result
 
     def transform_not_equal(self, context, nodes):
+        '''Transforms not equal expressions from SPL format to SQL format
+
+        :param context: An object used to keep parser context info
+        :param nodes: Nodes of the parse tree on this iteration
+        :return: Transformed not equal expression
+
+        '''
+
         result = ''
         if (len(nodes) == 5):
             result = '!(' + nodes[0] + '=' + nodes[2] + nodes[3] + nodes[4] + ')'
@@ -110,9 +134,9 @@ class BaseEvalExpressions():
     def transform_and(self, context, nodes):
         '''Transforms AND expressions from SPL format to SQL format
 
-        Arguments:
-        context(Context): An object used to keep parser context info
-        nodes(list): Nodes of the parse tree on this iteration
+        :param context: An object used to keep parser context info
+        :param nodes: Nodes of the parse tree on this iteration
+        :return: Transformed AND expression
         
         '''
         
@@ -126,9 +150,9 @@ class BaseEvalExpressions():
     def transform_or(self, context, nodes):
         '''Transforms OR expressions from SPL format to SQL format
 
-        Arguments:
-        context(Context): An object used to keep parser context info
-        nodes(list): Nodes of the parse tree on this iteration
+        :param context: An object used to keep parser context info
+        :param nodes: Nodes of the parse tree on this iteration
+        :return: Transformed OR expression
         
         '''
         
@@ -142,9 +166,9 @@ class BaseEvalExpressions():
     def transform_not(self, context, nodes):
         '''Transforms NOT expressions from SPL format to SQL format
 
-        Arguments:
-        context(Context): An object used to keep parser context info
-        nodes(list): Nodes of the parse tree on this iteration
+        :param context: An object used to keep parser context info
+        :param nodes: Nodes of the parse tree on this iteration
+        :return: Transformed NOT expression
         
         '''
         
@@ -154,44 +178,44 @@ class BaseEvalExpressions():
             return "!(" + nodes[1] + ")"
 
     def transform_comparison(self, context, nodes):
-        '''Transforms comparison expressions from SPL format to SQL format
+        '''Transforms compare expressions from SPL format to SQL format
 
-        Arguments:
-        context(Context): An object used to keep parser context info
-        nodes(list): Nodes of the parse tree on this iteration
+        :param context: An object used to keep parser context info
+        :param nodes: Nodes of the parse tree on this iteration
+        :return: Transformed compare expression
         
         '''
         
         return nodes[0] + nodes[1] + nodes[2]
 
     def transform_quotes(self, context, nodes):
-        '''Transforms quotes expressions from SPL format to SQL format
+        '''Transforms quoted expressions from SPL format to SQL format
 
-        Arguments:
-        context(Context): An object used to keep parser context info
-        nodes(list): Nodes of the parse tree on this iteration
+        :param context: An object used to keep parser context info
+        :param nodes: Nodes of the parse tree on this iteration
+        :return: Transformed quoted expression
         
         '''
         
         return '(_raw rlike \'' + nodes[1] + '\')'
 
     def transform_brackets(self, context, nodes):
-        '''Transforms brackets expressions from SPL format to SQL format
+        '''Transforms expressions with brackets from SPL format to SQL format
 
-        Arguments:
-        context(Context): An object used to keep parser context info
-        nodes(list): Nodes of the parse tree on this iteration
+        :param context: An object used to keep parser context info
+        :param nodes: Nodes of the parse tree on this iteration
+        :return: Transformed brackets expression
         
         '''
         
         return "(" + nodes[1] + ")"
 
     def transform_comma(self, context, nodes):
-        '''Transforms comma to AND expression from SPL format to SQL format
+        '''Transforms expressions with comma from SPL format to SQL format
 
-        Arguments:
-        context(Context): An object used to keep parser context info
-        nodes(list): Nodes of the parse tree on this iteration
+        :param context: An object used to keep parser context info
+        :param nodes: Nodes of the parse tree on this iteration
+        :return: Transformed comma expression
         
         '''
         
@@ -203,11 +227,11 @@ class BaseEvalExpressions():
             return nodes[0] + " AND " + nodes[2]
 
     def return_value(self, context, nodes):
-        '''Returns terminal value, optionally with quotes
+        '''Transforms value with optional regular expression to SPL format
 
-        Arguments:
-        context(Context): An object used to keep parser context info
-        nodes(list): Nodes of the parse tree on this iteration
+        :param context: An object used to keep parser context info
+        :param nodes: Nodes of the parse tree on this iteration
+        :return: Terminal value, optionally with quotes
         
         '''
 
@@ -224,11 +248,11 @@ class BaseEvalExpressions():
                 return nodes[0] + nodes[1] + nodes[2]
 
     def return_string(self, context, nodes):
-        '''Returns terminal string, optionally with _raw like or _raw rlike
+        '''Transforms string to SPL format with optional '_raw like' or '_raw rlike' strings
 
-        Arguments:
-        context(Context): An object used to keep parser context info
-        nodes(list): Nodes of the parse tree on this iteration
+        :param context: An object used to keep parser context info
+        :param nodes: Nodes of the parse tree on this iteration
+        :return: Terminal string, optionally with '_raw like' or '_raw rlike'
         
         '''
 
