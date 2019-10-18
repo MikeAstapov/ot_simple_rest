@@ -22,9 +22,10 @@ class SPLtoSQL:
         # Remove time from SPL and save start time and end time values in tws and twf
         (spl_time, _tws, _twf) = Timerange.removetime(spl, tws, twf)
         indices_list = []
+        fields_list = []
 
         # Create BaseEvalExpressions class instance
-        expressions = BaseEvalExpressions(indices_list)
+        expressions = BaseEvalExpressions(indices_list, fields_list)
 
         # Preprocess SPL string
         spl = expressions.spl_preprocessing(spl)
@@ -92,9 +93,10 @@ class SPLtoSQL:
         
         '''
         indices_list = []
+        fields_list = []
 
         # Create BaseEvalExpressions class instance
-        expressions = BaseEvalExpressions(indices_list)
+        expressions = BaseEvalExpressions(indices_list, fields_list)
 
         # Preprocess SPL string
         spl = expressions.spl_preprocessing(spl)
@@ -129,5 +131,5 @@ class SPLtoSQL:
         if (query_string == None): query_string = ''
 
         # Create dictionary with key 'query' and value query_string
-        result = {'query' : query_string}
+        result = {'query' : query_string, 'fields' : fields_list}
         return result

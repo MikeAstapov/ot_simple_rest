@@ -3,8 +3,9 @@ import re
 # Class with actions for parsing SPL expression to SQL
 
 class BaseEvalExpressions():
-    def __init__(self, indices_list):
+    def __init__(self, indices_list, fields_list):
         self.indices_list = indices_list
+        self.fields_list = fields_list
 
     def spl_preprocessing(self, spl):
         '''Transforms all logical expressions to upper case.
@@ -84,6 +85,11 @@ class BaseEvalExpressions():
 
         '''
 
+        if (nodes[0] in self.fields_list):
+            pass
+        else:
+            self.fields_list.insert(0, nodes[0])
+
         result = ''
         if (len(nodes) == 5):
             result = nodes[0] + '=' + nodes[2] + nodes[3] + nodes[4]
@@ -111,6 +117,11 @@ class BaseEvalExpressions():
         :return: Transformed not equal expression
 
         '''
+
+        if (nodes[0] in self.fields_list):
+            pass
+        else:
+            self.fields_list.insert(0, nodes[0])
 
         result = ''
         if (len(nodes) == 5):
@@ -185,7 +196,12 @@ class BaseEvalExpressions():
         :return: Transformed compare expression
         
         '''
-        
+
+        if (nodes[0] in self.fields_list):
+            pass
+        else:
+            self.fields_list.insert(0, nodes[0])
+
         return nodes[0] + nodes[1] + nodes[2]
 
     def transform_quotes(self, context, nodes):
