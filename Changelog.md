@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.2] - 2019-10-21
+### Fixed
+- Now search-command in the middle of SPL will return used fields for pushing down to read command.  
+
 ## [0.12.1] - 2019-10-16
 ### Added
 - Changelog.md.
