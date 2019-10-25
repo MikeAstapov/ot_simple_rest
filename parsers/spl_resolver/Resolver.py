@@ -35,7 +35,7 @@ class Resolver:
     quoted_return_pattern = r'_quoted_text_(\w+)'
     no_subsearch_return_pattern = r'_hidden_text_(\w+)'
     subsearch_pattern = r'.+\[(.+?)\]'
-    read_pattern_middle = r'\[\s*search ([^|\]])'
+    read_pattern_middle = r'\[\s*search ([^|\]]+)'
     read_pattern_start = r'^ *search ([^|]+)'
     otrest_pattern = r'otrest[^|]+url\s*?=\s*?([^\|\] ]+)'
     filter_pattern = r'\|\s*search ([^\|$]+)'
