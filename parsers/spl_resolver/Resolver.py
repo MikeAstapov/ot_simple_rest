@@ -11,7 +11,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Sergei Ermilov", "Anastasiya Safonova"]
 __license__ = ""
-__version__ = "0.3.17"
+__version__ = "0.3.18"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -31,7 +31,7 @@ class Resolver:
     logger = logging.getLogger('osr')
 
     # Patterns for transformation.
-    quoted_hide_pattern = r'"(.+?)"'
+    quoted_hide_pattern = r'"(.*?)"'
     quoted_return_pattern = r'_quoted_text_(\w+)'
     no_subsearch_return_pattern = r'_hidden_text_(\w+)'
     subsearch_pattern = r'.+\[(.+?)\]'
