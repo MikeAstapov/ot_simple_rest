@@ -1,12 +1,13 @@
 import csv
 import json
 import logging
+import os
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -28,9 +29,9 @@ class CacheWriter:
         self.logger.debug('Initialized.')
 
         self.cache = cache if type(cache) is dict else json.loads(cache)
-        self.file_name = '%ssearch_%s.cache' % (mem_conf['path'], cache_id)
+        self.cache_dir = '%ssearch_%s.cache' % (mem_conf['path'], cache_id)
 
-        self.logger.debug('Cache %s:%s with header will be written.' % (self.file_name, type(self.cache)))
+        self.logger.debug('Cache %s:%s with header will be written.' % (self.cache_dir, type(self.cache)))
 
     def get_fieldnames(self):
         """
@@ -43,12 +44,23 @@ class CacheWriter:
         fieldnames = set(fieldnames)
         return fieldnames
 
+    def generate_schema(self, fields):
+        """
+        Generates DDL schema of data frame.
+        :type fields: set of fields
+        :return: DDL schema string
+        """
+        schema = ["`%s` STRING" % field for field in fields]
+        schema = ",".join(schema)
+        self.logger.debug("Schema: %s" % schema)
+        return schema + '\n'
+
     def write_csv(self):
         """
         Writes the CSV file with cache data.
         :return:
         """
-        with open(self.file_name, 'w') as fw:
+        with open(self.cache_dir, 'w') as fw:
             fieldnames = list(self.get_fieldnames())
             writer = csv.DictWriter(fw, fieldnames=fieldnames)
             writer.writeheader()
@@ -60,8 +72,14 @@ class CacheWriter:
         Writes the JSON Lines file with cache data.
         :return:
         """
-        with open(self.file_name, 'w') as fw:
-            fieldnames = self.get_fieldnames()
+        part_file = os.path.join(self.cache_dir, "part-1.json")
+        schema_file = os.path.join(self.cache_dir, "_SCHEMA")
+        fieldnames = self.get_fieldnames()
+        schema = self.generate_schema(fieldnames)
+        os.makedirs(os.path.dirname(schema_file), exist_ok=True)
+        with open(schema_file, 'w') as fw:
+            fw.write(schema)
+        with open(part_file, 'w') as fw:
             for line in self.cache:
                 keys = set(line.keys())
                 empty_keys = fieldnames - keys
