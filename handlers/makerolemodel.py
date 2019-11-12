@@ -1,4 +1,6 @@
 import json
+import logging
+
 import tornado.web
 import psycopg2
 from tornado.ioloop import IOLoop
@@ -7,7 +9,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Nikolay Ryabykh"]
 __license__ = ""
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -17,6 +19,8 @@ class MakeRoleModel(tornado.web.RequestHandler):
     """
     This handler saves Role Model gotten from Splunk's API to OT.Simple Dispatcher's one.
     """
+
+    logger = logging.getLogger('osr')
 
     def initialize(self, db_conf):
         """
@@ -53,10 +57,10 @@ class MakeRoleModel(tornado.web.RequestHandler):
         conn.commit()
 
         for rm in role_model:
+            self.logger.debug("RM: %s." % rm)
             username = rm['username']
-            roles = rm['roles']
-            indexes = rm['indexes']
-
+            roles = rm['roles'].split('\n')
+            indexes = rm['indexes'].split('\n')
             roles = roles if type(roles) is list else [roles]
             indexes = indexes if type(indexes) is list else [indexes]
 
