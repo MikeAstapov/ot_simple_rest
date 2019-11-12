@@ -147,7 +147,7 @@ class MakeJob(tornado.web.RequestHandler):
         self.logger.debug('job_id: %s, creating_date: %s' % (job_id, creating_date))
         return job_id, creating_date
 
-    def user_have_right(self, username, indexes, cur):
+    def user_has_right(self, username, indexes, cur):
         """
         It checks Role Model if user has access to requested indexes.
 
@@ -170,7 +170,7 @@ class MakeJob(tornado.web.RequestHandler):
                 access_flag = True
             else:
                 for index in indexes:
-                    index = index.replace('"', '')
+                    index = index.replace('"', '').replace('\\', '')
                     for _index in _indexes:
                         indexes_from_rm = re.findall(index.replace("*", ".*"), _index)
                         self.logger.debug("Indexes from rm: %s. Left index: %s. Right index: %s." % (
@@ -229,7 +229,7 @@ class MakeJob(tornado.web.RequestHandler):
         conn = psycopg2.connect(**self.db_conf)
         cur = conn.cursor()
 
-        access_flag, indexes = self.user_have_right(username, indexes, cur)
+        access_flag, indexes = self.user_has_right(username, indexes, cur)
 
         resolver = Resolver(indexes, tws, twf, cur, sid, self.request.remote_ip,
                             self.resolver_conf.get('no_subsearch_commands'))
