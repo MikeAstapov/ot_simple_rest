@@ -12,7 +12,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.9.0"
+__version__ = "0.9.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -163,20 +163,25 @@ class MakeJob(tornado.web.RequestHandler):
         cur.execute(check_user_role_stm, (username,))
         fetch = cur.fetchone()
         access_flag = False
-        _indexes = []
+        accessed_indexes = []
         if fetch:
             _indexes = fetch[0]
             if '*' in _indexes:
                 access_flag = True
             else:
-                index_count = 0
                 for index in indexes:
-                    if index in _indexes:
-                        index_count += 1
-                if index_count == len(indexes):
-                    access_flag = True
+                    index = index.replace('"', '')
+                    for _index in _indexes:
+                        indexes_from_rm = re.findall(index.replace("*", ".*"), _index)
+                        self.logger.debug("Indexes from rm: %s. Left index: %s. Right index: %s." % (
+                            indexes_from_rm, index, _index
+                        ))
+                        for ifrm in indexes_from_rm:
+                            accessed_indexes.append(ifrm)
+            if accessed_indexes:
+                access_flag = True
         self.logger.debug('User has a right: %s' % access_flag)
-        return access_flag, _indexes
+        return access_flag, accessed_indexes
 
     def make_job(self):
         """
