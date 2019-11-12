@@ -125,6 +125,7 @@ class Resolver:
         query = match_object.group(1)
 
         query, subsearch = self.hide_subsearch_before_read(query)
+        self.logger.debug("Query: %s. Indexes: %s." % (query, self.indexes))
         graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
         return '| read %s%s' % (json.dumps(graph), subsearch)
 

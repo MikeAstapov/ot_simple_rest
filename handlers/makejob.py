@@ -229,16 +229,14 @@ class MakeJob(tornado.web.RequestHandler):
         conn = psycopg2.connect(**self.db_conf)
         cur = conn.cursor()
 
-        access_flag, indexes = self.user_has_right(username, indexes, cur)
-
-        resolver = Resolver(indexes, tws, twf, cur, sid, self.request.remote_ip,
-                            self.resolver_conf.get('no_subsearch_commands'))
-        resolved_spl = resolver.resolve(original_spl)
-        self.logger.debug("Resolved_spl: %s" % resolved_spl)
-
         # Step 4. Check for Role Model Access to requested indexes.
-
+        access_flag, indexes = self.user_has_right(username, indexes, cur)
         if access_flag:
+            self.logger.debug("User has access. Indexes: %s." % indexes)
+            resolver = Resolver(indexes, tws, twf, cur, sid, self.request.remote_ip,
+                                self.resolver_conf.get('no_subsearch_commands'))
+            resolved_spl = resolver.resolve(original_spl)
+            self.logger.debug("Resolved_spl: %s" % resolved_spl)
 
             # Step 5. Make searches queue based on subsearches of main query.
             searches = []
@@ -264,7 +262,7 @@ class MakeJob(tornado.web.RequestHandler):
                     if self.validate():
 
                         # Step 7. Check if the same query Job is already be running.
-                        job_id, creating_date = self.check_running(original_spl, tws, twf, cur, field_extraction,
+                        job_id, creating_date = self.check_running(search[0], tws, twf, cur, field_extraction,
                                                                    preview)
                         self.logger.debug('Running job_id: %s, creating_date: %s' % (job_id, creating_date))
                         if job_id is None:
@@ -312,6 +310,7 @@ class MakeJob(tornado.web.RequestHandler):
 
         else:
             # Return Role Model Access error.
+            self.logger.debug("User has no access.")
             response = {"status": "fail", "error": "User has no access to index"}
 
         self.logger.debug('Response: %s' % response)
