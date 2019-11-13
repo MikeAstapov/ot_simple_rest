@@ -158,29 +158,32 @@ class MakeJob(tornado.web.RequestHandler):
         :param cur: Cursor to Postgres DB.
         :return: Boolean access flag and resolved indexes.
         """
-        check_user_role_stm = "SELECT indexes FROM RoleModel WHERE username = %s;"
-        self.logger.debug(check_user_role_stm % (username,))
-        cur.execute(check_user_role_stm, (username,))
-        fetch = cur.fetchone()
-        access_flag = False
         accessed_indexes = []
-        if fetch:
-            _indexes = fetch[0]
-            if '*' in _indexes:
-                access_flag = True
-            else:
-                for index in indexes:
-                    index = index.replace('"', '').replace('\\', '')
-                    for _index in _indexes:
-                        indexes_from_rm = re.findall(index.replace("*", ".*"), _index)
-                        self.logger.debug("Indexes from rm: %s. Left index: %s. Right index: %s." % (
-                            indexes_from_rm, index, _index
-                        ))
-                        for ifrm in indexes_from_rm:
-                            accessed_indexes.append(ifrm)
-            if accessed_indexes:
-                access_flag = True
-        self.logger.debug('User has a right: %s' % access_flag)
+        if indexes:
+            check_user_role_stm = "SELECT indexes FROM RoleModel WHERE username = %s;"
+            self.logger.debug(check_user_role_stm % (username,))
+            cur.execute(check_user_role_stm, (username,))
+            fetch = cur.fetchone()
+            access_flag = False
+            if fetch:
+                _indexes = fetch[0]
+                if '*' in _indexes:
+                    access_flag = True
+                else:
+                    for index in indexes:
+                        index = index.replace('"', '').replace('\\', '')
+                        for _index in _indexes:
+                            indexes_from_rm = re.findall(index.replace("*", ".*"), _index)
+                            self.logger.debug("Indexes from rm: %s. Left index: %s. Right index: %s." % (
+                                indexes_from_rm, index, _index
+                            ))
+                            for ifrm in indexes_from_rm:
+                                accessed_indexes.append(ifrm)
+                if accessed_indexes:
+                    access_flag = True
+            self.logger.debug('User has a right: %s' % access_flag)
+        else:
+            access_flag = True
         return access_flag, accessed_indexes
 
     def make_job(self):
