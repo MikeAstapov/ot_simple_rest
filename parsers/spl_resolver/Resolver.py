@@ -221,6 +221,7 @@ class Resolver:
         self.logger.debug('Unescaped Tail: %s.' % tail)
 
         spl = spl + token + tail
+        spl = spl.strip()
         self.logger.debug('Concatenated SPL for subsearch: %s.' % spl)
 
         otloadjob_sha256 = sha256(spl.strip().encode('utf-8')).hexdigest()
