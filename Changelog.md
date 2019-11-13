@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.12.7] - 2019-11-13
+### Fixed
+- Strings with indexes instead of array in DB.
+- Permissions on wildcard indexes.  
+
 ## [0.12.6] - 2019-10-25
 ###  Changed
 - Structure of otrest result cache was changed to identical one of Spark's one for JSONLines.  
