@@ -36,9 +36,9 @@ class Timerange:
         _twf = twf
         regex = r"(earliest|latest)=([a-zA-Z0-9_*-]+)"
         for (time_modifier, time) in re.findall(regex, spl):
-            if (time_modifier == "earliest"):
+            if time_modifier == "earliest":
                 _tws = Timerange.get_timestamp(time)
-            if (time_modifier == "latest"):
+            if time_modifier == "latest":
                 _twf = Timerange.get_timestamp(time)
         service_spl = re.sub(regex, "", spl)
-        return (service_spl, _tws, _twf)
+        return service_spl, _tws, _twf

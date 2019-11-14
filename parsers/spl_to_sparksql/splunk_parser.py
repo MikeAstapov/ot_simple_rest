@@ -80,7 +80,7 @@ class SPLtoSQL:
 
         # Add indices and query strings to map_with_time dictionary
         for index_string in full_indices_list:
-            map_with_time[index_string] = {'query': query_string, 'tws': tws, 'twf': twf}
+            map_with_time[index_string] = {'query': query_string, 'tws': _tws, 'twf': _twf}
 
         return map_with_time
 
