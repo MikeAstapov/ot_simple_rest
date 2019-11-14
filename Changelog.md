@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.8] - 2019-11-14
+### Fixed
+- Command search earliest and latest args.  
+
 ## [0.12.7] - 2019-11-13
 ### Fixed
 - Strings with indexes instead of array in DB.
