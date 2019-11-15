@@ -341,3 +341,11 @@ class TestResolver(unittest.TestCase):
         print('result', result)
         print('target', target)
         self.assertDictEqual(result, target)
+
+    def test_rename_with_bracket(self):
+        spl = """search index=main | join host [ search index=main2 | rename bla as host]"""
+        target = {'search': ('search index=main | join host [ search index=main2 | rename bla as host]', '| read {"main": {"query": "", "tws": 0, "twf": 0}}| join host subsearch=subsearch_e94ea0468c117b166b32d6e5f7985ac4c1af08bb3bf941a1340a09697943d067'), 'subsearches': {'subsearch_e94ea0468c117b166b32d6e5f7985ac4c1af08bb3bf941a1340a09697943d067': (' search index=main2 | rename bla as host', '| read {"main2": {"query": "", "tws": 0, "twf": 0}}| rename bla as host')}}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
