@@ -20,7 +20,7 @@ class SPLtoSQL:
         """
 
         # Remove time from SPL and save start time and end time values in tws and twf
-        (_, _tws, _twf) = Timerange.removetime(spl, tws, twf)
+        (spl, _tws, _twf) = Timerange.removetime(spl, tws, twf)
         indices_list = []
         fields_list = []
 
