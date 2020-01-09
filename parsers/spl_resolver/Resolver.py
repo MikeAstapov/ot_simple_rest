@@ -37,6 +37,8 @@ class Resolver:
     subsearch_pattern = r'.+\[(.+?)\]'
     read_pattern_middle = r'\[\s*search ([^|\]]+)'
     read_pattern_start = r'^ *search ([^|]+)'
+    otstats_pattern_start = r'\|\s*otstats ([^|]+)'
+    otstats_pattern_middle = r'\[\s*\|\s*otstats ([^|\]]+)'
     otrest_pattern = r'otrest[^|]+url\s*?=\s*?([^\|\] ]+)'
     filter_pattern = r'\|\s*search ([^\|$]+)'
     otinputlookup_where_pattern = r'otinputlookup([^\|$]+)where\s+([^\|$]+)'
@@ -78,6 +80,9 @@ class Resolver:
 
         subsearch_query_service = re.sub(self.read_pattern_middle, self.create_read_graph, subsearch_query)
         subsearch_query_service = re.sub(self.read_pattern_start, self.create_read_graph, subsearch_query_service)
+
+        subsearch_query_service = re.sub(self.otstats_pattern_middle, self.create_otstats_graph, subsearch_query)
+        subsearch_query_service = re.sub(self.otstats_pattern_start, self.create_otstats_graph, subsearch_query_service)
 
         _subsearch_query = re.sub(self.quoted_return_pattern, self.return_quoted, subsearch_query)
         _subsearch_query_service = re.sub(self.quoted_return_pattern, self.return_quoted, subsearch_query_service)
@@ -128,6 +133,21 @@ class Resolver:
         self.logger.debug("Query: %s. Indexes: %s." % (query, self.indexes))
         graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
         return '| read %s%s' % (json.dumps(graph), subsearch)
+
+    def create_otstats_graph(self, match_object):
+        """
+        Finds "otstats __fts_query__" and transforms it to service form.
+        search -> | otstats "{__fts_json__}"
+
+        :param match_object: Re match object with original SPL.
+        :return: String with replaces of FTS part.
+        """
+        query = match_object.group(1)
+
+        query, subsearch = self.hide_subsearch_before_read(query)
+        self.logger.debug("Query: %s. Indexes: %s." % (query, self.indexes))
+        graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
+        return '| otstats %s%s' % (json.dumps(graph), subsearch)
 
     @staticmethod
     def create_filter_graph(match_object):
@@ -295,6 +315,8 @@ class Resolver:
 
         _spl = re.sub(self.read_pattern_middle, self.create_read_graph, _spl, flags=re.I)
         _spl = re.sub(self.read_pattern_start, self.create_read_graph, _spl, flags=re.I)
+        # _spl = re.sub(self.otstats_pattern_middle, self.create_otstats_graph, _spl, flags=re.I)
+        # _spl = re.sub(self.otstats_pattern_start, self.create_otstats_graph, _spl, flags=re.I)
 
         _spl = re.sub(self.otrest_pattern, self.create_otrest, _spl)
         _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl, flags=re.I)
