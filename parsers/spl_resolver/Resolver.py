@@ -130,7 +130,7 @@ class Resolver:
         query = match_object.group(1)
 
         query, subsearch = self.hide_subsearch_before_read(query)
-        self.logger.debug("Query: %s. Indexes: %s." % (query, self.indexes))
+        self.logger.debug("Whole Query: %s. Query: %s. Indexes: %s." % (match_object.group(0), query, self.indexes))
         graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
         return '| read %s%s' % (json.dumps(graph), subsearch)
 
@@ -145,7 +145,7 @@ class Resolver:
         query = match_object.group(1)
 
         query, subsearch = self.hide_subsearch_before_read(query)
-        self.logger.debug("Query: %s. Indexes: %s." % (query, self.indexes))
+        self.logger.debug("Whole Query: %s. Query: %s. Indexes: %s." % (match_object.group(0), query, self.indexes))
         graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
         return '| otstats %s%s' % (json.dumps(graph), subsearch)
 
@@ -315,8 +315,8 @@ class Resolver:
 
         _spl = re.sub(self.read_pattern_middle, self.create_read_graph, _spl, flags=re.I)
         _spl = re.sub(self.read_pattern_start, self.create_read_graph, _spl, flags=re.I)
-        # _spl = re.sub(self.otstats_pattern_middle, self.create_otstats_graph, _spl, flags=re.I)
-        # _spl = re.sub(self.otstats_pattern_start, self.create_otstats_graph, _spl, flags=re.I)
+        _spl = re.sub(self.otstats_pattern_middle, self.create_otstats_graph, _spl, flags=re.I)
+        _spl = re.sub(self.otstats_pattern_start, self.create_otstats_graph, _spl, flags=re.I)
 
         _spl = re.sub(self.otrest_pattern, self.create_otrest, _spl)
         _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl, flags=re.I)
