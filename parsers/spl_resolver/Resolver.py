@@ -37,7 +37,7 @@ class Resolver:
     subsearch_pattern = r'.+\[(.+?)\]'
     read_pattern_middle = r'\[\s*search ([^|\]]+)'
     read_pattern_start = r'^ *search ([^|]+)'
-    otstats_pattern_start = r'\|\s*otstats ([^|]+)'
+    otstats_pattern_start = r'\|?\s*otstats ([^|]+)'
     otstats_pattern_middle = r'\[\s*\|\s*otstats ([^|\]]+)'
     otrest_pattern = r'otrest[^|]+url\s*?=\s*?([^\|\] ]+)'
     filter_pattern = r'\|\s*search ([^\|$]+)'
