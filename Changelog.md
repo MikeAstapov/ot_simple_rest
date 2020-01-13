@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2020-01-13
+### Added
+- Command otstats.
+
+### Fixed
+- Test fails because of 0.12.8 fixes.
+
 ## [0.12.8] - 2019-11-14
 ### Fixed
 - Command search earliest and latest args.  
