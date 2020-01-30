@@ -6,7 +6,6 @@ import logging
 import os
 from configparser import ConfigParser
 
-
 import tornado.ioloop
 import tornado.web
 
@@ -16,6 +15,8 @@ from handlers.makerolemodel import MakeRoleModel
 from handlers.makedatamodels import MakeDataModels
 from handlers.saveotrest import SaveOtRest
 from handlers.pingpong import PingPong
+
+from jobs_manager.manager import JobsManager
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -28,14 +29,13 @@ __status__ = "Development"
 
 
 def set_logger(loglevel, logfile, logger_name):
-
     levels = {
         'CRITICAL': logging.CRITICAL,
         'ERROR': logging.ERROR,
         'WARNING': logging.WARNING,
         'INFO': logging.INFO,
         'DEBUG': logging.DEBUG
-        }
+    }
 
     logging.basicConfig(
         filename=logfile,
@@ -65,18 +65,25 @@ def main():
     mem_conf = dict(config['mem_conf'])
     disp_conf = dict(config['dispatcher'])
     resolver_conf = dict(config['resolver'])
+    check_index_access = config.getboolean('user', 'check_index_access')
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    logger = set_logger(config['general'].get('level', 'INFO'), './otsimplerest.log', 'osr')
+    logger = set_logger(config['general'].get('level', 'INFO'), './logs/otsimplerest.log', 'osr')
     logger.info('DB configuration: %s' % db_conf)
     logger.info('MEM configuration: %s' % mem_conf)
+
+    # Create jobs manager instance with configs needed to jobs work
+
+    manager = JobsManager(db_conf=db_conf, mem_conf=mem_conf, disp_conf=disp_conf,
+                          resolver_conf=resolver_conf, check_index_access=check_index_access)
+    manager.start()
 
     # Set TORNADO application with custom handlers.
     application = tornado.web.Application([
         (r'/ping', PingPong),
-        (r'/makejob', MakeJob, {"db_conf": db_conf, "resolver_conf": resolver_conf}),
-        (r'/loadjob', LoadJob, {"db_conf": db_conf, "mem_conf": mem_conf, "disp_conf": disp_conf}),
+        (r'/makejob', MakeJob, {"manager": manager}),
+        (r'/loadjob', LoadJob, {"manager": manager}),
         (r'/otrest', SaveOtRest, {"db_conf": db_conf, "mem_conf": mem_conf}),
         (r'/makerolemodel', MakeRoleModel, {"db_conf": db_conf}),
         (r'/makedatamodels', MakeDataModels, {"db_conf": db_conf})
