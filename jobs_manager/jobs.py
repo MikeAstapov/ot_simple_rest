@@ -10,6 +10,8 @@ from utils import backlasher
 from parsers.spl_resolver.Resolver import Resolver
 
 
+# TODO Instead these two classes you need one class Job with 2 builders: the 1st from makejob, the 2nd from loadjob.
+
 class JobLoader:
     """
     This class contains all of methods for check job status
@@ -402,4 +404,5 @@ class JobMaker:
 
         self.logger.debug('Response: %s' % response)
         await asyncio.sleep(0.001)
+        #
         # return response

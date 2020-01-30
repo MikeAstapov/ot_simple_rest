@@ -65,7 +65,7 @@ def main():
     mem_conf = dict(config['mem_conf'])
     disp_conf = dict(config['dispatcher'])
     resolver_conf = dict(config['resolver'])
-    check_index_access = config.getboolean('user', 'check_index_access')
+    check_index_access = config.getboolean('user', 'check_index_access')  # TODO Follow style guides of config loading  as before.
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -87,7 +87,6 @@ def main():
         (r'/otrest', SaveOtRest, {"db_conf": db_conf, "mem_conf": mem_conf}),
         (r'/makerolemodel', MakeRoleModel, {"db_conf": db_conf}),
         (r'/makedatamodels', MakeDataModels, {"db_conf": db_conf})
-
     ])
 
     logger.info('Starting server')

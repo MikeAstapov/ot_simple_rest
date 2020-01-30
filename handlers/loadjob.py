@@ -61,5 +61,6 @@ class LoadJob(tornado.web.RequestHandler):
         :return:
         """
         response = self.jobs_manager.load_job(self.request)
+        # TODO If you decide use format instead of % replace it everywhere.
         self.logger.debug('RESPONSE: {}'.format(response))
         self.write(response)

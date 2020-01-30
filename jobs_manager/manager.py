@@ -12,7 +12,7 @@ class JobsManager:
 
     There is two job types:
     - make_job: creates job and queue it in asyncio.Queue
-    - load_job: creates job and start it immediately
+    - load_job: creates job and start it immediately # TODO Does it really start it? You've already started it in make_job.
 
     Also we have a _start_monitoring method to identify and run jobs from jobs queue.
 
@@ -30,8 +30,10 @@ class JobsManager:
 
         self._enable = False
         self.jobs_queue = asyncio.Queue(maxsize=100)
+
         logger.info('Jobs manager started')
 
+    # TODO Why this method is async when load_job is not?
     async def make_job(self, request):
         """
         Creates JobMaker instance with needed params and queue it.
@@ -84,6 +86,7 @@ class JobsManager:
         :return:        None
         """
         self._enable = True
+        # TODO Is asyncio.ensure_future similar to loop.create_task?
         asyncio.ensure_future(self._start_monitoring())
 
     def stop(self):
