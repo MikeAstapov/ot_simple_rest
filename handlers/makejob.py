@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 import tornado.web
 
@@ -64,11 +63,8 @@ class MakeJob(tornado.web.RequestHandler):
 
         :return:
         """
-        # TODO Move exception handling into jobs_manager.
-        try:
-            await self.jobs_manager.make_job(self.request)
-        except Exception as err:
-            response = {"status": "fail", "timestamp": str(datetime.now()), "error": str(err)}
-        else:
-            response = {"status": "success", "timestamp": str(datetime.now())}
+        # TODO (SOLVED): Move exception handling into jobs_manager.
+        response = await self.jobs_manager.make_job(self.request)
+        # response = self.jobs_manager.make_job(self.request)
+        self.logger.debug('MakeJob RESPONSE: {}'.format(response))
         self.write(response)
