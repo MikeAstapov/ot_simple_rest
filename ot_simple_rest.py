@@ -65,7 +65,7 @@ def main():
     mem_conf = dict(config['mem_conf'])
     disp_conf = dict(config['dispatcher'])
     resolver_conf = dict(config['resolver'])
-    check_index_access = config.getboolean('user', 'check_index_access')  # TODO Follow style guides of config loading  as before.
+    user_conf = config['user']  # TODO (SOLVED): Follow style guides of config loading  as before.
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -76,7 +76,7 @@ def main():
     # Create jobs manager instance with configs needed to jobs work
 
     manager = JobsManager(db_conf=db_conf, mem_conf=mem_conf, disp_conf=disp_conf,
-                          resolver_conf=resolver_conf, check_index_access=check_index_access)
+                          resolver_conf=resolver_conf, user_conf=user_conf)
     manager.start()
 
     # Set TORNADO application with custom handlers.
