@@ -51,7 +51,7 @@ class LoadJob(tornado.web.RequestHandler):
             error = str(kwargs["exc_info"][1])
             error_msg = {"status": "rest_error", "server_error": self._reason, "status_code": status_code,
                          "error": error}
-            self.logger.debug('Error_msg: %s' % error_msg)
+            self.logger.debug('Error_msg: {}'.format(error_msg))
             self.finish(error_msg)
 
     async def get(self):
@@ -61,6 +61,6 @@ class LoadJob(tornado.web.RequestHandler):
         :return:
         """
         response = self.jobs_manager.load_job(self.request)
-        # TODO If you decide use format instead of % replace it everywhere.
-        self.logger.debug('RESPONSE: {}'.format(response))
+        # TODO (SOLVED): If you decide use format instead of % replace it everywhere.
+        self.logger.debug('LoadJob RESPONSE: {}'.format(response))
         self.write(response)
