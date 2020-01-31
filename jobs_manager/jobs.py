@@ -10,9 +10,12 @@ from utils import backlasher
 from parsers.spl_resolver.Resolver import Resolver
 
 
-# TODO Instead these two classes you need one class Job with 2 builders: the 1st from makejob, the 2nd from loadjob.
+# TODO (SOLVED): Instead these two classes you need one class Job with 2 builders:
+#  the 1st from makejob, the 2nd from loadjob.
 
-class JobLoader:
+# TODO: Put the code that works with the database in a separate module.
+
+class Job:
     """
     This class contains all of methods for check job status
     and get jobs result from cache.
@@ -20,11 +23,14 @@ class JobLoader:
 
     logger = logging.getLogger('osr')
 
-    def __init__(self, request, db_conf, mem_conf, tracker_max_interval):
+    def __init__(self, request, db_conf, mem_conf, resolver_conf,
+                 check_index_access, tracker_max_interval):
         self.request = request
         self.db_conf = db_conf
         self.mem_conf = mem_conf
+        self.resolver_conf = resolver_conf
         self.tracker_max_interval = tracker_max_interval
+        self.check_index_access = check_index_access
 
     def check_dispatcher_status(self, cur):
         check_disp_status = """SELECT (extract(epoch from CURRENT_TIMESTAMP) - extract(epoch from lastcheck)) as delta 
@@ -37,85 +43,6 @@ class JobLoader:
             if delta <= self.tracker_max_interval:
                 return True
         return False
-
-    def start(self):
-        """
-        It checks for Job's status then downloads the result.
-
-        :return:
-        """
-
-        conn = psycopg2.connect(**self.db_conf)
-        cur = conn.cursor()
-
-        dispatcher_status = self.check_dispatcher_status(cur)
-        if dispatcher_status:
-            request = self.request.arguments
-            self.logger.debug(request)
-            # Step 1. Remove OT.Simple Splunk app service data from SPL query.
-            original_spl = request["original_spl"][0].decode()
-            cache_ttl = re.findall(r"\|\s*ot[^|]*ttl\s*=\s*(\d+)", original_spl)
-            field_extraction = re.findall(r"\|\s*ot[^|]*field_extraction\s*=\s*(\S+)", original_spl)
-            preview = re.findall(r"\|\s*ot[^|]*preview\s*=\s*(\S+)", original_spl)
-            original_spl = re.sub(r"\|\s*ot\s[^|]*\|", "", original_spl)
-            original_spl = re.sub(r"\|\s*simple[^\"]*", "", original_spl)
-            original_spl = original_spl.replace("oteval", "eval")
-            original_spl = original_spl.strip()
-
-            # Get time window.
-            tws = int(float(request['tws'][0]))
-            twf = int(float(request['twf'][0]))
-
-            # Get Field Extraction mode.
-            field_extraction = field_extraction[0] if field_extraction else False
-
-            # Get preview mode.
-            preview = preview[0] if preview else False
-
-            # Update time window to discrete value.
-            tws, twf = backlasher.discretize(tws, twf, int(cache_ttl[0]) if cache_ttl else int(request['cache_ttl'][0]))
-            self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
-
-            # Step 2. Get Job's status based on (original_spl, tws, twf) parameters.
-            check_job_status = 'SELECT splqueries.id, splqueries.status, cachesdl.expiring_date, splqueries.msg ' \
-                               'FROM splqueries ' \
-                               'LEFT JOIN cachesdl ON splqueries.id = cachesdl.id WHERE splqueries.original_spl=%s AND ' \
-                               'splqueries.tws=%s AND splqueries.twf=%s AND splqueries.field_extraction=%s ' \
-                               'AND splqueries.preview=%s ORDER BY splqueries.id DESC LIMIT 1 '
-
-            stm_tuple = (original_spl, tws, twf, field_extraction, preview)
-            self.logger.info(check_job_status % stm_tuple)
-            cur.execute(check_job_status, stm_tuple)
-            fetch = cur.fetchone()
-            self.logger.info(fetch)
-
-            # Check if such Job presents.
-            if fetch:
-                cid, status, expiring_date, msg = fetch
-                # Step 3. Check Job's status and return it to OT.Simple Splunk app if it is not still ready.
-                if status == 'finished' and expiring_date:
-                    # Step 4. Load results of Job from cache for transcending.
-                    response = ''.join(list(self.load_and_send_from_memcache(cid)))
-                    self.logger.info('Cache is %s loaded.' % cid)
-                elif status == 'finished' and not expiring_date:
-                    response = {'status': 'nocache'}
-                elif status == 'running':
-                    response = {'status': status}
-                elif status == 'new':
-                    response = {'status': status}
-                elif status in ['failed', 'canceled']:
-                    response = {'status': status, 'error': msg}
-                else:
-                    self.logger.warning('Unknown status of job: %s' % status)
-                    response = {'status': 'failed', 'error': 'Unknown error: %s' % status}
-            else:
-                # Return missed job error.
-                response = {'status': 'notfound', 'error': 'Job is not found'}
-        else:
-            msg = 'SuperDispatcher is offline. Please check Spark Cluster.'
-            self.logger.warning(msg)
-            response = {'status': 'failed', 'error': msg}
-        return response
 
     def load_and_send_from_memcache(self, cid):
         """
@@ -143,23 +70,9 @@ class JobLoader:
                 yield ", "
         yield '}}'
 
-
-class JobMaker:
-    """
-    This class contains all of methods for create job in OT_Dispatcher.
-    """
-
-    logger = logging.getLogger('osr')
-
-    def __init__(self, request, db_conf, resolver_conf, check_index_access):
-        self.request = request
-        self.db_conf = db_conf
-        self.resolver_conf = resolver_conf
-        self.check_index_access = check_index_access
-
     @staticmethod
     def validate():
-        # TODO
+        # TODO: Implement in a future release
         return True
 
     def user_has_right(self, username, indexes, cur):
@@ -173,35 +86,34 @@ class JobMaker:
         :param cur: Cursor to Postgres DB.
         :return: Boolean access flag and resolved indexes.
         """
-        if not self.check_index_access:
+        if not self.check_index_access or not indexes:
             return True, indexes
 
         accessed_indexes = []
-        if indexes:
-            check_user_role_stm = "SELECT indexes FROM RoleModel WHERE username = %s;"
-            self.logger.debug(check_user_role_stm % (username,))
-            cur.execute(check_user_role_stm, (username,))
-            fetch = cur.fetchone()
-            access_flag = False
-            if fetch:
-                _indexes = fetch[0]
-                if '*' in _indexes:
-                    access_flag = True
-                else:
-                    for index in indexes:
-                        index = index.replace('"', '').replace('\\', '')
-                        for _index in _indexes:
-                            indexes_from_rm = re.findall(index.replace("*", ".*"), _index)
-                            self.logger.debug("Indexes from rm: %s. Left index: %s. Right index: %s." % (
-                                indexes_from_rm, index, _index
-                            ))
-                            for ifrm in indexes_from_rm:
-                                accessed_indexes.append(ifrm)
-                if accessed_indexes:
-                    access_flag = True
-            self.logger.debug('User has a right: %s' % access_flag)
-        else:
-            access_flag = True
+
+        check_user_role_stm = "SELECT indexes FROM RoleModel WHERE username = %s;"
+        self.logger.debug(check_user_role_stm % (username,))
+        cur.execute(check_user_role_stm, (username,))
+        fetch = cur.fetchone()
+        access_flag = False
+        if fetch:
+            _indexes = fetch[0]
+            if '*' in _indexes:
+                access_flag = True
+            else:
+                for index in indexes:
+                    index = index.replace('"', '').replace('\\', '')
+                    for _index in _indexes:
+                        indexes_from_rm = re.findall(index.replace("*", ".*"), _index)
+                        self.logger.debug("Indexes from rm: %s. Left index: %s. Right index: %s." % (
+                            indexes_from_rm, index, _index
+                        ))
+                        for ifrm in indexes_from_rm:
+                            accessed_indexes.append(ifrm)
+            if accessed_indexes:
+                access_flag = True
+        self.logger.debug('User has a right: %s' % access_flag)
+
         return access_flag, accessed_indexes
 
     def check_cache(self, cache_ttl, original_spl, tws, twf, cur, field_extraction, preview):
@@ -268,7 +180,36 @@ class JobMaker:
         self.logger.debug('job_id: %s, creating_date: %s' % (job_id, creating_date))
         return job_id, creating_date
 
-    async def start(self):
+    def get_request_params(self):
+        request = self.request.arguments
+        self.logger.debug(request)
+        # Step 1. Remove OT.Simple Splunk app service data from SPL query.
+        original_spl = request["original_spl"][0].decode()
+        cache_ttl = re.findall(r"\|\s*ot[^|]*ttl\s*=\s*(\d+)", original_spl)
+        field_extraction = re.findall(r"\|\s*ot[^|]*field_extraction\s*=\s*(\S+)", original_spl)
+        preview = re.findall(r"\|\s*ot[^|]*preview\s*=\s*(\S+)", original_spl)
+        original_spl = re.sub(r"\|\s*ot\s[^|]*\|", "", original_spl)
+        original_spl = re.sub(r"\|\s*simple[^\"]*", "", original_spl)
+        original_spl = original_spl.replace("oteval", "eval")
+        original_spl = original_spl.strip()
+
+        # Get Field Extraction mode.
+        field_extraction = field_extraction[0] if field_extraction else False
+
+        # Get preview mode.
+        preview = preview[0] if preview else False
+
+        # Get time window.
+        tws = int(float(request['tws'][0]))
+        twf = int(float(request['twf'][0]))
+
+        # Update time window to discrete value.
+        tws, twf = backlasher.discretize(tws, twf, int(cache_ttl[0]) if cache_ttl else int(request['cache_ttl'][0]))
+
+        return {'original_spl': original_spl, 'field_extraction': field_extraction,
+                'preview': preview, 'tws': tws, 'twf': twf}
+
+    async def start_make(self):
         """
         It checks for the same query Jobs and returns id for loading results to OT.Simple Splunk app.
 
@@ -281,36 +222,18 @@ class JobMaker:
         request = self.request.body_arguments
         self.logger.debug('Request: %s' % request)
 
-        # Step 1. Remove OT.Simple Splunk app service data from SPL query.
-        original_spl = request['original_spl'][0].decode()
-        self.logger.debug("Original spl: %s" % original_spl)
-        original_spl = re.sub(r"\|\s*ot\s[^|]*\|", "", original_spl)
-        original_spl = re.sub(r"\|\s*simple", "", original_spl)
-        original_spl = original_spl.replace("oteval", "eval")
-        original_spl = original_spl.strip()
-        self.logger.debug('Fixed original_spl: %s' % original_spl)
-
-        # Step 2. Get Role Model information about query and user.
-        username = request['username'][0].decode()
-        indexes = re.findall(r"index=(\S+)", original_spl)
-
-        # Get search time window.
-        tws = int(float(request['tws'][0]))
-        twf = int(float(request['twf'][0]))
-
         # Get cache lifetime.
         cache_ttl = int(request['cache_ttl'][0])
 
-        # Get field extraction mode.
-        field_extraction = request['field_extraction'][0]
-        field_extraction = True if field_extraction == b'True' else False
+        params = self.get_request_params()
+        original_spl = params['original_spl']
+        tws, twf = params['tws'], params['twf']
+        field_extraction = params['field_extraction']
+        preview = params['preview']
 
-        # Get preview mode.
-        preview = request['preview'][0]
-        preview = True if preview == b'True' else False
+        username = request['username'][0].decode()
+        indexes = re.findall(r"index=(\S+)", params['original_spl'])
 
-        # Update time window to discrete value.
-        tws, twf = backlasher.discretize(tws, twf, cache_ttl if cache_ttl else 0)
         self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
 
         sid = request['sid'][0].decode()
@@ -404,5 +327,62 @@ class JobMaker:
 
         self.logger.debug('Response: %s' % response)
         await asyncio.sleep(0.001)
-        #
-        # return response
+
+    def start_load(self):
+        """
+        It checks for Job's status then downloads the result.
+
+        :return:
+        """
+
+        conn = psycopg2.connect(**self.db_conf)
+        cur = conn.cursor()
+
+        dispatcher_status = self.check_dispatcher_status(cur)
+        if not dispatcher_status:
+            msg = 'SuperDispatcher is offline. Please check Spark Cluster.'
+            self.logger.warning(msg)
+            return {'status': 'failed', 'error': msg}
+
+        params = self.get_request_params()
+        original_spl = params['original_spl']
+        tws, twf = params['tws'], params['twf']
+        field_extraction = params['field_extraction']
+        preview = params['preview']
+
+        self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
+
+        # Step 2. Get Job's status based on (original_spl, tws, twf) parameters.
+        check_job_status = 'SELECT splqueries.id, splqueries.status, cachesdl.expiring_date, splqueries.msg ' \
+                           'FROM splqueries ' \
+                           'LEFT JOIN cachesdl ON splqueries.id = cachesdl.id WHERE splqueries.original_spl=%s AND ' \
+                           'splqueries.tws=%s AND splqueries.twf=%s AND splqueries.field_extraction=%s ' \
+                           'AND splqueries.preview=%s ORDER BY splqueries.id DESC LIMIT 1 '
+
+        stm_tuple = (original_spl, tws, twf, field_extraction, preview)
+        self.logger.info(check_job_status % stm_tuple)
+        cur.execute(check_job_status, stm_tuple)
+        fetch = cur.fetchone()
+        self.logger.info(fetch)
+
+        # Check if such Job presents.
+        if fetch:
+            cid, status, expiring_date, msg = fetch
+            # Step 3. Check Job's status and return it to OT.Simple Splunk app if it is not still ready.
+            if status == 'finished' and expiring_date:
+                # Step 4. Load results of Job from cache for transcending.
+                response = ''.join(list(self.load_and_send_from_memcache(cid)))
+                self.logger.info('Cache is %s loaded.' % cid)
+            elif status == 'finished' and not expiring_date:
+                response = {'status': 'nocache'}
+            elif status in ['new', 'running']:
+                response = {'status': status}
+            elif status in ['failed', 'canceled']:
+                response = {'status': status, 'error': msg}
+            else:
+                self.logger.warning('Unknown status of job: %s' % status)
+                response = {'status': 'failed', 'error': 'Unknown error: %s' % status}
+        else:
+            # Return missed job error.
+            response = {'status': 'notfound', 'error': 'Job is not found'}
+        return response
