@@ -3,3 +3,4 @@
 *.log
 *.swp
 .idea/
+deploy_to_stand.sh

@@ -3,10 +3,10 @@ import logging
 from hashlib import sha256
 
 import tornado.web
-import psycopg2
 from tornado.ioloop import IOLoop
 
 from utils.cachewriter import CacheWriter
+from handlers.jobs.db_connector import PostgresConnector
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -33,7 +33,7 @@ class SaveOtRest(tornado.web.RequestHandler):
         :param mem_conf: RAM cache config.
         :return:
         """
-        self.db_conf = db_conf
+        self.db = PostgresConnector(*db_conf)
         self.mem_conf = mem_conf
 
     def write_error(self, status_code: int, **kwargs) -> None:
@@ -68,7 +68,7 @@ class SaveOtRest(tornado.web.RequestHandler):
         # TODO
         return True
 
-    def check_cache(self, cache_ttl, original_spl, tws, twf, cur, field_extraction, preview):
+    def check_cache(self, cache_ttl, original_spl, tws, twf, field_extraction, preview):
         """
         It checks if the same query Job is already finished and it's cache is ready to be downloaded. This way it will
         return it's id for OT.Simple Splunk app JobLoader to download it's cache.
@@ -80,7 +80,6 @@ class SaveOtRest(tornado.web.RequestHandler):
         :type tws: Integer.
         :param twf: Time Window Finish.
         :type twf: Integer.
-        :param cur: Cursor to Postgres DB.
         :param field_extraction: Field Extraction mode.
         :type field_extraction: Boolean.
         :param preview: Preview mode.
@@ -90,12 +89,8 @@ class SaveOtRest(tornado.web.RequestHandler):
         cache_id = creating_date = None
         self.logger.debug('cache_ttl: %s' % cache_ttl)
         if cache_ttl:
-            check_cache_statement = 'SELECT id, extract(epoch from creating_date) FROM cachesdl WHERE expiring_date >= \
-            CURRENT_TIMESTAMP AND original_spl=%s AND tws=%s AND twf=%s AND field_extraction=%s AND preview=%s;'
-            stm_tuple = (original_spl, tws, twf, field_extraction, preview)
-            self.logger.info(check_cache_statement % stm_tuple)
-            cur.execute(check_cache_statement, stm_tuple)
-            fetch = cur.fetchone()
+            fetch = self.db.check_cache_statement(original_spl=original_spl, tws=tws, twf=twf,
+                                                  field_extraction=field_extraction, preview=preview)
             if fetch:
                 cache_id, creating_date = fetch
         self.logger.debug('cache_id: %s, creating_date: %s' % (cache_id, creating_date))
@@ -113,11 +108,8 @@ class SaveOtRest(tornado.web.RequestHandler):
         self.logger.debug('Original SPL: %s.' % original_spl)
 
         if self.validate():
-            conn = psycopg2.connect(**self.db_conf)
-            cur = conn.cursor()
-
             # Check for cache.
-            cache_id, creating_date = self.check_cache(cache_ttl, original_spl, 0, 0, cur, False, False)
+            cache_id, creating_date = self.check_cache(cache_ttl, original_spl, 0, 0, False, False)
 
             if cache_id is None:
 
@@ -127,23 +119,16 @@ class SaveOtRest(tornado.web.RequestHandler):
                 service_spl = '| otrest subsearch=subsearch_%s' % sha256(sha_spl.encode()).hexdigest()
 
                 # Registers new Job.
-                make_external_job_statement = 'INSERT INTO splqueries ' \
-                                              '(original_spl, service_spl, tws, twf, cache_ttl, username, status) ' \
-                                              'VALUES (%s,%s,%s,%s,%s,%s,%s) ' \
-                                              'RETURNING id, extract(epoch from creating_date);'
-                stm_tuple = (original_spl, service_spl, 0, 0, cache_ttl, '_ot_simple_rest', 'external')
-                self.logger.debug(make_external_job_statement % stm_tuple)
-                cur.execute(make_external_job_statement, stm_tuple)
-                cache_id, creating_date = cur.fetchone()
+                cache_id, creating_date = self.db.make_external_job_statement(original_spl=original_spl,
+                                                                              service_spl=service_spl,
+                                                                              tws=0, twf=0, cache_ttl=cache_ttl,
+                                                                              username='_ot_simple_rest',
+                                                                              status='external')
                 # Writes data to RAM cache.
                 CacheWriter(data, cache_id, self.mem_conf).write()
                 # Registers cache in Dispatcher's DB.
-                save_to_cache_statement = 'INSERT INTO CachesDL (original_spl, tws, twf, id, expiring_date) ' \
-                                          'VALUES(%s, %s, %s, %s, to_timestamp(extract(epoch from now()) + %s));'
-                stm_tuple = (original_spl, 0, 0, cache_id, 60)
-                self.logger.debug(save_to_cache_statement % stm_tuple)
-                cur.execute(save_to_cache_statement, stm_tuple)
-                conn.commit()
+                self.db.save_to_cache_statement(original_spl=original_spl, tws=0, twf=0,
+                                                cache_id=cache_id, expiring_date=60)
 
                 response = {"_time": creating_date, "status": "success", "job_id": cache_id}
 

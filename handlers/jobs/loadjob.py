@@ -4,10 +4,10 @@ import os
 import re
 
 import tornado.web
-import psycopg2
 from tornado.ioloop import IOLoop
 
 from utils import backlasher
+from handlers.jobs.db_connector import PostgresConnector
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -46,7 +46,7 @@ class LoadJob(tornado.web.RequestHandler):
         :return:
         """
 
-        self.db_conf = db_conf
+        self.db = PostgresConnector(db_conf)
         self.mem_conf = mem_conf
         self.tracker_max_interval = float(disp_conf['tracker_max_interval'])
 
@@ -79,11 +79,8 @@ class LoadJob(tornado.web.RequestHandler):
         future = IOLoop.current().run_in_executor(None, self.load_job)
         await future
 
-    def check_dispatcher_status(self, cur):
-        check_disp_status = """SELECT (extract(epoch from CURRENT_TIMESTAMP) - extract(epoch from lastcheck)) as delta 
-        from ticks ORDER BY lastcheck DESC LIMIT 1;"""
-        cur.execute(check_disp_status)
-        fetch = cur.fetchone()
+    def check_dispatcher_status(self):
+        fetch = self.db.check_dispatcher_status()
         self.logger.debug("Dispatcher last check: %s." % fetch)
         if fetch:
             delta = fetch[0]
@@ -98,10 +95,7 @@ class LoadJob(tornado.web.RequestHandler):
         :return:
         """
 
-        conn = psycopg2.connect(**self.db_conf)
-        cur = conn.cursor()
-
-        dispatcher_status = self.check_dispatcher_status(cur)
+        dispatcher_status = self.check_dispatcher_status()
         if dispatcher_status:
             request = self.request.arguments
             self.logger.debug(request)
@@ -130,16 +124,8 @@ class LoadJob(tornado.web.RequestHandler):
             self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
 
             # Step 2. Get Job's status based on (original_spl, tws, twf) parameters.
-            check_job_status = 'SELECT splqueries.id, splqueries.status, cachesdl.expiring_date, splqueries.msg ' \
-                               'FROM splqueries ' \
-                               'LEFT JOIN cachesdl ON splqueries.id = cachesdl.id WHERE splqueries.original_spl=%s AND ' \
-                               'splqueries.tws=%s AND splqueries.twf=%s AND splqueries.field_extraction=%s ' \
-                               'AND splqueries.preview=%s ORDER BY splqueries.id DESC LIMIT 1 '
-
-            stm_tuple = (original_spl, tws, twf, field_extraction, preview)
-            self.logger.info(check_job_status % stm_tuple)
-            cur.execute(check_job_status, stm_tuple)
-            fetch = cur.fetchone()
+            fetch = self.db.check_job_status(original_spl=original_spl, tws=tws, twf=twf,
+                                             field_extraction=field_extraction, preview=preview)
             self.logger.info(fetch)
 
             # Check if such Job presents.

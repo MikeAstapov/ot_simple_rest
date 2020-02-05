@@ -2,11 +2,11 @@ import re
 import logging
 
 import tornado.web
-import psycopg2
 from tornado.ioloop import IOLoop
 
 from parsers.spl_resolver.Resolver import Resolver
 from utils import backlasher
+from handlers.jobs.db_connector import PostgresConnector
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -45,7 +45,7 @@ class MakeJob(tornado.web.RequestHandler):
         :return:
         """
 
-        self.db_conf = db_conf
+        self.db = PostgresConnector(db_conf)
         self.resolver_conf = resolver_conf
 
     def write_error(self, status_code: int, **kwargs) -> None:
@@ -81,7 +81,7 @@ class MakeJob(tornado.web.RequestHandler):
         # TODO
         return True
 
-    def check_cache(self, cache_ttl, original_spl, tws, twf, cur, field_extraction, preview):
+    def check_cache(self, cache_ttl, original_spl, tws, twf, field_extraction, preview):
         """
         It checks if the same query Job is already finished and it's cache is ready to be downloaded. This way it will
         return it's id for OT.Simple Splunk app JobLoader to download it's cache.
@@ -93,7 +93,6 @@ class MakeJob(tornado.web.RequestHandler):
         :type tws: Integer.
         :param twf: Time Window Finish.
         :type twf: Integer.
-        :param cur: Cursor to Postgres DB.
         :param field_extraction: Field Extraction mode.
         :type field_extraction: Boolean.
         :param preview: Preview mode.
@@ -103,18 +102,14 @@ class MakeJob(tornado.web.RequestHandler):
         cache_id = creating_date = None
         self.logger.debug('cache_ttl: %s' % cache_ttl)
         if cache_ttl:
-            check_cache_statement = 'SELECT id, extract(epoch from creating_date) FROM cachesdl WHERE expiring_date >= \
-            CURRENT_TIMESTAMP AND original_spl=%s AND tws=%s AND twf=%s AND field_extraction=%s AND preview=%s;'
-            stm_tuple = (original_spl, tws, twf, field_extraction, preview)
-            self.logger.info(check_cache_statement % stm_tuple)
-            cur.execute(check_cache_statement, stm_tuple)
-            fetch = cur.fetchone()
+            fetch = self.db.check_cache_statement(original_spl=original_spl, tws=tws, twf=twf,
+                                                  field_extraction=field_extraction, preview=preview)
             if fetch:
                 cache_id, creating_date = fetch
         self.logger.debug('cache_id: %s, creating_date: %s' % (cache_id, creating_date))
         return cache_id, creating_date
 
-    def check_running(self, original_spl, tws, twf, cur, field_extraction, preview):
+    def check_running(self, original_spl, tws, twf, field_extraction, preview):
         """
         It checks if the same query Job is already running. This way it will return id of running job and will not
         register a new one.
@@ -125,20 +120,14 @@ class MakeJob(tornado.web.RequestHandler):
         :type tws: Integer.
         :param twf: Time Window Finish.
         :type twf: Integer.
-        :param cur: Cursor to Postgres DB.
         :param field_extraction: Field Extraction mode.
         :type field_extraction: Boolean.
         :param preview: Preview mode.
         :type preview: Boolean.
         :return: Job's id and date of creating.
         """
-        check_running_statement = "SELECT id, extract(epoch from creating_date) FROM splqueries \
-        WHERE status = 'running' AND original_spl=%s AND tws=%s AND twf=%s AND field_extraction=%s AND preview=%s;"
-        stm_tuple = (original_spl, tws, twf, field_extraction, preview)
-        self.logger.info(check_running_statement % stm_tuple)
-        cur.execute(check_running_statement, stm_tuple)
-        fetch = cur.fetchone()
-
+        fetch = self.db.check_running_statement(original_spl=original_spl, tws=tws, twf=twf,
+                                                field_extraction=field_extraction, preview=preview)
         if fetch:
             job_id, creating_date = fetch
         else:
@@ -147,7 +136,7 @@ class MakeJob(tornado.web.RequestHandler):
         self.logger.debug('job_id: %s, creating_date: %s' % (job_id, creating_date))
         return job_id, creating_date
 
-    def user_has_right(self, username, indexes, cur):
+    def user_has_right(self, username, indexes):
         """
         It checks Role Model if user has access to requested indexes.
 
@@ -160,10 +149,7 @@ class MakeJob(tornado.web.RequestHandler):
         """
         accessed_indexes = []
         if indexes:
-            check_user_role_stm = "SELECT indexes FROM RoleModel WHERE username = %s;"
-            self.logger.debug(check_user_role_stm % (username,))
-            cur.execute(check_user_role_stm, (username,))
-            fetch = cur.fetchone()
+            fetch = self.db.check_user_role_stm(username)
             access_flag = False
             if fetch:
                 _indexes = fetch[0]
@@ -229,14 +215,11 @@ class MakeJob(tornado.web.RequestHandler):
 
         sid = request['sid'][0].decode()
 
-        conn = psycopg2.connect(**self.db_conf)
-        cur = conn.cursor()
-
         # Step 4. Check for Role Model Access to requested indexes.
-        access_flag, indexes = self.user_has_right(username, indexes, cur)
+        access_flag, indexes = self.user_has_right(username, indexes)
         if access_flag:
             self.logger.debug("User has access. Indexes: %s." % indexes)
-            resolver = Resolver(indexes, tws, twf, cur, sid, self.request.remote_ip,
+            resolver = Resolver(indexes, tws, twf, self.db, sid, self.request.remote_ip,
                                 self.resolver_conf.get('no_subsearch_commands'))
             resolved_spl = resolver.resolve(original_spl)
             self.logger.debug("Resolved_spl: %s" % resolved_spl)
@@ -255,8 +238,7 @@ class MakeJob(tornado.web.RequestHandler):
             for search in searches:
 
                 # Step 6. Check if the same query Job is already calculated and has ready cache.
-                cache_id, creating_date = self.check_cache(cache_ttl, search[0], tws, twf, cur, field_extraction,
-                                                           preview)
+                cache_id, creating_date = self.check_cache(cache_ttl, search[0], tws, twf, field_extraction, preview)
 
                 if cache_id is None:
                     self.logger.debug('No cache')
@@ -265,8 +247,7 @@ class MakeJob(tornado.web.RequestHandler):
                     if self.validate():
 
                         # Step 7. Check if the same query Job is already be running.
-                        job_id, creating_date = self.check_running(search[0], tws, twf, cur, field_extraction,
-                                                                   preview)
+                        job_id, creating_date = self.check_running(search[0], tws, twf, field_extraction, preview)
                         self.logger.debug('Running job_id: %s, creating_date: %s' % (job_id, creating_date))
                         if job_id is None:
 
@@ -279,25 +260,15 @@ class MakeJob(tornado.web.RequestHandler):
 
                             # Step 8. Register new Job in Dispatcher DB.
                             self.logger.debug('Search: %s. Subsearches: %s.' % (search[1], subsearches))
-                            make_job_statement = 'INSERT INTO splqueries \
-                            (original_spl, service_spl, subsearches, tws, twf, cache_ttl, username, field_extraction,' \
-                                                 ' preview) \
-                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id, extract(epoch from creating_date);'
-
-                            stm_tuple = (search[0], search[1], subsearches, tws, twf, cache_ttl, username,
-                                         field_extraction, preview)
-                            self.logger.info(make_job_statement % stm_tuple)
-                            cur.execute(make_job_statement, stm_tuple)
-                            job_id, creating_date = cur.fetchone()
+                            job_id, creating_date = self.db.make_job_statement(search=search, subsearches=subsearches,
+                                                                               tws=tws, twf=twf, cache_ttl=cache_ttl,
+                                                                               username=username, field_extraction=field_extraction,
+                                                                               preview=preview)
 
                             # Add SID to DB if search is not subsearch.
                             if search == searches[-1]:
-                                add_sid_statement = 'INSERT INTO SplunkSIDs (sid, src_ip, spl) VALUES (%s,%s,%s);'
-                                stm_tuple = (sid, self.request.remote_ip, original_spl)
-                                self.logger.info(add_sid_statement % stm_tuple)
-                                cur.execute(add_sid_statement, stm_tuple)
-
-                            conn.commit()
+                                self.db.add_sid_statement(sid=sid, remote_ip=self.request.remote_ip,
+                                                          original_spl=original_spl)
 
                         # Return id of new Job.
                         response = {"_time": creating_date, "status": "success", "job_id": job_id}

@@ -10,11 +10,11 @@ from configparser import ConfigParser
 import tornado.ioloop
 import tornado.web
 
-from handlers.loadjob import LoadJob
-from handlers.makejob import MakeJob
+from handlers.jobs.loadjob import LoadJob
+from handlers.jobs.makejob import MakeJob
+from handlers.jobs.saveotrest import SaveOtRest
 from handlers.makerolemodel import MakeRoleModel
 from handlers.makedatamodels import MakeDataModels
-from handlers.saveotrest import SaveOtRest
 from handlers.pingpong import PingPong
 
 __author__ = "Andrey Starchenkov"

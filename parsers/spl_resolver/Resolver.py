@@ -46,19 +46,19 @@ class Resolver:
     otloadjob_id_pattern = r'otloadjob\s+(\d+\.\d+)'
     otloadjob_spl_pattern = r'otloadjob\s+spl=\"(.+?[^\\])\"(\s+?___token___=\"(.+?[^\\])\")?(\s+?___tail___=\"(.+?[^\\])\")?'
 
-    def __init__(self, indexes, tws, twf, cur=None, sid=None, src_ip=None, no_subsearch_commands=None):
+    def __init__(self, indexes, tws, twf, db=None, sid=None, src_ip=None, no_subsearch_commands=None):
         """
         Init with default available indexes, time window and cursor to DB for DataModels.
 
         :param indexes: list of default available indexes.
         :param tws: Time Window Start.
         :param twf: Time Window Finish.
-        :param cur: Cursor to Postgres DB.
+        :param db: DB connector.
         """
         self.indexes = indexes
         self.tws = tws
         self.twf = twf
-        self.cur = cur
+        self.db = db
         self.sid = sid
         self.src_ip = src_ip
         self.no_subsearch_commands = no_subsearch_commands
@@ -183,9 +183,7 @@ class Resolver:
         :return: String with replaces of datamodel part.
         """
         datamodel_name = match_object.group(1)
-        get_datamodel_stm = """SELECT search FROM DataModels WHERE name = '%s';"""
-        self.cur.execute(get_datamodel_stm % (datamodel_name,))
-        fetch = self.cur.fetchone()
+        fetch = self.db.get_datamodel_stm(datamodel_name)
         if fetch:
             query = fetch[0]
         else:
@@ -200,9 +198,7 @@ class Resolver:
         :return: String with replaces of datamodel part.
         """
         sid = match_object.group(1)
-        get_spl_stm = """SELECT spl FROM SplunkSIDs WHERE sid=%s AND src_ip='%s';"""
-        self.cur.execute(get_spl_stm % (sid, self.src_ip))
-        fetch = self.cur.fetchone()
+        fetch = self.db.get_spl_stm(sid, self.src_ip)
         if fetch:
             spl = fetch[0]
             otloadjob_sha256 = sha256(spl.strip().encode('utf-8')).hexdigest()
