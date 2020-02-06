@@ -6,7 +6,6 @@ import logging
 import os
 from configparser import ConfigParser
 
-
 import tornado.ioloop
 import tornado.web
 
@@ -19,23 +18,22 @@ from handlers.pingpong import PingPong
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
-__credits__ = []
+__credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "0.13.0"
+__version__ = "0.13.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
 
 
 def set_logger(loglevel, logfile, logger_name):
-
     levels = {
         'CRITICAL': logging.CRITICAL,
         'ERROR': logging.ERROR,
         'WARNING': logging.WARNING,
         'INFO': logging.INFO,
         'DEBUG': logging.DEBUG
-        }
+    }
 
     logging.basicConfig(
         filename=logfile,
