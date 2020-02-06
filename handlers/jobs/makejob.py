@@ -10,9 +10,9 @@ from handlers.jobs.db_connector import PostgresConnector
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
-__credits__ = []
+__credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "0.9.1"
+__version__ = "0.9.2"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -102,11 +102,9 @@ class MakeJob(tornado.web.RequestHandler):
         cache_id = creating_date = None
         self.logger.debug('cache_ttl: %s' % cache_ttl)
         if cache_ttl:
-            # TODO Do you think to return a fetch is a good ieda? Return the needed data instead of db conn elements here and next.
-            fetch = self.db.check_cache_statement(original_spl=original_spl, tws=tws, twf=twf,
-                                                  field_extraction=field_extraction, preview=preview)
-            if fetch:
-                cache_id, creating_date = fetch
+            cache_id, creating_date = self.db.check_cache(original_spl=original_spl, tws=tws, twf=twf,
+                                                          field_extraction=field_extraction, preview=preview)
+
         self.logger.debug('cache_id: %s, creating_date: %s' % (cache_id, creating_date))
         return cache_id, creating_date
 
@@ -127,12 +125,8 @@ class MakeJob(tornado.web.RequestHandler):
         :type preview: Boolean.
         :return: Job's id and date of creating.
         """
-        fetch = self.db.check_running_statement(original_spl=original_spl, tws=tws, twf=twf,
-                                                field_extraction=field_extraction, preview=preview)
-        if fetch:
-            job_id, creating_date = fetch
-        else:
-            job_id = creating_date = None
+        job_id, creating_date = self.db.check_running(original_spl=original_spl, tws=tws, twf=twf,
+                                                      field_extraction=field_extraction, preview=preview)
 
         self.logger.debug('job_id: %s, creating_date: %s' % (job_id, creating_date))
         return job_id, creating_date
@@ -150,16 +144,15 @@ class MakeJob(tornado.web.RequestHandler):
         """
         accessed_indexes = []
         if indexes:
-            fetch = self.db.check_user_role_stm(username)
+            user_indexes = self.db.check_user_role(username)
             access_flag = False
-            if fetch:
-                _indexes = fetch[0]
-                if '*' in _indexes:
+            if user_indexes:
+                if '*' in user_indexes:
                     access_flag = True
                 else:
                     for index in indexes:
                         index = index.replace('"', '').replace('\\', '')
-                        for _index in _indexes:
+                        for _index in user_indexes:
                             indexes_from_rm = re.findall(index.replace("*", ".*"), _index)
                             self.logger.debug("Indexes from rm: %s. Left index: %s. Right index: %s." % (
                                 indexes_from_rm, index, _index
@@ -261,15 +254,16 @@ class MakeJob(tornado.web.RequestHandler):
 
                             # Step 8. Register new Job in Dispatcher DB.
                             self.logger.debug('Search: %s. Subsearches: %s.' % (search[1], subsearches))
-                            job_id, creating_date = self.db.make_job_statement(search=search, subsearches=subsearches,
-                                                                               tws=tws, twf=twf, cache_ttl=cache_ttl,
-                                                                               username=username, field_extraction=field_extraction,
-                                                                               preview=preview)
+                            job_id, creating_date = self.db.add_job(search=search, subsearches=subsearches,
+                                                                    tws=tws, twf=twf, cache_ttl=cache_ttl,
+                                                                    username=username,
+                                                                    field_extraction=field_extraction,
+                                                                    preview=preview)
 
                             # Add SID to DB if search is not subsearch.
                             if search == searches[-1]:
-                                self.db.add_sid_statement(sid=sid, remote_ip=self.request.remote_ip,
-                                                          original_spl=original_spl)
+                                self.db.add_sid(sid=sid, remote_ip=self.request.remote_ip,
+                                                original_spl=original_spl)
 
                         # Return id of new Job.
                         response = {"_time": creating_date, "status": "success", "job_id": job_id}
