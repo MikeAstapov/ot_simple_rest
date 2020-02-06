@@ -5,11 +5,13 @@ import tornado.web
 import psycopg2
 from tornado.ioloop import IOLoop
 
+from handlers.jobs.db_connector import PostgresConnector
+
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
-__credits__ = ["Nikolay Ryabykh"]
+__credits__ = ["Nikolay Ryabykh", "Anton Khromov"]
 __license__ = ""
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -29,7 +31,7 @@ class MakeRoleModel(tornado.web.RequestHandler):
         :param db_conf: Postgres config.
         :return:
         """
-        self.db_conf = db_conf
+        self.db = PostgresConnector(db_conf)
 
     async def post(self):
         """
@@ -49,12 +51,7 @@ class MakeRoleModel(tornado.web.RequestHandler):
         role_model = request["role_model"][0].decode()
         role_model = json.loads(role_model)
 
-        conn = psycopg2.connect(**self.db_conf)
-        cur = conn.cursor()
-
-        clear_role_stm = "DELETE FROM RoleModel"
-        cur.execute(clear_role_stm)
-        conn.commit()
+        self.db.clear_roles()
 
         for rm in role_model:
             self.logger.debug("RM: %s." % rm)
@@ -64,10 +61,7 @@ class MakeRoleModel(tornado.web.RequestHandler):
             roles = roles if type(roles) is list else [roles]
             indexes = indexes if type(indexes) is list else [indexes]
 
-            role_stm = "INSERT INTO RoleModel (username, roles, indexes) VALUES (%s, %s, %s)"
-            cur.execute(role_stm, (username, roles, indexes))
-
-        conn.commit()
+            self.db.add_roles(username=username, roles=roles, indexes=indexes)
 
         response = {"status": "ok"}
         self.write(response)
