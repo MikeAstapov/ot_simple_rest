@@ -65,7 +65,7 @@ def main():
     mem_conf = dict(config['mem_conf'])
     disp_conf = dict(config['dispatcher'])
     resolver_conf = dict(config['resolver'])
-    user_conf = config['user']  # TODO (SOLVED): Follow style guides of config loading  as before.
+    user_conf = config['user']  # TODO if you think if "dict" is not needed, remove it from other configs.
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 

@@ -16,8 +16,6 @@ class JobsManager:
                 This action creates JOB in OT_Dispatcher.
     - load_job: creates job and start it immediately.
                 This action checks status JOB in OT_Dispatcher.
-    # TODO (SOLVED): Does it really start it? You've already started it in make_job.
-
     Also we have a _start_monitoring method to identify and run jobs from jobs queue.
 
     Job from the queue will be started later, when _start_monitoring detect it.
@@ -37,8 +35,6 @@ class JobsManager:
 
         logger.info('Jobs manager started')
 
-    # TODO (SOLVED): Why this method is async when load_job is not?
-    # I'v tried make this method synchronous, but it's not work correctly
     async def make_job(self, request):
         """
         Creates JobMaker instance with needed params and queue it.
@@ -75,6 +71,9 @@ class JobsManager:
                   tracker_max_interval=self.tracker_max_interval,
                   check_index_access=self.check_index)
         logger.debug('Load job was created')
+        # TODO You need something like this:
+        # job.start_load()
+        # return job.status
         return job.start_load()
 
     async def _start_monitoring(self):
@@ -101,8 +100,6 @@ class JobsManager:
         :return:        None
         """
         self._enable = True
-        # TODO (SOLVED): Is asyncio.ensure_future similar to loop.create_task?
-        # No, it's have different behavior
         asyncio.ensure_future(self._start_monitoring())
 
     def stop(self):

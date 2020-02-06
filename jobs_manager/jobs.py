@@ -9,11 +9,8 @@ import psycopg2
 from utils import backlasher
 from parsers.spl_resolver.Resolver import Resolver
 
-
-# TODO (SOLVED): Instead these two classes you need one class Job with 2 builders:
-#  the 1st from makejob, the 2nd from loadjob.
-
 # TODO: Put the code that works with the database in a separate module.
+
 
 class Job:
     """

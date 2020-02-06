@@ -63,7 +63,6 @@ class MakeJob(tornado.web.RequestHandler):
 
         :return:
         """
-        # TODO (SOLVED): Move exception handling into jobs_manager.
         response = await self.jobs_manager.make_job(self.request)
         # response = self.jobs_manager.make_job(self.request)
         self.logger.debug('MakeJob RESPONSE: {}'.format(response))
