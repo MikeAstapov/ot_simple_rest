@@ -11,9 +11,9 @@ from handlers.jobs.db_connector import PostgresConnector
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
-__credits__ = []
+__credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -80,12 +80,10 @@ class LoadJob(tornado.web.RequestHandler):
         await future
 
     def check_dispatcher_status(self):
-        fetch = self.db.check_dispatcher_status()
-        self.logger.debug("Dispatcher last check: %s." % fetch)
-        if fetch:
-            delta = fetch[0]
-            if delta <= self.tracker_max_interval:
-                return True
+        delta = self.db.check_dispatcher_status()
+        self.logger.debug("Dispatcher last check: %s." % delta)
+        if delta <= self.tracker_max_interval:
+            return True
         return False
 
     def load_job(self):
@@ -124,13 +122,13 @@ class LoadJob(tornado.web.RequestHandler):
             self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
 
             # Step 2. Get Job's status based on (original_spl, tws, twf) parameters.
-            fetch = self.db.check_job_status(original_spl=original_spl, tws=tws, twf=twf,
-                                             field_extraction=field_extraction, preview=preview)
-            self.logger.info(fetch)
+            job_status_data = self.db.check_job_status(original_spl=original_spl, tws=tws, twf=twf,
+                                                       field_extraction=field_extraction, preview=preview)
+            self.logger.info(job_status_data)
 
             # Check if such Job presents.
-            if fetch:
-                cid, status, expiring_date, msg = fetch
+            if job_status_data:
+                cid, status, expiring_date, msg = job_status_data
                 # Step 3. Check Job's status and return it to OT.Simple Splunk app if it is not still ready.
                 if status == 'finished' and expiring_date:
                     # Step 4. Load results of Job from cache for transcending.
