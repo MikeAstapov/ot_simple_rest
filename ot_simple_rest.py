@@ -81,6 +81,7 @@ def main():
         (r'/ping', PingPong),
         (r'/makejob', MakeJob, {"db_conf": db_conf, "resolver_conf": resolver_conf}),
         (r'/checkjob', CheckJob, {"db_conf": db_conf, "mem_conf": mem_conf, "disp_conf": disp_conf}),
+        # TODO You need to save old endpoint for backward compatibility.
         # (r'/loadjob', LoadJob, {"db_conf": db_conf, "mem_conf": mem_conf, "disp_conf": disp_conf}),
         (r'/getdata', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
         (r'/otrest', SaveOtRest, {"db_conf": db_conf, "mem_conf": mem_conf}),
