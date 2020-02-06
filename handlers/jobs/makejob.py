@@ -102,6 +102,7 @@ class MakeJob(tornado.web.RequestHandler):
         cache_id = creating_date = None
         self.logger.debug('cache_ttl: %s' % cache_ttl)
         if cache_ttl:
+            # TODO Do you think to return a fetch is a good ieda? Return the needed data instead of db conn elements here and next.
             fetch = self.db.check_cache_statement(original_spl=original_spl, tws=tws, twf=twf,
                                                   field_extraction=field_extraction, preview=preview)
             if fetch:
