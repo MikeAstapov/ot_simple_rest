@@ -9,7 +9,6 @@ from configparser import ConfigParser
 import tornado.ioloop
 import tornado.web
 
-
 from handlers.jobs.makejob import MakeJob
 from handlers.jobs.loadjob import LoadJob
 from handlers.jobs.checkjob import CheckJob
@@ -19,11 +18,13 @@ from handlers.service.makerolemodel import MakeRoleModel
 from handlers.service.makedatamodels import MakeDataModels
 from handlers.service.pingpong import PingPong
 
+from jobs_manager.manager import JobsManager
+
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "0.14.1"
+__version__ = "0.14.2"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -62,29 +63,36 @@ def main():
     config = ConfigParser()
     config.read(os.path.join(basedir, 'ot_simple_rest.conf'))
 
-    db_conf = dict(config['db_conf'])
-    mem_conf = dict(config['mem_conf'])
-    disp_conf = dict(config['dispatcher'])
-    resolver_conf = dict(config['resolver'])
-    static_conf = config['static_conf']
+    db_conf = config['db_conf']
+    mem_conf = config['mem_conf']
+    disp_conf = config['dispatcher']
+    resolver_conf = config['resolver']
+    static_conf = config['static']
+    user_conf = config['user']  # TODO if you think if "dict" is not needed, remove it from other configs.
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    logger = set_logger(config['general'].get('level', 'INFO'), './otsimplerest.log', 'osr')
+    logger = set_logger(config['general'].get('level', 'INFO'), './logs/otsimplerest.log', 'osr')
     logger.info('DB configuration: %s' % db_conf)
     logger.info('MEM configuration: %s' % mem_conf)
+
+    # Create jobs manager instance with configs needed to jobs work
+
+    manager = JobsManager(db_conf=db_conf, mem_conf=mem_conf, disp_conf=disp_conf,
+                          resolver_conf=resolver_conf, user_conf=user_conf)
+    manager.start()
 
     # Set TORNADO application with custom handlers.
     application = tornado.web.Application([
         (r'/ping', PingPong),
-        (r'/makejob', MakeJob, {"db_conf": db_conf, "resolver_conf": resolver_conf}),
-        (r'/checkjob', CheckJob, {"db_conf": db_conf, "mem_conf": mem_conf, "disp_conf": disp_conf}),
         # TODO You need to save old endpoint for backward compatibility.
-        (r'/loadjob', LoadJob, {"db_conf": db_conf, "mem_conf": mem_conf, "disp_conf": disp_conf}),
-        (r'/getdata', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
+        (r'/checkjob', CheckJob, {"db_conf": db_conf, "mem_conf": mem_conf, "disp_conf": disp_conf}),
+        (r'/getresult', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
+        (r'/makejob', MakeJob, {"manager": manager}),
+        (r'/loadjob', LoadJob, {"manager": manager}),
         (r'/otrest', SaveOtRest, {"db_conf": db_conf, "mem_conf": mem_conf}),
         (r'/makerolemodel', MakeRoleModel, {"db_conf": db_conf}),
-        (r'/makedatamodels', MakeDataModels, {"db_conf": db_conf}),
+        (r'/makedatamodels', MakeDataModels, {"db_conf": db_conf})
     ])
 
     logger.info('Starting server')

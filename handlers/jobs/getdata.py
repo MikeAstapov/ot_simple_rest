@@ -25,10 +25,10 @@ class GetResult(tornado.web.RequestHandler):
     """
 
     def initialize(self, mem_conf, static_conf):
-        self.mem_conf = mem_conf
+        self.mem_conf = dict(mem_conf)
         self.static_conf = dict(static_conf)
-        self.data_path = mem_conf['path']
-        self.base_url = static_conf['base_url']
+        self.data_path = self.mem_conf['path']
+        self.base_url = self.static_conf['base_url']
         self.with_nginx = static_conf.getboolean('use_nginx')
 
         self.logger = logging.getLogger('osr')

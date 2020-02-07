@@ -16,7 +16,7 @@ __status__ = "Development"
 class PostgresConnector:
     def __init__(self, db_conf):
         self.logger = logging.getLogger('osr')
-        self.db_conf = db_conf
+        self.db_conf = dict(db_conf)
         self.conn = psycopg2.connect(**self.db_conf)
         self.cur = self.conn.cursor()
 

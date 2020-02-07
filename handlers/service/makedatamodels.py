@@ -2,7 +2,6 @@ import json
 import logging
 
 import tornado.web
-import psycopg2
 from tornado.ioloop import IOLoop
 
 from handlers.jobs.db_connector import PostgresConnector

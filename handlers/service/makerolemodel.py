@@ -2,7 +2,6 @@ import json
 import logging
 
 import tornado.web
-import psycopg2
 from tornado.ioloop import IOLoop
 
 from handlers.jobs.db_connector import PostgresConnector
@@ -54,13 +53,12 @@ class MakeRoleModel(tornado.web.RequestHandler):
         self.db.clear_roles()
 
         for rm in role_model:
-            self.logger.debug("RM: %s." % rm)
+            self.logger.debug(f"RM: {rm}.")
             username = rm['username']
             roles = rm['roles'].split('\n')
             indexes = rm['indexes'].split('\n')
             roles = roles if type(roles) is list else [roles]
             indexes = indexes if type(indexes) is list else [indexes]
-
             self.db.add_roles(username=username, roles=roles, indexes=indexes)
 
         response = {"status": "ok"}

@@ -10,9 +10,9 @@ from handlers.jobs.db_connector import PostgresConnector
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
-__credits__ = []
+__credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -33,7 +33,7 @@ class SaveOtRest(tornado.web.RequestHandler):
         :param mem_conf: RAM cache config.
         :return:
         """
-        self.db = PostgresConnector(*db_conf)
+        self.db = PostgresConnector(**db_conf)
         self.mem_conf = mem_conf
 
     def write_error(self, status_code: int, **kwargs) -> None:
@@ -52,7 +52,7 @@ class SaveOtRest(tornado.web.RequestHandler):
             error = str(kwargs["exc_info"][1])
             error_msg = {"status": "rest_error", "server_error": self._reason, "status_code": status_code,
                          "error": error}
-            self.logger.debug('Error_msg: %s' % error_msg)
+            self.logger.debug(f'Error_msg: {error_msg}')
             self.finish(error_msg)
 
     async def post(self):
@@ -87,13 +87,11 @@ class SaveOtRest(tornado.web.RequestHandler):
         :return: Job cache's id and date of creating.
         """
         cache_id = creating_date = None
-        self.logger.debug('cache_ttl: %s' % cache_ttl)
+        self.logger.debug(f'cache_ttl: {cache_ttl}')
         if cache_ttl:
-            fetch = self.db.check_cache_statement(original_spl=original_spl, tws=tws, twf=twf,
-                                                  field_extraction=field_extraction, preview=preview)
-            if fetch:
-                cache_id, creating_date = fetch
-        self.logger.debug('cache_id: %s, creating_date: %s' % (cache_id, creating_date))
+            cache_id, creating_date = self.db.check_cache(original_spl=original_spl, tws=tws, twf=twf,
+                                                          field_extraction=field_extraction, preview=preview)
+        self.logger.debug(f'cache_id: {cache_id}, creating_date: {creating_date}')
         return cache_id, creating_date
 
     def save_to_cache(self):
@@ -119,16 +117,16 @@ class SaveOtRest(tornado.web.RequestHandler):
                 service_spl = '| otrest subsearch=subsearch_%s' % sha256(sha_spl.encode()).hexdigest()
 
                 # Registers new Job.
-                cache_id, creating_date = self.db.make_external_job_statement(original_spl=original_spl,
-                                                                              service_spl=service_spl,
-                                                                              tws=0, twf=0, cache_ttl=cache_ttl,
-                                                                              username='_ot_simple_rest',
-                                                                              status='external')
+                cache_id, creating_date = self.db.add_external_job(original_spl=original_spl,
+                                                                   service_spl=service_spl,
+                                                                   tws=0, twf=0, cache_ttl=cache_ttl,
+                                                                   username='_ot_simple_rest',
+                                                                   status='external')
                 # Writes data to RAM cache.
                 CacheWriter(data, cache_id, self.mem_conf).write()
                 # Registers cache in Dispatcher's DB.
-                self.db.save_to_cache_statement(original_spl=original_spl, tws=0, twf=0,
-                                                cache_id=cache_id, expiring_date=60)
+                self.db.add_to_cache(original_spl=original_spl, tws=0, twf=0,
+                                     cache_id=cache_id, expiring_date=60)
 
                 response = {"_time": creating_date, "status": "success", "job_id": cache_id}
 
