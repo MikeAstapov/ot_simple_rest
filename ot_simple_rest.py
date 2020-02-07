@@ -20,9 +20,9 @@ from jobs_manager.manager import JobsManager
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
-__credits__ = []
+__credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "0.13.0"
+__version__ = "0.13.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -61,10 +61,10 @@ def main():
     config = ConfigParser()
     config.read(os.path.join(basedir, 'ot_simple_rest.conf'))
 
-    db_conf = dict(config['db_conf'])
-    mem_conf = dict(config['mem_conf'])
-    disp_conf = dict(config['dispatcher'])
-    resolver_conf = dict(config['resolver'])
+    db_conf = config['db_conf']
+    mem_conf = config['mem_conf']
+    disp_conf = config['dispatcher']
+    resolver_conf = config['resolver']
     user_conf = config['user']  # TODO if you think if "dict" is not needed, remove it from other configs.
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
