@@ -29,9 +29,10 @@ class CacheWriter:
         self.logger.debug('Initialized.')
 
         self.cache = cache if type(cache) is dict else json.loads(cache)
-        self.cache_dir = '%ssearch_%s.cache' % (mem_conf['path'], cache_id)
+        _path = mem_conf['path']
+        self.cache_dir = f'{_path}ssearch_{cache_id}.cache'
 
-        self.logger.debug('Cache %s:%s with header will be written.' % (self.cache_dir, type(self.cache)))
+        self.logger.debug(f'Cache {self.cache_dir}:{type(self.cache)} with header will be written.')
 
     def get_fieldnames(self):
         """
@@ -50,9 +51,9 @@ class CacheWriter:
         :type fields: set of fields
         :return: DDL schema string
         """
-        schema = ["`%s` STRING" % field for field in fields]
+        schema = [f"`{field}` STRING" for field in fields]
         schema = ",".join(schema)
-        self.logger.debug("Schema: %s" % schema)
+        self.logger.debug(f"Schema: {schema}")
         return schema + '\n'
 
     def write_csv(self):
@@ -85,7 +86,7 @@ class CacheWriter:
                 empty_keys = fieldnames - keys
                 for empty_key in empty_keys:
                     line[empty_key] = ''
-                fw.write('%s\n' % json.dumps(line))
+                fw.write('{}\n'.format(json.dumps(line)))
 
     def write(self):
         self.write_json()

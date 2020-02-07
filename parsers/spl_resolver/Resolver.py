@@ -89,10 +89,8 @@ class Resolver:
 
         subsearch_sha256 = sha256(_subsearch_query.strip().encode('utf-8')).hexdigest()
 
-        self.subsearches['subsearch_%s' % subsearch_sha256] = (_subsearch_query, _subsearch_query_service)
-        return match_object.group(0).replace(
-            '[%s]' % subsearch_query, 'subsearch=subsearch_%s' % subsearch_sha256
-        )
+        self.subsearches[f'subsearch_{subsearch_sha256}'] = (_subsearch_query, _subsearch_query_service)
+        return match_object.group(0).replace(f'[{subsearch_query}]', f'subsearch=subsearch_{subsearch_sha256}')
 
     def create_otrest(self, match_object):
         """
@@ -103,8 +101,8 @@ class Resolver:
         :return: String with replaces of subsearches.
         """
         otrest_sha256 = sha256(match_object.group(0).strip().encode('utf-8')).hexdigest()
-        otrest_service = '| otrest subsearch=subsearch_%s' % otrest_sha256
-        self.subsearches['subsearch_%s' % otrest_sha256] = ('| %s' % match_object.group(0), otrest_service)
+        otrest_service = f'| otrest subsearch=subsearch_{otrest_sha256}'
+        self.subsearches[f'subsearch_{otrest_sha256}'] = ('| {}'.format(match_object.group(0)), otrest_service)
         return otrest_service
 
     @staticmethod
@@ -130,9 +128,9 @@ class Resolver:
         query = match_object.group(1)
 
         query, subsearch = self.hide_subsearch_before_read(query)
-        self.logger.debug("Whole Query: %s. Query: %s. Indexes: %s." % (match_object.group(0), query, self.indexes))
+        self.logger.debug(f"Whole Query: {match_object.group(0)}. Query: {query}. Indexes: {self.indexes}.")
         graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
-        return '| read %s%s' % (json.dumps(graph), subsearch)
+        return f'| read {json.dumps(graph)}{subsearch}'
 
     def create_otstats_graph(self, match_object):
         """
@@ -145,9 +143,9 @@ class Resolver:
         query = match_object.group(1)
 
         query, subsearch = self.hide_subsearch_before_read(query)
-        self.logger.debug("Whole Query: %s. Query: %s. Indexes: %s." % (match_object.group(0), query, self.indexes))
+        self.logger.debug(f"Whole Query: {match_object.group(0)}. Query: {query}. Indexes: {self.indexes}.")
         graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
-        return '| otstats %s%s' % (json.dumps(graph), subsearch)
+        return f'| otstats {json.dumps(graph)}{subsearch}'
 
     @staticmethod
     def create_filter_graph(match_object):
@@ -160,7 +158,7 @@ class Resolver:
         """
         query = match_object.group(1)
         graph = SPLtoSQL.parse_filter(query)
-        return '| filter %s' % json.dumps(graph)
+        return f'| filter {json.dumps(graph)}'
 
     @staticmethod
     def create_inputlookup_filter(match_object):
@@ -173,7 +171,7 @@ class Resolver:
         """
         query = match_object.group(2)
         graph = SPLtoSQL.parse_filter(query)
-        return 'otinputlookup%swhere %s' % (match_object.group(1), json.dumps(graph))
+        return f'otinputlookup{match_object.group(1)}where {json.dumps(graph)}'
 
     def create_datamodels(self, match_object):
         """
@@ -183,8 +181,8 @@ class Resolver:
         :return: String with replaces of datamodel part.
         """
         datamodel_name = match_object.group(1)
-        get_datamodel_stm = """SELECT search FROM DataModels WHERE name = '%s';"""
-        self.cur.execute(get_datamodel_stm % (datamodel_name,))
+        get_datamodel_stm = f"""SELECT search FROM DataModels WHERE name = '{datamodel_name}';"""
+        self.cur.execute(get_datamodel_stm)
         fetch = self.cur.fetchone()
         if fetch:
             query = fetch[0]
@@ -200,14 +198,14 @@ class Resolver:
         :return: String with replaces of datamodel part.
         """
         sid = match_object.group(1)
-        get_spl_stm = """SELECT spl FROM SplunkSIDs WHERE sid=%s AND src_ip='%s';"""
-        self.cur.execute(get_spl_stm % (sid, self.src_ip))
+        get_spl_stm = f"""SELECT spl FROM SplunkSIDs WHERE sid={sid} AND src_ip='{self.src_ip}';"""
+        self.cur.execute(get_spl_stm)
         fetch = self.cur.fetchone()
         if fetch:
             spl = fetch[0]
             otloadjob_sha256 = sha256(spl.strip().encode('utf-8')).hexdigest()
-            otloadjob_service = '| otloadjob subsearch=subsearch_%s' % otloadjob_sha256
-            self.subsearches['subsearch_%s' % otloadjob_sha256] = (spl, otloadjob_service)
+            otloadjob_service = f'| otloadjob subsearch=subsearch_{otloadjob_sha256}'
+            self.subsearches[f'subsearch_{otloadjob_sha256}'] = (spl, otloadjob_service)
             return otloadjob_service
         else:
             raise Exception('Job sid is not found.')
@@ -222,9 +220,9 @@ class Resolver:
         spl = match_object.group(1)
         token = match_object.group(3)
         tail = match_object.group(5)
-        self.logger.debug('SPL: %s.' % spl)
-        self.logger.debug('Token: %s.' % token)
-        self.logger.debug('Tail: %s.' % tail)
+        self.logger.debug(f'SPL: {spl}.')
+        self.logger.debug(f'Token: {token}.')
+        self.logger.debug(f'Tail: {tail}.')
 
         spl = spl.replace('\\"', '"')
         if token is None:
@@ -236,18 +234,18 @@ class Resolver:
         else:
             tail = tail.replace('\\"', '"')
 
-        self.logger.debug('Unescaped SPL: %s.' % spl)
-        self.logger.debug('Unescaped Token: %s.' % token)
-        self.logger.debug('Unescaped Tail: %s.' % tail)
+        self.logger.debug(f'Unescaped SPL: {spl}.')
+        self.logger.debug(f'Unescaped Token: {token}.')
+        self.logger.debug(f'Unescaped Tail: {tail}.')
 
         spl = spl + token + tail
         spl = spl.strip()
-        self.logger.debug('Concatenated SPL for subsearch: %s.' % spl)
+        self.logger.debug(f'Concatenated SPL for subsearch: {spl}.')
 
         otloadjob_sha256 = sha256(spl.strip().encode('utf-8')).hexdigest()
-        otloadjob_service = 'otloadjob subsearch=subsearch_%s' % otloadjob_sha256
+        otloadjob_service = f'otloadjob subsearch=subsearch_{otloadjob_sha256}'
         _otloadjob_service = self.resolve(spl)
-        self.subsearches['subsearch_%s' % otloadjob_sha256] = (spl, _otloadjob_service['search'][1])
+        self.subsearches[f'subsearch_{otloadjob_sha256}'] = (spl, _otloadjob_service['search'][1])
         return otloadjob_service
 
     def hide_quoted(self, match_object):
@@ -256,12 +254,12 @@ class Resolver:
         quoted_text_sha256 = sha256(quoted_text.encode('utf-8')).hexdigest()
         self.hidden_quoted_text[quoted_text_sha256] = quoted_text
 
-        return match_object.group(0).replace(quoted_text, '_quoted_text_%s' % quoted_text_sha256)
+        return match_object.group(0).replace(quoted_text, f'_quoted_text_{quoted_text_sha256}')
 
     def return_quoted(self, match_object):
         quoted_text_sha256 = match_object.group(1)
         return match_object.group(0).replace(
-            '_quoted_text_%s' % quoted_text_sha256,
+            f'_quoted_text_{quoted_text_sha256}',
             self.hidden_quoted_text[quoted_text_sha256]
         )
 
@@ -270,21 +268,21 @@ class Resolver:
         hidden_text_sha256 = sha256(hidden_text.encode('utf-8')).hexdigest()
         self.hidden_no_subsearches[hidden_text_sha256] = hidden_text
 
-        return match_object.group(0).replace(hidden_text, '_hidden_text_%s' % hidden_text_sha256)
+        return match_object.group(0).replace(hidden_text, f'_hidden_text_{hidden_text_sha256}')
 
     def _return_no_subsearch_command(self, match_object):
         hidden_text_sha256 = match_object.group(1)
         return match_object.group(0).replace(
-            '_hidden_text_%s' % hidden_text_sha256,
+            f'_hidden_text_{hidden_text_sha256}',
             self.hidden_no_subsearches[hidden_text_sha256]
         )
 
     def hide_no_subsearch_commands(self, spl):
         if self.no_subsearch_commands is not None:
             commands = self.no_subsearch_commands.split(',')
-            raw_str = r'\|\s+%s[^\[]+(\[.+\])'
-            patterns = [re.compile(raw_str % command) for command in commands]
-            self.logger.debug('Patterns: %s.' % patterns)
+            raw_str = r'\|\s+{command}[^\[]+(\[.+\])'
+            patterns = [re.compile(raw_str.format(command=command)) for command in commands]
+            self.logger.debug(f'Patterns: {patterns}.')
             for pattern in patterns:
                 spl = pattern.sub(self._hide_no_subsearch_command, spl)
         return spl
