@@ -9,6 +9,7 @@ import psycopg2
 from utils import backlasher
 from parsers.spl_resolver.Resolver import Resolver
 
+
 # TODO: Put the code that works with the database in a separate module.
 
 
@@ -29,12 +30,14 @@ class Job:
         self.tracker_max_interval = tracker_max_interval
         self.check_index_access = check_index_access
 
+        self.status = {'status': 'created'}
+
     def check_dispatcher_status(self, cur):
-        check_disp_status = """SELECT (extract(epoch from CURRENT_TIMESTAMP) - extract(epoch from lastcheck)) as delta 
-        from ticks ORDER BY lastcheck DESC LIMIT 1;"""
+        check_disp_status = """SELECT (extract(epoch from CURRENT_TIMESTAMP) - extract(epoch from lastcheck)) as delta
+         from ticks ORDER BY lastcheck DESC LIMIT 1;"""
         cur.execute(check_disp_status)
         fetch = cur.fetchone()
-        self.logger.debug("Dispatcher last check: %s." % fetch)
+        self.logger.debug(f"Dispatcher last check: {fetch}.")
         if fetch:
             delta = fetch[0]
             if delta <= self.tracker_max_interval:
@@ -48,18 +51,19 @@ class Job:
         :type cid: Integer.
         :return: List of cache table lines.
         """
-        self.logger.debug('Started loading cache %s.' % cid)
-        path_to_cache_dir = '%s/search_%s.cache/' % (self.mem_conf['path'], cid)
-        self.logger.debug('Path to cache %s.' % path_to_cache_dir)
+        self.logger.debug(f'Started loading cache {cid}.')
+        _path = self.mem_conf['path']
+        path_to_cache_dir = f'{_path}/search_{cid}.cache/'
+        self.logger.debug(f'Path to cache {path_to_cache_dir}.')
         file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
         with open(path_to_cache_dir + "_SCHEMA") as fr:
             df_schema = fr.read()
-        yield '{"status": "success", "schema": "%s", "events": {' % df_schema.strip()
+        yield '{"status": "success", "schema": "{}", "events": {'.format(df_schema.strip())
         length = len(file_names)
         for i in range(length):
             file_name = file_names[i]
-            self.logger.debug('Reading part: %s' % file_name)
-            yield '"%s": ' % file_name
+            self.logger.debug(f'Reading part: {file_name}')
+            yield f'"{file_name}": '
             with open(path_to_cache_dir + file_name) as fr:
                 body = fr.read()
             yield json.dumps(body)
@@ -88,9 +92,9 @@ class Job:
 
         accessed_indexes = []
 
-        check_user_role_stm = "SELECT indexes FROM RoleModel WHERE username = %s;"
-        self.logger.debug(check_user_role_stm % (username,))
-        cur.execute(check_user_role_stm, (username,))
+        check_user_role_stm = f"SELECT indexes FROM RoleModel WHERE username = {username};"
+        self.logger.debug(check_user_role_stm)
+        cur.execute(check_user_role_stm)
         fetch = cur.fetchone()
         access_flag = False
         if fetch:
@@ -102,14 +106,13 @@ class Job:
                     index = index.replace('"', '').replace('\\', '')
                     for _index in _indexes:
                         indexes_from_rm = re.findall(index.replace("*", ".*"), _index)
-                        self.logger.debug("Indexes from rm: %s. Left index: %s. Right index: %s." % (
-                            indexes_from_rm, index, _index
-                        ))
+                        self.logger.debug(f"Indexes from rm: {indexes_from_rm}. Left index: {index}. "
+                                          f"Right index: {_index}.")
                         for ifrm in indexes_from_rm:
                             accessed_indexes.append(ifrm)
             if accessed_indexes:
                 access_flag = True
-        self.logger.debug('User has a right: %s' % access_flag)
+        self.logger.debug(f'User has a right: {access_flag}')
 
         return access_flag, accessed_indexes
 
@@ -132,17 +135,17 @@ class Job:
         :return: Job cache's id and date of creating.
         """
         cache_id = creating_date = None
-        self.logger.debug('cache_ttl: %s' % cache_ttl)
+        self.logger.debug(f'cache_ttl: {cache_ttl}')
         if cache_ttl:
-            check_cache_statement = 'SELECT id, extract(epoch from creating_date) FROM cachesdl WHERE expiring_date >= \
-            CURRENT_TIMESTAMP AND original_spl=%s AND tws=%s AND twf=%s AND field_extraction=%s AND preview=%s;'
-            stm_tuple = (original_spl, tws, twf, field_extraction, preview)
-            self.logger.info(check_cache_statement % stm_tuple)
-            cur.execute(check_cache_statement, stm_tuple)
+            check_cache_statement = f'SELECT id, extract(epoch from creating_date) FROM cachesdl WHERE expiring_date >= ' \
+                                    f'CURRENT_TIMESTAMP AND original_spl={original_spl} AND tws={tws} AND twf={twf} ' \
+                                    f'AND field_extraction={field_extraction} AND preview={preview};'
+            self.logger.info(check_cache_statement)
+            cur.execute(check_cache_statement)
             fetch = cur.fetchone()
             if fetch:
                 cache_id, creating_date = fetch
-        self.logger.debug('cache_id: %s, creating_date: %s' % (cache_id, creating_date))
+        self.logger.debug(f'cache_id: {cache_id}, creating_date: {creating_date}')
         return cache_id, creating_date
 
     def check_running(self, original_spl, tws, twf, cur, field_extraction, preview):
@@ -162,11 +165,11 @@ class Job:
         :type preview: Boolean.
         :return: Job's id and date of creating.
         """
-        check_running_statement = "SELECT id, extract(epoch from creating_date) FROM splqueries \
-        WHERE status = 'running' AND original_spl=%s AND tws=%s AND twf=%s AND field_extraction=%s AND preview=%s;"
-        stm_tuple = (original_spl, tws, twf, field_extraction, preview)
-        self.logger.info(check_running_statement % stm_tuple)
-        cur.execute(check_running_statement, stm_tuple)
+        check_running_statement = f"SELECT id, extract(epoch from creating_date) FROM splqueries " \
+                                  f"WHERE status = 'running' AND original_spl={original_spl} AND tws={tws} AND twf={twf}" \
+                                  f" AND field_extraction={field_extraction} AND preview={preview};"
+        self.logger.info(check_running_statement)
+        cur.execute(check_running_statement)
         fetch = cur.fetchone()
 
         if fetch:
@@ -174,7 +177,7 @@ class Job:
         else:
             job_id = creating_date = None
 
-        self.logger.debug('job_id: %s, creating_date: %s' % (job_id, creating_date))
+        self.logger.debug(f'job_id: {job_id}, creating_date: {creating_date}')
         return job_id, creating_date
 
     def get_request_params(self):
@@ -217,7 +220,7 @@ class Job:
         :return:
         """
         request = self.request.body_arguments
-        self.logger.debug('Request: %s' % request)
+        self.logger.debug(f'Request: {request}')
 
         # Get cache lifetime.
         cache_ttl = int(request['cache_ttl'][0])
@@ -231,7 +234,7 @@ class Job:
         username = request['username'][0].decode()
         indexes = re.findall(r"index=(\S+)", params['original_spl'])
 
-        self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
+        self.logger.debug(f"Discrete time window: [{tws},{twf}].")
 
         sid = request['sid'][0].decode()
 
@@ -241,11 +244,11 @@ class Job:
         # Step 4. Check for Role Model Access to requested indexes.
         access_flag, indexes = self.user_has_right(username, indexes, cur)
         if access_flag:
-            self.logger.debug("User has access. Indexes: %s." % indexes)
+            self.logger.debug(f"User has access. Indexes: {indexes}.")
             resolver = Resolver(indexes, tws, twf, cur, sid, self.request.remote_ip,
                                 self.resolver_conf.get('no_subsearch_commands'))
             resolved_spl = resolver.resolve(original_spl)
-            self.logger.debug("Resolved_spl: %s" % resolved_spl)
+            self.logger.debug(f"Resolved_spl: {resolved_spl}")
 
             # Step 5. Make searches queue based on subsearches of main query.
             searches = []
@@ -256,7 +259,7 @@ class Job:
 
             # Append main search query to the end.
             searches.append(resolved_spl['search'])
-            self.logger.debug("Searches: %s" % searches)
+            self.logger.debug(f"Searches: {searches}")
             response = {"status": "fail", "error": "No any searches were resolved"}
             for search in searches:
 
@@ -273,7 +276,7 @@ class Job:
                         # Step 7. Check if the same query Job is already be running.
                         job_id, creating_date = self.check_running(search[0], tws, twf, cur, field_extraction,
                                                                    preview)
-                        self.logger.debug('Running job_id: %s, creating_date: %s' % (job_id, creating_date))
+                        self.logger.debug(f'Running job_id: {job_id}, creating_date: {creating_date}')
                         if job_id is None:
 
                             # Form the list of subsearches for each search.
@@ -284,24 +287,26 @@ class Job:
                                     subsearches.append(resolved_spl['subsearches'][each][0])
 
                             # Step 8. Register new Job in Dispatcher DB.
-                            self.logger.debug('Search: %s. Subsearches: %s.' % (search[1], subsearches))
-                            make_job_statement = 'INSERT INTO splqueries \
-                            (original_spl, service_spl, subsearches, tws, twf, cache_ttl, username, field_extraction,' \
-                                                 ' preview) \
-                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id, extract(epoch from creating_date);'
-
-                            stm_tuple = (search[0], search[1], subsearches, tws, twf, cache_ttl, username,
-                                         field_extraction, preview)
-                            self.logger.info(make_job_statement % stm_tuple)
-                            cur.execute(make_job_statement, stm_tuple)
+                            _search = search[1]
+                            self.logger.debug(f'Search: {_search}. Subsearches: {subsearches}.')
+                            original_spl = search[0]
+                            service_spl = search[1]
+                            make_job_statement = f'INSERT INTO splqueries (original_spl, service_spl, subsearches, tws,' \
+                                                 f' twf, cache_ttl, username, field_extraction, preview) VALUES ' \
+                                                 f'({original_spl},{service_spl},{subsearches},{tws}, {twf},{cache_ttl},' \
+                                                 f'{username},{field_extraction},{preview}) RETURNING id, ' \
+                                                 f'extract(epoch from creating_date);'
+                            self.logger.info(make_job_statement)
+                            cur.execute(make_job_statement)
                             job_id, creating_date = cur.fetchone()
 
                             # Add SID to DB if search is not subsearch.
                             if search == searches[-1]:
-                                add_sid_statement = 'INSERT INTO SplunkSIDs (sid, src_ip, spl) VALUES (%s,%s,%s);'
-                                stm_tuple = (sid, self.request.remote_ip, original_spl)
-                                self.logger.info(add_sid_statement % stm_tuple)
-                                cur.execute(add_sid_statement, stm_tuple)
+                                src_ip = self.request.remote_ip
+                                add_sid_statement = f'INSERT INTO SplunkSIDs (sid, src_ip, spl) ' \
+                                                    f'VALUES ({sid},{src_ip},{original_spl});'
+                                self.logger.info(add_sid_statement)
+                                cur.execute(add_sid_statement)
 
                             conn.commit()
 
@@ -322,7 +327,7 @@ class Job:
             self.logger.debug("User has no access.")
             response = {"status": "fail", "error": "User has no access to index"}
 
-        self.logger.debug('Response: %s' % response)
+        self.logger.debug(f'Response: {response}')
         await asyncio.sleep(0.001)
 
     def start_load(self):
@@ -347,18 +352,17 @@ class Job:
         field_extraction = params['field_extraction']
         preview = params['preview']
 
-        self.logger.debug("Discrete time window: [%s,%s]." % (tws, twf))
+        self.logger.debug(f"Discrete time window: [{tws},{twf}].")
 
         # Step 2. Get Job's status based on (original_spl, tws, twf) parameters.
-        check_job_status = 'SELECT splqueries.id, splqueries.status, cachesdl.expiring_date, splqueries.msg ' \
-                           'FROM splqueries ' \
-                           'LEFT JOIN cachesdl ON splqueries.id = cachesdl.id WHERE splqueries.original_spl=%s AND ' \
-                           'splqueries.tws=%s AND splqueries.twf=%s AND splqueries.field_extraction=%s ' \
-                           'AND splqueries.preview=%s ORDER BY splqueries.id DESC LIMIT 1 '
+        check_job_status = f'SELECT splqueries.id, splqueries.status, cachesdl.expiring_date, splqueries.msg ' \
+                           f'FROM splqueries LEFT JOIN cachesdl ON splqueries.id = cachesdl.id WHERE ' \
+                           f'splqueries.original_spl={original_spl} AND splqueries.tws={tws} AND splqueries.twf={twf} ' \
+                           f'AND splqueries.field_extraction={field_extraction} ' \
+                           f'AND splqueries.preview={preview} ORDER BY splqueries.id DESC LIMIT 1 '
 
-        stm_tuple = (original_spl, tws, twf, field_extraction, preview)
-        self.logger.info(check_job_status % stm_tuple)
-        cur.execute(check_job_status, stm_tuple)
+        self.logger.info(check_job_status)
+        cur.execute(check_job_status)
         fetch = cur.fetchone()
         self.logger.info(fetch)
 
@@ -369,7 +373,7 @@ class Job:
             if status == 'finished' and expiring_date:
                 # Step 4. Load results of Job from cache for transcending.
                 response = ''.join(list(self.load_and_send_from_memcache(cid)))
-                self.logger.info('Cache is %s loaded.' % cid)
+                self.logger.info(f'Cache is {cid} loaded.')
             elif status == 'finished' and not expiring_date:
                 response = {'status': 'nocache'}
             elif status in ['new', 'running']:
@@ -377,9 +381,9 @@ class Job:
             elif status in ['failed', 'canceled']:
                 response = {'status': status, 'error': msg}
             else:
-                self.logger.warning('Unknown status of job: %s' % status)
-                response = {'status': 'failed', 'error': 'Unknown error: %s' % status}
+                self.logger.warning(f'Unknown status of job: {status}')
+                response = {'status': 'failed', 'error': f'Unknown error: {status}'}
         else:
             # Return missed job error.
             response = {'status': 'notfound', 'error': 'Job is not found'}
-        return response
+        self.status = response
