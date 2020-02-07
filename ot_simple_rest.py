@@ -12,12 +12,12 @@ import tornado.web
 
 from handlers.jobs.makejob import MakeJob
 from handlers.jobs.loadjob import LoadJob
-from handlers.checkjob import CheckJob
-from handlers.getdata import GetResult
+from handlers.jobs.checkjob import CheckJob
+from handlers.jobs.getdata import GetResult
 from handlers.jobs.saveotrest import SaveOtRest
-from handlers.makerolemodel import MakeRoleModel
-from handlers.makedatamodels import MakeDataModels
-from handlers.pingpong import PingPong
+from handlers.service.makerolemodel import MakeRoleModel
+from handlers.service.makedatamodels import MakeDataModels
+from handlers.service.pingpong import PingPong
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
