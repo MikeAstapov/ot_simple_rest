@@ -23,10 +23,10 @@ class JobsManager:
     """
     def __init__(self, db_conf, mem_conf, disp_conf,
                  resolver_conf, user_conf):
-        self.db_conf = db_conf
-        self.mem_conf = mem_conf
-        self.disp_conf = disp_conf
-        self.r_conf = resolver_conf
+        self.db_conf = dict(db_conf)
+        self.mem_conf = dict(mem_conf)
+        self.disp_conf = dict(disp_conf)
+        self.r_conf = dict(resolver_conf)
         self.check_index = user_conf.getboolean('check_index_access')
         self.tracker_max_interval = float(disp_conf['tracker_max_interval'])
 
@@ -74,7 +74,8 @@ class JobsManager:
         # TODO You need something like this:
         # job.start_load()
         # return job.status
-        return job.start_load()
+        job.start_load()
+        return job.status
 
     async def _start_monitoring(self):
         """
