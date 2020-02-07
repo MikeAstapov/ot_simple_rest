@@ -5,9 +5,9 @@ import tornado.web
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
-__credits__ = []
+__credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "0.9.1"
+__version__ = "0.10.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -54,7 +54,7 @@ class MakeJob(tornado.web.RequestHandler):
             error = str(kwargs["exc_info"][1])
             error_msg = {"status": "rest_error", "server_error": self._reason, "status_code": status_code,
                          "error": error}
-            self.logger.debug('Error_msg: %s' % error_msg)
+            self.logger.debug(f'Error_msg: {error_msg}')
             self.finish(error_msg)
 
     async def post(self):
@@ -65,5 +65,5 @@ class MakeJob(tornado.web.RequestHandler):
         """
         response = await self.jobs_manager.make_job(self.request)
         # response = self.jobs_manager.make_job(self.request)
-        self.logger.debug('MakeJob RESPONSE: {}'.format(response))
+        self.logger.debug(f'MakeJob RESPONSE: {response}')
         self.write(response)

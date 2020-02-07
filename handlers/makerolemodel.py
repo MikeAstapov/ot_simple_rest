@@ -7,9 +7,9 @@ from tornado.ioloop import IOLoop
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
-__credits__ = ["Nikolay Ryabykh"]
+__credits__ = ["Nikolay Ryabykh", "Anton Khromov"]
 __license__ = ""
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -29,7 +29,7 @@ class MakeRoleModel(tornado.web.RequestHandler):
         :param db_conf: Postgres config.
         :return:
         """
-        self.db_conf = db_conf
+        self.db_conf = dict(db_conf)
 
     async def post(self):
         """
@@ -57,15 +57,15 @@ class MakeRoleModel(tornado.web.RequestHandler):
         conn.commit()
 
         for rm in role_model:
-            self.logger.debug("RM: %s." % rm)
+            self.logger.debug(f"RM: {rm}.")
             username = rm['username']
             roles = rm['roles'].split('\n')
             indexes = rm['indexes'].split('\n')
             roles = roles if type(roles) is list else [roles]
             indexes = indexes if type(indexes) is list else [indexes]
 
-            role_stm = "INSERT INTO RoleModel (username, roles, indexes) VALUES (%s, %s, %s)"
-            cur.execute(role_stm, (username, roles, indexes))
+            role_stm = f"INSERT INTO RoleModel (username, roles, indexes) VALUES ({username}, {roles}, {indexes})"
+            cur.execute(role_stm)
 
         conn.commit()
 

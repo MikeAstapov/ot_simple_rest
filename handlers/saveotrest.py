@@ -33,7 +33,7 @@ class SaveOtRest(tornado.web.RequestHandler):
         :param mem_conf: RAM cache config.
         :return:
         """
-        self.db_conf = db_conf
+        self.db_conf = dict(db_conf)
         self.mem_conf = mem_conf
 
     def write_error(self, status_code: int, **kwargs) -> None:
@@ -52,7 +52,7 @@ class SaveOtRest(tornado.web.RequestHandler):
             error = str(kwargs["exc_info"][1])
             error_msg = {"status": "rest_error", "server_error": self._reason, "status_code": status_code,
                          "error": error}
-            self.logger.debug('Error_msg: %s' % error_msg)
+            self.logger.debug(f'Error_msg: {error_msg}')
             self.finish(error_msg)
 
     async def post(self):
@@ -88,17 +88,18 @@ class SaveOtRest(tornado.web.RequestHandler):
         :return: Job cache's id and date of creating.
         """
         cache_id = creating_date = None
-        self.logger.debug('cache_ttl: %s' % cache_ttl)
+        self.logger.debug(f'cache_ttl: {cache_ttl}')
         if cache_ttl:
-            check_cache_statement = 'SELECT id, extract(epoch from creating_date) FROM cachesdl WHERE expiring_date >= \
-            CURRENT_TIMESTAMP AND original_spl=%s AND tws=%s AND twf=%s AND field_extraction=%s AND preview=%s;'
-            stm_tuple = (original_spl, tws, twf, field_extraction, preview)
-            self.logger.info(check_cache_statement % stm_tuple)
-            cur.execute(check_cache_statement, stm_tuple)
+            check_cache_statement = f'SELECT id, extract(epoch from creating_date) FROM cachesdl WHERE ' \
+                                    f'expiring_date >= CURRENT_TIMESTAMP AND original_spl={original_spl} ' \
+                                    f'AND tws={tws} AND twf={twf} AND field_extraction={field_extraction} ' \
+                                    f'AND preview={preview};'
+            self.logger.info(check_cache_statement)
+            cur.execute(check_cache_statement)
             fetch = cur.fetchone()
             if fetch:
                 cache_id, creating_date = fetch
-        self.logger.debug('cache_id: %s, creating_date: %s' % (cache_id, creating_date))
+        self.logger.debug(f'cache_id: {cache_id}, creating_date: {creating_date}')
         return cache_id, creating_date
 
     def save_to_cache(self):
@@ -110,7 +111,7 @@ class SaveOtRest(tornado.web.RequestHandler):
         original_spl = request['original_spl'][0].decode()
         cache_ttl = request['cache_ttl'][0].decode()
 
-        self.logger.debug('Original SPL: %s.' % original_spl)
+        self.logger.debug(f'Original SPL: {original_spl}.')
 
         if self.validate():
             conn = psycopg2.connect(**self.db_conf)
@@ -121,28 +122,27 @@ class SaveOtRest(tornado.web.RequestHandler):
 
             if cache_id is None:
 
-                sha_spl = 'otrest%s' % original_spl.split('otrest')[1]
+                sha_spl = 'otrest{}'.format(original_spl.split('otrest')[1])
                 data = request['data'][0].decode()
-                self.logger.debug('Data: %s.' % data)
-                service_spl = '| otrest subsearch=subsearch_%s' % sha256(sha_spl.encode()).hexdigest()
+                self.logger.debug(f'Data: {data}.')
+                service_spl = '| otrest subsearch=subsearch_{}'.format(sha256(sha_spl.encode()).hexdigest())
 
                 # Registers new Job.
-                make_external_job_statement = 'INSERT INTO splqueries ' \
-                                              '(original_spl, service_spl, tws, twf, cache_ttl, username, status) ' \
-                                              'VALUES (%s,%s,%s,%s,%s,%s,%s) ' \
-                                              'RETURNING id, extract(epoch from creating_date);'
-                stm_tuple = (original_spl, service_spl, 0, 0, cache_ttl, '_ot_simple_rest', 'external')
-                self.logger.debug(make_external_job_statement % stm_tuple)
-                cur.execute(make_external_job_statement, stm_tuple)
+                make_external_job_statement = f'INSERT INTO splqueries (original_spl, service_spl, tws, twf, ' \
+                                              f'cache_ttl, username, status) ' \
+                                              f'VALUES ({original_spl},{service_spl},0,0,{cache_ttl},' \
+                                              f'_ot_simple_rest,external) RETURNING id, extract(epoch from creating_date);'
+                self.logger.debug(make_external_job_statement)
+                cur.execute(make_external_job_statement)
                 cache_id, creating_date = cur.fetchone()
                 # Writes data to RAM cache.
                 CacheWriter(data, cache_id, self.mem_conf).write()
                 # Registers cache in Dispatcher's DB.
-                save_to_cache_statement = 'INSERT INTO CachesDL (original_spl, tws, twf, id, expiring_date) ' \
-                                          'VALUES(%s, %s, %s, %s, to_timestamp(extract(epoch from now()) + %s));'
-                stm_tuple = (original_spl, 0, 0, cache_id, 60)
-                self.logger.debug(save_to_cache_statement % stm_tuple)
-                cur.execute(save_to_cache_statement, stm_tuple)
+                save_to_cache_statement = f'INSERT INTO CachesDL (original_spl, tws, twf, id, expiring_date) ' \
+                                          f'VALUES({original_spl}, 0, 0, {cache_id}, ' \
+                                          f'to_timestamp(extract(epoch from now()) + 60));'
+                self.logger.debug(save_to_cache_statement)
+                cur.execute(save_to_cache_statement)
                 conn.commit()
 
                 response = {"_time": creating_date, "status": "success", "job_id": cache_id}

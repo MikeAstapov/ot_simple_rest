@@ -7,9 +7,9 @@ from tornado.ioloop import IOLoop
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
-__credits__ = ["Nikolay Ryabykh"]
+__credits__ = ["Nikolay Ryabykh", "Anton Khromov"]
 __license__ = ""
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -29,7 +29,7 @@ class MakeDataModels(tornado.web.RequestHandler):
         :param db_conf: Postgres config.
         :return:
         """
-        self.db_conf = db_conf
+        self.db_conf = dict(db_conf)
 
     async def post(self):
         """
@@ -57,9 +57,10 @@ class MakeDataModels(tornado.web.RequestHandler):
         cur.execute(clear_data_models_stm)
 
         for name in data_models:
-            data_model_stm = "INSERT INTO DataModels (name, search) VALUES (%s, %s)"
-            self.logger.debug(data_model_stm % (name, data_models[name]))
-            cur.execute(data_model_stm, (name, data_models[name]))
+            search = data_models[name]
+            data_model_stm = f"INSERT INTO DataModels (name, search) VALUES ({name}, {search})"
+            self.logger.debug(data_model_stm)
+            cur.execute(data_model_stm)
 
         conn.commit()
 
