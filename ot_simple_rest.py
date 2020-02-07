@@ -9,8 +9,11 @@ from configparser import ConfigParser
 import tornado.ioloop
 import tornado.web
 
-from handlers.jobs.loadjob import LoadJob
+
 from handlers.jobs.makejob import MakeJob
+from handlers.jobs.loadjob import LoadJob
+from handlers.checkjob import CheckJob
+from handlers.getdata import GetResult
 from handlers.jobs.saveotrest import SaveOtRest
 from handlers.makerolemodel import MakeRoleModel
 from handlers.makedatamodels import MakeDataModels
@@ -20,7 +23,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "0.13.1"
+__version__ = "0.14.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -63,6 +66,7 @@ def main():
     mem_conf = dict(config['mem_conf'])
     disp_conf = dict(config['dispatcher'])
     resolver_conf = dict(config['resolver'])
+    static_conf = config['static_conf']
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -74,11 +78,13 @@ def main():
     application = tornado.web.Application([
         (r'/ping', PingPong),
         (r'/makejob', MakeJob, {"db_conf": db_conf, "resolver_conf": resolver_conf}),
+        (r'/checkjob', CheckJob, {"db_conf": db_conf, "mem_conf": mem_conf, "disp_conf": disp_conf}),
+        # TODO You need to save old endpoint for backward compatibility.
         (r'/loadjob', LoadJob, {"db_conf": db_conf, "mem_conf": mem_conf, "disp_conf": disp_conf}),
+        (r'/getdata', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
         (r'/otrest', SaveOtRest, {"db_conf": db_conf, "mem_conf": mem_conf}),
         (r'/makerolemodel', MakeRoleModel, {"db_conf": db_conf}),
-        (r'/makedatamodels', MakeDataModels, {"db_conf": db_conf})
-
+        (r'/makedatamodels', MakeDataModels, {"db_conf": db_conf}),
     ])
 
     logger.info('Starting server')
