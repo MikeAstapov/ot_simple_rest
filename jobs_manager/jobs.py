@@ -24,12 +24,12 @@ class Job:
     def __init__(self, request, db_conf, mem_conf, resolver_conf,
                  check_index_access, tracker_max_interval):
         self.request = request
-        self.db = PostgresConnector(db_conf)
         self.mem_conf = mem_conf
         self.resolver_conf = resolver_conf
         self.tracker_max_interval = tracker_max_interval
         self.check_index_access = check_index_access
 
+        self.db = PostgresConnector(db_conf)
         self.status = {'status': 'created'}
 
     def check_dispatcher_status(self):

@@ -181,7 +181,7 @@ class Resolver:
         :return: String with replaces of datamodel part.
         """
         datamodel_name = match_object.group(1)
-        fetch = self.db.get_datamodel_stm(datamodel_name)
+        fetch = self.db.get_datamodel(datamodel_name)
         if fetch:
             query = fetch[0]
         else:
@@ -196,7 +196,7 @@ class Resolver:
         :return: String with replaces of datamodel part.
         """
         sid = match_object.group(1)
-        fetch = self.db.get_spl_stm(sid, self.src_ip)
+        fetch = self.db.get_spl(sid, self.src_ip)
         if fetch:
             spl = fetch[0]
             otloadjob_sha256 = sha256(spl.strip().encode('utf-8')).hexdigest()
