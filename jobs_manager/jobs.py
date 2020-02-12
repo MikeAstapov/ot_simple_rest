@@ -10,9 +10,6 @@ from parsers.spl_resolver.Resolver import Resolver
 from handlers.jobs.db_connector import PostgresConnector
 
 
-# TODO: Put the code that works with the database in a separate module.
-
-
 class Job:
     """
     This class contains all of methods for check job status
@@ -282,6 +279,7 @@ class Job:
             response = {"status": "fail", "error": "User has no access to index"}
 
         self.logger.debug('Response: %s' % response)
+        self.status = response
         await asyncio.sleep(0.001)
 
     def start_load(self):

@@ -71,9 +71,6 @@ class JobsManager:
                   tracker_max_interval=self.tracker_max_interval,
                   check_index_access=self.check_index)
         logger.debug('Load job was created')
-        # TODO You need something like this:
-        # job.start_load()
-        # return job.status
         job.start_load()
         return job.status
 

@@ -6,7 +6,6 @@ __author__ = "Anton Khromov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-# TODO When did you have time to make 9 versions?  May be 0.0.1?
 __version__ = "0.0.1"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "akhromov@ot.ru"
@@ -19,7 +18,6 @@ class PostgresConnector:
         self.conn = psycopg2.connect(**db_conf)
         self.cur = self.conn.cursor()
 
-    # TODO I think it's better to remove word "statement".
     def check_cache(self, *, original_spl, tws, twf, field_extraction, preview):
         cache_id = creating_date = None
         query_str = 'SELECT id, extract(epoch from creating_date) FROM cachesdl WHERE expiring_date >= ' \
