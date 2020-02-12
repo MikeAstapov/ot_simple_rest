@@ -44,7 +44,7 @@ class CheckJob(tornado.web.RequestHandler):
 
         :return:
         """
-        self.db = PostgresConnector(**db_conf)
+        self.db = PostgresConnector(db_conf)
         self.mem_conf = mem_conf
         self.tracker_max_interval = float(disp_conf['tracker_max_interval'])
 
@@ -74,7 +74,7 @@ class CheckJob(tornado.web.RequestHandler):
         :return:
         """
 
-        future = IOLoop.current().run_in_executor(None, self.check_job())
+        future = IOLoop.current().run_in_executor(None, self.check_job)
         await future
 
     def check_dispatcher_status(self):
@@ -145,7 +145,7 @@ class CheckJob(tornado.web.RequestHandler):
             # Step 3. Check Job's status and return it to OT.Simple Splunk app if it is not still ready.
             if status == 'finished' and expiring_date:
                 self.logger.info('Cache for task_id=%s was found.' % cid)
-                response = {'status': 'ready', 'cid': cid}
+                response = {'status': 'success', 'cid': cid}
             elif status == 'finished' and not expiring_date:
                 response = {'status': 'nocache'}
             elif status in ['running', 'new']:

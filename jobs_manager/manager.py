@@ -23,11 +23,11 @@ class JobsManager:
     """
     def __init__(self, db_conf, mem_conf, disp_conf,
                  resolver_conf, user_conf):
-        self.db_conf = dict(db_conf)
-        self.mem_conf = dict(mem_conf)
-        self.disp_conf = dict(disp_conf)
-        self.r_conf = dict(resolver_conf)
-        self.check_index = user_conf.getboolean('check_index_access')
+        self.db_conf = db_conf
+        self.mem_conf = mem_conf
+        self.disp_conf = disp_conf
+        self.r_conf = resolver_conf
+        self.check_index = False if user_conf['check_index_access'] == 'False' else True
         self.tracker_max_interval = float(disp_conf['tracker_max_interval'])
 
         self._enable = False

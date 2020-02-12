@@ -63,12 +63,12 @@ def main():
     config = ConfigParser()
     config.read(os.path.join(basedir, 'ot_simple_rest.conf'))
 
-    db_conf = config['db_conf']
-    mem_conf = config['mem_conf']
-    disp_conf = config['dispatcher']
-    resolver_conf = config['resolver']
-    static_conf = config['static']
-    user_conf = config['user']  # TODO if you think if "dict" is not needed, remove it from other configs.
+    db_conf = dict(config['db_conf'])
+    mem_conf = dict(config['mem_conf'])
+    disp_conf = dict(config['dispatcher'])
+    resolver_conf = dict(config['resolver'])
+    static_conf = dict(config['static'])
+    user_conf = dict(config['user'])  # TODO if you think if "dict" is not needed, remove it from other configs.
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 

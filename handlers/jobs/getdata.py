@@ -25,11 +25,11 @@ class GetResult(tornado.web.RequestHandler):
     """
 
     def initialize(self, mem_conf, static_conf):
-        self.mem_conf = dict(mem_conf)
-        self.static_conf = dict(static_conf)
+        self.mem_conf = mem_conf
+        self.static_conf = static_conf
         self.data_path = self.mem_conf['path']
         self.base_url = self.static_conf['base_url']
-        self.with_nginx = static_conf.getboolean('use_nginx')
+        self.with_nginx = False if static_conf['use_nginx'] == 'False' else True
 
         self.logger = logging.getLogger('osr')
         self._cache_name_template = 'search_{}.cache'
@@ -59,15 +59,15 @@ class GetResult(tornado.web.RequestHandler):
         cache_full_path = os.path.join(self.data_path, cache_dir)
 
         if not os.path.exists(cache_full_path):
-            self.logger.debug('No cache for task with id={}'.format(task_id))
-            self.write({'status': 'No cache for task with id={}'.format(task_id)})
+            self.logger.error('No cache for task with id={}'.format(task_id))
+            self.write({'status': 'failed', 'error': 'No cache for task with id={}'.format(task_id)})
 
         self.logger.debug('Task id={} cache exists'.format(task_id))
         listing = os.listdir(cache_full_path)
         cache_list = [f for f in listing if f.endswith('.json') or 'SCHEMA' in f]
         cache_list = [os.path.join(cache_dir, f) for f in cache_list]
         urls_list = [self.base_url.format(f) for f in cache_list]
-        response = {"data_urls": urls_list}
+        response = {"status": "success", "data_urls": urls_list}
         self.logger.debug(response)
         self.write(response)
 
@@ -79,19 +79,19 @@ class GetResult(tornado.web.RequestHandler):
         :param task_id:         OT_Dispatcher's job cid
         :return:
         """
-        self.logger.debug('Started loading cache %s.' % task_id)
-        path_to_cache_dir = '%s/search_%s.cache/' % (self.data_path, task_id)
-        self.logger.debug('Path to cache %s.' % path_to_cache_dir)
+        self.logger.debug(f'Started loading cache {task_id}.')
+        path_to_cache_dir = os.path.join(self.data_path, f'search_{task_id}.cache')
+        self.logger.debug(f'Path to cache {path_to_cache_dir}.')
         file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
-        with open(path_to_cache_dir + "_SCHEMA") as fr:
+        with open(os.path.join(path_to_cache_dir, "_SCHEMA")) as fr:
             df_schema = fr.read()
         self.write('{"status": "success", "schema": "%s", "events": {' % df_schema.strip())
         length = len(file_names)
         for i in range(length):
             file_name = file_names[i]
-            self.logger.debug('Reading part: %s' % file_name)
-            self.write('"%s": ' % file_name)
-            with open(path_to_cache_dir + file_name) as fr:
+            self.logger.debug(f'Reading part: {file_name}')
+            self.write(f'"{file_name}": ')
+            with open(os.path.join(path_to_cache_dir, file_name)) as fr:
                 body = fr.read()
             self.write(json.dumps(body))
             if i != length - 1:
