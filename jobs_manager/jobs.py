@@ -9,6 +9,15 @@ from parsers.spl_resolver.Resolver import Resolver
 
 from handlers.jobs.db_connector import PostgresConnector
 
+__author__ = "Anton Khromov"
+__copyright__ = "Copyright 2019, Open Technologies 98"
+__credits__ = []
+__license__ = ""
+__version__ = "0.0.1"
+__maintainer__ = "Andrey Starchenkov"
+__email__ = "astarchenkov@ot.ru"
+__status__ = "Development"
+
 
 class Job:
     """
@@ -282,7 +291,7 @@ class Job:
         self.status = response
         await asyncio.sleep(0.001)
 
-    def start_load(self):
+    def start_check(self, with_load=False):
         """
         It checks for Job's status then downloads the result.
 
@@ -314,9 +323,13 @@ class Job:
             cid, status, expiring_date, msg = job_status_data
             # Step 3. Check Job's status and return it to OT.Simple Splunk app if it is not still ready.
             if status == 'finished' and expiring_date:
-                # Step 4. Load results of Job from cache for transcending.
-                response = ''.join(list(self.load_and_send_from_memcache(cid)))
-                self.logger.info(f'Cache is {cid} loaded.')
+                if with_load:
+                    # Step 4. Load results of Job from cache for transcending.
+                    response = ''.join(list(self.load_and_send_from_memcache(cid)))
+                    self.logger.info(f'Cache is {cid} loaded.')
+                else:
+                    self.logger.info('Cache for task_id=%s was found.' % cid)
+                    response = {'status': 'success', 'cid': cid}
             elif status == 'finished' and not expiring_date:
                 response = {'status': 'nocache'}
             elif status in ['new', 'running']:

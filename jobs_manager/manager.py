@@ -6,6 +6,15 @@ from jobs_manager.jobs import Job
 
 logger = logging.getLogger('osr')
 
+__author__ = "Anton Khromov"
+__copyright__ = "Copyright 2019, Open Technologies 98"
+__credits__ = []
+__license__ = ""
+__version__ = "0.0.1"
+__maintainer__ = "Andrey Starchenkov"
+__email__ = "akhromov@ot.ru"
+__status__ = "Development"
+
 
 class JobsManager:
     """
@@ -14,8 +23,10 @@ class JobsManager:
     There is two methods for create auxiliary jobs:
     - make_job: creates job and queue it in asyncio.Queue for scheduled executing.
                 This action creates JOB in OT_Dispatcher.
-    - load_job: creates job and start it immediately.
+    - check_job: creates job and start it immediately.
                 This action checks status JOB in OT_Dispatcher.
+    - load_job: creates job and start it immediately.
+                This action checks status JOB in OT_Dispatcher and load results of finished job.
     Also we have a _start_monitoring method to identify and run jobs from jobs queue.
 
     Job from the queue will be started later, when _start_monitoring detect it.
@@ -37,7 +48,7 @@ class JobsManager:
 
     async def make_job(self, request):
         """
-        Creates JobMaker instance with needed params and queue it.
+        Creates Job instance with needed params and queue it for create job.
 
         :param request:     request object from handler
         :return:            None
@@ -54,15 +65,16 @@ class JobsManager:
             response = {"status": "fail", "timestamp": str(datetime.now()), "error": str(err)}
         else:
             response = {"status": "success", "timestamp": str(datetime.now())}
-            logger.debug('Make job was queued')
+            logger.debug('MakeJob was queued')
         return response
 
-    def load_job(self, request):
+    def check_job(self, request, with_load=False):
         """
-        Creates JobLoader instance with needed params and start it.
+        Creates Job instance with needed params and start it for check job.
 
         :param request:     request object from handler
-        :return:            results of loading job
+        :param with_load:   sign of need load results after finish
+        :return:            results of checking job
         """
         job = Job(request=request,
                   db_conf=self.db_conf,
@@ -70,9 +82,18 @@ class JobsManager:
                   resolver_conf=self.r_conf,
                   tracker_max_interval=self.tracker_max_interval,
                   check_index_access=self.check_index)
-        logger.debug('Load job was created')
-        job.start_load()
+        logger.debug('CheckJob was created')
+        job.start_check(with_load)
         return job.status
+
+    def load_job(self, request):
+        """
+        Creates Job instance with needed params and start it for check job and load results.
+
+        :param request:     request object from handler
+        :return:            results of loading job
+        """
+        return self.check_job(request, with_load=True)
 
     async def _start_monitoring(self):
         """

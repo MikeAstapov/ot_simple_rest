@@ -24,7 +24,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "0.14.2"
+__version__ = "0.14.3"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -86,7 +86,7 @@ def main():
     application = tornado.web.Application([
         (r'/ping', PingPong),
         # TODO You need to save old endpoint for backward compatibility.
-        (r'/checkjob', CheckJob, {"db_conf": db_conf, "mem_conf": mem_conf, "disp_conf": disp_conf}),
+        (r'/checkjob', CheckJob, {"manager": manager}),
         (r'/getresult', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
         (r'/makejob', MakeJob, {"manager": manager}),
         (r'/loadjob', LoadJob, {"manager": manager}),

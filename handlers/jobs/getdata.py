@@ -8,9 +8,9 @@ __author__ = "Anton Khromov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.8.0"
+__version__ = "0.0.1"
 __maintainer__ = "Andrey Starchenkov"
-__email__ = "astarchenkov@ot.ru"
+__email__ = "akhromov@ot.ru"
 __status__ = "Development"
 
 

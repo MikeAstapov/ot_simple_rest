@@ -6,11 +6,13 @@ __author__ = "Anton Khromov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "akhromov@ot.ru"
 __status__ = "Development"
 
+
+# TODO: Realize Postgres connections pool using for each new connection
 
 class PostgresConnector:
     def __init__(self, db_conf):

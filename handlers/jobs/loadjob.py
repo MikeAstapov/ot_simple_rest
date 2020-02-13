@@ -6,7 +6,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "0.9.1"
+__version__ = "0.9.2"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -59,7 +59,7 @@ class LoadJob(tornado.web.RequestHandler):
 
         :return:
         """
-        response = self.jobs_manager.load_job(self.request)
+        response = self.jobs_manager.check_job(self.request, with_load=True)
         self.logger.debug(f'LoadJob RESPONSE: {response}')
         self.write(response)
 
