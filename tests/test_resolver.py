@@ -380,3 +380,13 @@ class TestResolver(unittest.TestCase):
         print('result', result)
         print('target', target)
         self.assertDictEqual(result, target)
+
+    def test_appendpipe(self):
+        spl = """search index=main| appendpipe [stats sum(random_Field) as count by WordField | eval user = "word" ]"""
+        target = {'search': (
+            'search index=main| appendpipe [stats sum(random_Field) as count by WordField | eval user = "word" ]', '| read {"main": {"query": "", "tws": 0, "twf": 0}}| appendpipe [stats sum(random_Field) as count by WordField | eval user = "word" ]'),
+            'subsearches': {}}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)

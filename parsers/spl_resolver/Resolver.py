@@ -11,7 +11,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Sergei Ermilov", "Anastasiya Safonova"]
 __license__ = ""
-__version__ = "0.3.18"
+__version__ = "0.3.19"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -291,6 +291,7 @@ class Resolver:
 
     def return_no_subsearch_commands(self, spl):
         spl = re.sub(self.no_subsearch_return_pattern, self._return_no_subsearch_command, spl)
+        spl = re.sub(self.quoted_return_pattern, self.return_quoted, spl)
         return spl
 
     def resolve(self, spl):
