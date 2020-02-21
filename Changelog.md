@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2020-02-21
+### Added
+- Jobs manager for MakeJob jobs synchronization.
+- Ability to use NGINX or other for static data serving.
+- Work with SQL DB is in a separate module.
+- Tests for endpoints.
+
+### Fixed
+- Simultainously DB inserts in MakeJob handler.
+
 ## [0.13.0] - 2020-01-13
 ### Added
 - Command otstats.
