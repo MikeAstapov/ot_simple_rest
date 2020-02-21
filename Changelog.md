@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Simultainously DB inserts in MakeJob handler.
 
+## [0.13.1] - 2020-02-20
+### Fixed
+- Command appendpipe quoted masquerading.  
+
 ## [0.13.0] - 2020-01-13
 ### Added
 - Command otstats.

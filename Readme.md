@@ -9,6 +9,7 @@ Only config ramcache, db and we are ready to go.
 ### Prerequisites
 
 You need postgresql-devel library for psycopg2 lib.
+Also you need gcc and python3-devel. 
 
 ### Installing
 
