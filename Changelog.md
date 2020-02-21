@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ability to use NGINX or other for static data serving.
 - Work with SQL DB is in a separate module.
 - Tests for endpoints.
+- Using connection pool for PostgresConnector.
 
 ### Fixed
 - Simultainously DB inserts in MakeJob handler.

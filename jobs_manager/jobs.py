@@ -7,8 +7,6 @@ import asyncio
 from utils import backlasher
 from parsers.spl_resolver.Resolver import Resolver
 
-from handlers.jobs.db_connector import PostgresConnector
-
 __author__ = "Anton Khromov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
@@ -27,15 +25,15 @@ class Job:
 
     logger = logging.getLogger('osr')
 
-    def __init__(self, request, db_conf, mem_conf, resolver_conf,
+    def __init__(self, request, db_conn, mem_conf, resolver_conf,
                  check_index_access, tracker_max_interval):
         self.request = request
+        self.db = db_conn
         self.mem_conf = mem_conf
         self.resolver_conf = resolver_conf
         self.tracker_max_interval = tracker_max_interval
         self.check_index_access = check_index_access
 
-        self.db = PostgresConnector(db_conf)
         self.status = {'status': 'created'}
 
     def check_dispatcher_status(self):

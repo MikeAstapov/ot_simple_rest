@@ -18,6 +18,8 @@ from handlers.service.makerolemodel import MakeRoleModel
 from handlers.service.makedatamodels import MakeDataModels
 from handlers.service.pingpong import PingPong
 
+from handlers.jobs.db_connector import PostgresConnector
+
 from jobs_manager.manager import JobsManager
 
 __author__ = "Andrey Starchenkov"
@@ -68,7 +70,8 @@ def main():
     disp_conf = dict(config['dispatcher'])
     resolver_conf = dict(config['resolver'])
     static_conf = dict(config['static'])
-    user_conf = dict(config['user'])  # TODO if you think if "dict" is not needed, remove it from other configs.
+    user_conf = dict(config['user'])
+    pool_conf = dict(config['db_pool_conf'])
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -78,21 +81,23 @@ def main():
 
     # Create jobs manager instance with configs needed to jobs work
 
-    manager = JobsManager(db_conf=db_conf, mem_conf=mem_conf, disp_conf=disp_conf,
+    db = PostgresConnector(db_conf=db_conf, min_pool=int(pool_conf['min_size']),
+                           max_pool=int(pool_conf['max_size']))
+
+    manager = JobsManager(db_conn=db, mem_conf=mem_conf, disp_conf=disp_conf,
                           resolver_conf=resolver_conf, user_conf=user_conf)
     manager.start()
 
     # Set TORNADO application with custom handlers.
     application = tornado.web.Application([
         (r'/ping', PingPong),
-        # TODO You need to save old endpoint for backward compatibility.
         (r'/checkjob', CheckJob, {"manager": manager}),
         (r'/getresult', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
         (r'/makejob', MakeJob, {"manager": manager}),
         (r'/loadjob', LoadJob, {"manager": manager}),
-        (r'/otrest', SaveOtRest, {"db_conf": db_conf, "mem_conf": mem_conf}),
-        (r'/makerolemodel', MakeRoleModel, {"db_conf": db_conf}),
-        (r'/makedatamodels', MakeDataModels, {"db_conf": db_conf})
+        (r'/otrest', SaveOtRest, {"db_conn": db, "mem_conf": mem_conf}),
+        (r'/makerolemodel', MakeRoleModel, {"db_conn": db}),
+        (r'/makedatamodels', MakeDataModels, {"db_conn": db})
     ])
 
     logger.info('Starting server')

@@ -6,7 +6,6 @@ import tornado.web
 from tornado.ioloop import IOLoop
 
 from utils.cachewriter import CacheWriter
-from handlers.jobs.db_connector import PostgresConnector
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -25,15 +24,15 @@ class SaveOtRest(tornado.web.RequestHandler):
 
     logger = logging.getLogger('osr')
 
-    def initialize(self, db_conf, mem_conf):
+    def initialize(self, db_conn, mem_conf):
         """
         Gets config and init logger.
 
-        :param db_conf: DB config.
+        :param db_conn: DB connector object.
         :param mem_conf: RAM cache config.
         :return:
         """
-        self.db = PostgresConnector(**db_conf)
+        self.db = db_conn
         self.mem_conf = mem_conf
 
     def write_error(self, status_code: int, **kwargs) -> None:
