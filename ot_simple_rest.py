@@ -12,7 +12,7 @@ import tornado.web
 from handlers.jobs.makejob import MakeJob
 from handlers.jobs.loadjob import LoadJob
 from handlers.jobs.checkjob import CheckJob
-from handlers.jobs.getdata import GetResult
+from handlers.jobs.getresult import GetResult
 from handlers.jobs.saveotrest import SaveOtRest
 from handlers.service.makerolemodel import MakeRoleModel
 from handlers.service.makedatamodels import MakeDataModels
