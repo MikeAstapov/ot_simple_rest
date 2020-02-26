@@ -39,7 +39,7 @@ class Job:
     def check_dispatcher_status(self):
         delta = self.db.check_dispatcher_status()
         self.logger.debug("Dispatcher last check: %s." % delta)
-        if delta <= self.tracker_max_interval:
+        if delta and delta <= self.tracker_max_interval:
             return True
         return False
 
