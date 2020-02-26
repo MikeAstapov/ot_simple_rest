@@ -67,13 +67,16 @@ class PostgresConnector:
             return indexes[0]
 
     def add_job(self, *, search, subsearches, tws, twf, cache_ttl, username, field_extraction, preview):
+        job_id = creating_date = None
         query_str = "INSERT INTO splqueries (original_spl, service_spl, subsearches, tws, twf, cache_ttl, username, " \
                     "field_extraction, preview) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id, " \
                     "extract(epoch from creating_date);"
         stm_tuple = (search[0], search[1], subsearches, tws, twf, cache_ttl, username, field_extraction, preview)
         self.logger.info(query_str % stm_tuple)
 
-        job_id, creating_date = self.execute_query(query_str, stm_tuple, with_commit=True)
+        job_data = self.execute_query(query_str, stm_tuple, with_commit=True)
+        if job_data:
+            job_id, creating_date = job_data
         return job_id, creating_date
 
     def add_sid(self, *, sid, remote_ip, original_spl):
@@ -83,12 +86,15 @@ class PostgresConnector:
         self.execute_query(query_str, stm_tuple, with_commit=True, with_fetch=False)
 
     def add_external_job(self, *, original_spl, service_spl, tws, twf, cache_ttl, username, status):
+        cache_id = creating_date = None
         query_str = "INSERT INTO splqueries (original_spl, service_spl, tws, twf, cache_ttl, username, status) " \
                     "VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id, extract(epoch from creating_date);"
         stm_tuple = (original_spl, service_spl, tws, twf, cache_ttl, username, status)
         self.logger.debug(query_str % stm_tuple)
 
-        cache_id, creating_date = self.execute_query(query_str, stm_tuple, with_commit=True)
+        cache_data = self.execute_query(query_str, stm_tuple, with_commit=True)
+        if cache_data:
+            cache_id, creating_date = cache_data
         return cache_id, creating_date
 
     def add_to_cache(self, *, original_spl, tws, twf, cache_id, expiring_date):
