@@ -8,7 +8,7 @@ __author__ = "Anton Khromov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "akhromov@ot.ru"
 __status__ = "Development"
@@ -41,28 +41,28 @@ class GetResult(tornado.web.RequestHandler):
         :return:
         """
         params = self.request.query_arguments
-        task_id = params.get('task_id')[0].decode()
+        cid = params.get('cid')[0].decode()
         if self.with_nginx:
-            self.generate_data_links(task_id)
+            self.generate_data_links(cid)
         else:
-            self.load_and_send_from_memcache(task_id)
+            self.load_and_send_from_memcache(cid)
 
-    def generate_data_links(self, task_id):
+    def generate_data_links(self, cid):
         """
         Makes listing of directory with cache data and generate links
         for that data with url pattern.
 
-        :param task_id:         OT_Dispatcher's job cid
+        :param cid:         OT_Dispatcher's job cid
         :return:
         """
-        cache_dir = self._cache_name_template.format(task_id)
+        cache_dir = self._cache_name_template.format(cid)
         cache_full_path = os.path.join(self.data_path, cache_dir)
 
         if not os.path.exists(cache_full_path):
-            self.logger.error('No cache for task with id={}'.format(task_id))
-            self.write({'status': 'failed', 'error': 'No cache for task with id={}'.format(task_id)})
+            self.logger.error('No cache with id={}'.format(cid))
+            self.write({'status': 'failed', 'error': 'No cache with id={}'.format(cid)})
 
-        self.logger.debug('Task id={} cache exists'.format(task_id))
+        self.logger.debug('Cache with id={} exists'.format(cid))
         listing = os.listdir(cache_full_path)
         cache_list = [f for f in listing if f.endswith('.json') or 'SCHEMA' in f]
         cache_list = [os.path.join(cache_dir, f) for f in cache_list]
@@ -71,16 +71,16 @@ class GetResult(tornado.web.RequestHandler):
         self.logger.debug(response)
         self.write(response)
 
-    def load_and_send_from_memcache(self, task_id):
+    def load_and_send_from_memcache(self, cid):
         """
         Makes listing of directory with cache data and read files
         content. Then join chunks together and writes data in socket.
 
-        :param task_id:         OT_Dispatcher's job cid
+        :param cid:         OT_Dispatcher's job cid
         :return:
         """
-        self.logger.debug(f'Started loading cache {task_id}.')
-        path_to_cache_dir = os.path.join(self.data_path, f'search_{task_id}.cache')
+        self.logger.debug(f'Started loading cache {cid}.')
+        path_to_cache_dir = os.path.join(self.data_path, f'search_{cid}.cache')
         self.logger.debug(f'Path to cache {path_to_cache_dir}.')
         file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
         with open(os.path.join(path_to_cache_dir, "_SCHEMA")) as fr:
