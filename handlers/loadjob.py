@@ -185,7 +185,7 @@ class LoadJob(tornado.web.RequestHandler):
         """
 
         self.logger.debug('Started loading cache %s.' % cid)
-        path_to_cache_dir = '%s/search_%s.cache/' % (self.mem_conf['path'], cid)
+        path_to_cache_dir = '%s/search_%s.cache/data/' % (self.mem_conf['path'], cid)
         self.logger.debug('Path to cache %s.' % path_to_cache_dir)
         file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
         with open(path_to_cache_dir + "_SCHEMA") as fr:

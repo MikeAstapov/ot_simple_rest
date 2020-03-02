@@ -29,7 +29,7 @@ class CacheWriter:
         self.logger.debug('Initialized.')
 
         self.cache = cache if type(cache) is dict else json.loads(cache)
-        self.cache_dir = '%ssearch_%s.cache' % (mem_conf['path'], cache_id)
+        self.cache_dir = '%ssearch_%s.cache/data/' % (mem_conf['path'], cache_id)
 
         self.logger.debug('Cache %s:%s with header will be written.' % (self.cache_dir, type(self.cache)))
 
