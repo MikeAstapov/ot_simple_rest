@@ -4,6 +4,7 @@
 
 import logging
 import os
+import uuid
 from configparser import ConfigParser
 
 import tornado.ioloop
@@ -17,6 +18,7 @@ from handlers.jobs.saveotrest import SaveOtRest
 from handlers.service.makerolemodel import MakeRoleModel
 from handlers.service.makedatamodels import MakeDataModels
 from handlers.service.pingpong import PingPong
+from handlers.auth.auth import AuthLoginHandler, AuthCreateHandler
 
 from handlers.jobs.db_connector import PostgresConnector
 
@@ -97,8 +99,13 @@ def main():
         (r'/loadjob', LoadJob, {"manager": manager}),
         (r'/otrest', SaveOtRest, {"db_conn": db, "mem_conf": mem_conf}),
         (r'/makerolemodel', MakeRoleModel, {"db_conn": db}),
-        (r'/makedatamodels', MakeDataModels, {"db_conn": db})
-    ])
+        (r'/makedatamodels', MakeDataModels, {"db_conn": db}),
+        (r'/auth/create', AuthCreateHandler, {"db_conn": db}),
+        (r'/auth/login', AuthLoginHandler, {"db_conn": db}),
+    ],
+        cookie_secret=f"{uuid.uuid4()}",
+        login_url="/auth/login"
+    )
 
     logger.info('Starting server')
 
