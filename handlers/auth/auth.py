@@ -10,6 +10,8 @@ import tornado.locks
 import tornado.web
 import tornado.util
 
+from handlers.auth.db_connector import PostgresConnector
+
 SECRET_KEY = 'SOME_SECRET_KEY'
 
 
@@ -18,25 +20,25 @@ class NoResultError(Exception):
 
 
 class BaseHandler(tornado.web.RequestHandler):
-    def initialize(self, db_conn):
+    def initialize(self, db_conn_pool):
         """
         Gets config and init logger.
 
-        :param db_conn: DB connector object.
+        :param db_conn_pool: Postgres DB connection pool object.
         :return:
         """
-        self.db = db_conn
+        self.db = PostgresConnector(db_conn_pool)
 
     def set_default_headers(self):
-        self.set_header('Access-Control-Expose-Headers', "*")
-        self.set_header("Access-Control-Allow-Origin", "*")
+        # self.set_header('Access-Control-Expose-Headers', "*")
+        # self.set_header("Access-Control-Allow-Origin", "172.25.12.186:8081")
         self.set_header('Access-Control-Allow-Credentials', True)
-        # self.set_header("Access-Control-Allow-Headers", "x-requested-with")
-        # self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
+        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
 
     def options(self, *args, **kwargs):
-        self.set_header('Access-Control-Allow-Headers', 'Set-Cookie, *')
-        self.set_header('Access-Control-Allow-Methods', '*')
+        # self.set_header('Access-Control-Allow-Headers', 'Set-Cookie, *')
+        # self.set_header('Access-Control-Allow-Methods', '*')
         self.set_status(204)
         self.finish()
 
@@ -53,19 +55,18 @@ class BaseHandler(tornado.web.RequestHandler):
     def generate_token(self, payload):
         return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
-    # async def prepare(self):
-    #     token = self.request.headers.get('Authorization')
-    #     if not token:
-    #         self.redirect('/auth/login')
-    #     else:
-    #         token = token.split('Bearer ')[-1]
-    #         try:
-    #             data = self.decode_token(token)
-    #         except jwt.exceptions.InvalidSignatureError as err:
-    #             print(f'Token: {token}, Error: {err}')
-    #             raise tornado.web.HTTPError(401, "unauthorised")
-    #         else:
-    #             self.current_user = data
+    async def prepare(self):
+        user_id = self.get_secure_cookie('eva_cookie')
+
+        client_token = self.get_cookie('token')
+        client_token = client_token.split('Bearer ')[-1] if client_token else None
+        if client_token:
+            try:
+                self.decode_token(client_token)
+            except (jwt.ExpiredSignatureError, jwt.DecodeError):
+                pass
+            else:
+                self.current_user = user_id
 
 
 class AuthCreateHandler(BaseHandler):
@@ -104,7 +105,7 @@ class AuthLoginHandler(BaseHandler):
             if not password_equal:
                 raise tornado.web.HTTPError(400, "incorrect password")
 
-            client_token = self.get_cookie('token')
+            client_token = self.get_cookie('eva_token')
             client_token = client_token.split('Bearer ')[-1] if client_token else None
 
             if not client_token:
@@ -115,8 +116,10 @@ class AuthLoginHandler(BaseHandler):
                     user.id,
                     token.decode('utf-8')
                 )
-                self.set_secure_cookie('cookie', str(user.username), expires_days=1, domain='172.25.12.186')
-                self.set_cookie('token', token, expires_days=1, domain='172.25.12.186')
+
+                self.current_user = user.id
+                self.set_secure_cookie('eva_cookie', str(user.id), expires_days=1)
+                self.set_cookie('eva_token', token, expires_days=1)
                 self.write({'status': 'success'})
 
             elif client_token not in user_tokens:

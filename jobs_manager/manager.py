@@ -3,6 +3,7 @@ import asyncio
 from datetime import datetime
 
 from jobs_manager.jobs import Job
+from handlers.jobs.db_connector import PostgresConnector
 
 logger = logging.getLogger('osr')
 
@@ -32,9 +33,9 @@ class JobsManager:
     Job from the queue will be started later, when _start_monitoring detect it.
     If jobs queue is empty, monitoring is waiting for new jobs.
     """
-    def __init__(self, db_conn, mem_conf, disp_conf,
+    def __init__(self, db_conn_pool, mem_conf, disp_conf,
                  resolver_conf, user_conf):
-        self.db_conn = db_conn
+        self.db_conn = PostgresConnector(db_conn_pool)
         self.mem_conf = mem_conf
         self.disp_conf = disp_conf
         self.r_conf = resolver_conf

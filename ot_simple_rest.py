@@ -4,12 +4,14 @@
 
 import logging
 import os
-import uuid
 from configparser import ConfigParser
 
 import tornado.ioloop
 import tornado.web
 
+from psycopg2.pool import ThreadedConnectionPool
+
+from handlers.auth.auth import AuthLoginHandler, AuthCreateHandler
 from handlers.jobs.makejob import MakeJob
 from handlers.jobs.loadjob import LoadJob
 from handlers.jobs.checkjob import CheckJob
@@ -18,9 +20,6 @@ from handlers.jobs.saveotrest import SaveOtRest
 from handlers.service.makerolemodel import MakeRoleModel
 from handlers.service.makedatamodels import MakeDataModels
 from handlers.service.pingpong import PingPong
-from handlers.auth.auth import AuthLoginHandler, AuthCreateHandler
-
-from handlers.jobs.db_connector import PostgresConnector
 
 from jobs_manager.manager import JobsManager
 
@@ -28,7 +27,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "0.14.4"
+__version__ = "0.15.4"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Development"
@@ -83,10 +82,9 @@ def main():
 
     # Create jobs manager instance with configs needed to jobs work
 
-    db = PostgresConnector(db_conf=db_conf, min_pool=int(pool_conf['min_size']),
-                           max_pool=int(pool_conf['max_size']))
+    db_pool = ThreadedConnectionPool(int(pool_conf['min_size']), int(pool_conf['max_size']), **db_conf)
 
-    manager = JobsManager(db_conn=db, mem_conf=mem_conf, disp_conf=disp_conf,
+    manager = JobsManager(db_conn_pool=db_pool, mem_conf=mem_conf, disp_conf=disp_conf,
                           resolver_conf=resolver_conf, user_conf=user_conf)
     manager.start()
 
@@ -97,14 +95,14 @@ def main():
         (r'/getresult', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
         (r'/makejob', MakeJob, {"manager": manager}),
         (r'/loadjob', LoadJob, {"manager": manager}),
-        (r'/otrest', SaveOtRest, {"db_conn": db, "mem_conf": mem_conf}),
-        (r'/makerolemodel', MakeRoleModel, {"db_conn": db}),
-        (r'/makedatamodels', MakeDataModels, {"db_conn": db}),
-        (r'/auth/create', AuthCreateHandler, {"db_conn": db}),
-        (r'/auth/login', AuthLoginHandler, {"db_conn": db}),
+        (r'/otrest', SaveOtRest, {"db_conn_pool": db_pool, "mem_conf": mem_conf}),
+        (r'/makerolemodel', MakeRoleModel, {"db_conn_pool": db_pool}),
+        (r'/makedatamodels', MakeDataModels, {"db_conn_pool": db_pool}),
+        (r'/auth/create', AuthCreateHandler, {"db_conn_pool": db_pool}),
+        (r'/auth/login', AuthLoginHandler, {"db_conn_pool": db_pool}),
     ],
-        cookie_secret=f"{uuid.uuid4()}",
-        login_url="/auth/login"
+        cookie_secret='57ed6cf3-b908-47ca-a3de-88a76aa794cb',
+        login_url=r'/auth/login'
     )
 
     logger.info('Starting server')
