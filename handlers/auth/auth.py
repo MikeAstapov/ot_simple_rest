@@ -79,7 +79,7 @@ class AuthCreateHandler(BaseHandler):
             tornado.escape.utf8(self.get_argument("password")),
             bcrypt.gensalt(),
         )
-        self.db.add_user(
+        self.db.create_user(
             role=self.get_argument('role'),
             username=self.get_argument('username'),
             password=tornado.escape.to_unicode(hashed_password)
@@ -126,3 +126,13 @@ class AuthLoginHandler(BaseHandler):
                 raise tornado.web.HTTPError(401, "unauthorized")
             else:
                 self.write({'status': 'success'})
+
+
+class UsersListHandler(BaseHandler):
+    async def post(self):
+        pass
+
+
+class UsersCreateHandler(BaseHandler):
+    async def post(self):
+        pass

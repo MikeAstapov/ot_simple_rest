@@ -11,7 +11,8 @@ import tornado.web
 
 from psycopg2.pool import ThreadedConnectionPool
 
-from handlers.auth.auth import AuthLoginHandler, AuthCreateHandler
+from handlers.auth.auth import AuthLoginHandler, AuthCreateHandler, UsersListHandler, UsersCreateHandler
+
 from handlers.jobs.makejob import MakeJob
 from handlers.jobs.loadjob import LoadJob
 from handlers.jobs.checkjob import CheckJob
@@ -100,6 +101,8 @@ def main():
         (r'/makedatamodels', MakeDataModels, {"db_conn_pool": db_pool}),
         (r'/auth/create', AuthCreateHandler, {"db_conn_pool": db_pool}),
         (r'/auth/login', AuthLoginHandler, {"db_conn_pool": db_pool}),
+        (r'/api/users/list', UsersListHandler, {"db_conn_pool": db_pool}),
+        (r'/api/users/create')
     ],
         cookie_secret='57ed6cf3-b908-47ca-a3de-88a76aa794cb',
         login_url=r'/auth/login'
