@@ -11,7 +11,9 @@ import tornado.web
 
 from psycopg2.pool import ThreadedConnectionPool
 
-from handlers.auth.auth import AuthLoginHandler, AuthCreateHandler, UsersListHandler, UsersCreateHandler
+from handlers.auth.auth import AuthLoginHandler, AuthCreateHandler,\
+    RolesHandler, RoleHandler, UsersHandler, UserHandler, PermissionsHandler,\
+    GroupsHandler, GroupHandler
 
 from handlers.jobs.makejob import MakeJob
 from handlers.jobs.loadjob import LoadJob
@@ -23,6 +25,7 @@ from handlers.service.makedatamodels import MakeDataModels
 from handlers.service.pingpong import PingPong
 
 from jobs_manager.manager import JobsManager
+from task_scheduler.tasks import DbTasksSchduler
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -81,13 +84,16 @@ def main():
     logger.info('DB configuration: %s' % db_conf)
     logger.info('MEM configuration: %s' % mem_conf)
 
-    # Create jobs manager instance with configs needed to jobs work
-
     db_pool = ThreadedConnectionPool(int(pool_conf['min_size']), int(pool_conf['max_size']), **db_conf)
 
+    # Create jobs manager instance and start it
     manager = JobsManager(db_conn_pool=db_pool, mem_conf=mem_conf, disp_conf=disp_conf,
                           resolver_conf=resolver_conf, user_conf=user_conf)
     manager.start()
+
+    # Create and start task scheduler
+    scheduler = DbTasksSchduler(db_conn_pool=db_pool)
+    scheduler.start()
 
     # Set TORNADO application with custom handlers.
     application = tornado.web.Application([
@@ -99,13 +105,27 @@ def main():
         (r'/otrest', SaveOtRest, {"db_conn_pool": db_pool, "mem_conf": mem_conf}),
         (r'/makerolemodel', MakeRoleModel, {"db_conn_pool": db_pool}),
         (r'/makedatamodels', MakeDataModels, {"db_conn_pool": db_pool}),
-        (r'/auth/create', AuthCreateHandler, {"db_conn_pool": db_pool}),
-        (r'/auth/login', AuthLoginHandler, {"db_conn_pool": db_pool}),
-        (r'/api/users/list', UsersListHandler, {"db_conn_pool": db_pool}),
-        (r'/api/users/create')
+
+        (r'/api/auth/create', AuthCreateHandler, {"db_conn_pool": db_pool}),
+        (r'/api/auth/login', AuthLoginHandler, {"db_conn_pool": db_pool}),
+
+        (r'/api/roles', RolesHandler, {"db_conn_pool": db_pool}),
+        (r'/api/role', RoleHandler, {"db_conn_pool": db_pool}),
+
+        (r'/api/users', UsersHandler, {"db_conn_pool": db_pool}),
+        (r'/api/user', UserHandler, {"db_conn_pool": db_pool}),
+
+        (r'/api/permissions', PermissionsHandler, {"db_conn_pool": db_pool}),
+        (r'/api/permission', PermissionsHandler, {"db_conn_pool": db_pool}),
+
+        (r'/api/groups', GroupsHandler, {"db_conn_pool": db_pool}),
+        (r'/api/group', GroupHandler, {"db_conn_pool": db_pool}),
+
+
     ],
         cookie_secret='57ed6cf3-b908-47ca-a3de-88a76aa794cb',
-        login_url=r'/auth/login'
+        login_url=r'/auth/login',
+        debug=True
     )
 
     logger.info('Starting server')
