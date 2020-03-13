@@ -35,6 +35,15 @@ class PostgresConnector:
         self.pool = conn_pool
         self.logger = logging.getLogger('osr')
 
+    def get_column_names(self, table_name):
+        conn = self.pool.getconn()
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM "%s" LIMIT 0;' % table_name)
+        columns = [desc[0] for desc in cur.description]
+        cur.close()
+        self.pool.putconn(conn)
+        return columns
+
     @contextmanager
     def transaction(self, name="transaction", **kwargs):
         options = {
@@ -105,13 +114,14 @@ class PostgresConnector:
                                   params=(username,), as_obj=True)
         return user
 
-    def get_user_permissions(self, roles):
+    def get_user_permissions(self, user_id):
+        roles = self.get_roles_data(user_id=user_id, names_only=True)
         permissions = list()
         for role in roles:
-            role_id = self.execute_query("""SELECT id FROM role WHERE name = %s;""", params=(role,))
+            role = self.execute_query("""SELECT id FROM role WHERE name = %s;""", params=(role,), as_obj=True)
             role_permissions = self.execute_query("""SELECT name FROM permission WHERE id IN 
                                                  (SELECT permission_id FROM role_permission WHERE role_id = %s);""",
-                                                  params=(role_id,), fetchall=True)
+                                                  params=(role.id,), fetchall=True)
             permissions.extend(list(role_permissions))
         permissions = flat_to_list(permissions)
         return permissions
@@ -128,30 +138,52 @@ class PostgresConnector:
         roles = [p[0] for p in roles] if roles else []
         return roles
 
+    def get_auth_data(self, user_id):
+        login_pass = self.execute_query("""SELECT username, password FROM "user" WHERE id = %s;""",
+                                        params=(user_id,), as_obj=True)
+        return login_pass
+
     def add_session(self, *, user_id, token, expired_date):
         self.execute_query("""INSERT INTO session (token, user_id, expired_date) VALUES (%s, %s, %s);""",
                            params=(token, user_id, expired_date), with_commit=True, with_fetch=False)
 
     # __USERS__ #######################################################################
 
-    def get_users_data(self, user_id=None):
-        if user_id:
-            users = self.execute_query("""SELECT id, username, password FROM "user" WHERE id = %s;""",
-                                       fetchall=True, params=(user_id,), as_obj=True)
+    def get_users_data(self, names_only=False):
+        users = self.execute_query("""SELECT id, username FROM "user";""", fetchall=True, as_obj=True)
+        if names_only:
+            users = [u['username'] for u in users]
         else:
-            users = self.execute_query("""SELECT id, username FROM "user";""", fetchall=True, as_obj=True)
-        for user in users:
-            roles = self.execute_query("""SELECT name FROM role WHERE id IN 
-                                        (SELECT role_id FROM user_role WHERE user_id = %s);""",
-                                       params=(user.id,), fetchall=True)
-            roles = flat_to_list(roles)
-            user['roles'] = roles
-            groups = self.execute_query("""SELECT name FROM "group" WHERE id IN 
-                                        (SELECT group_id FROM user_group WHERE user_id = %s);""",
-                                        params=(user.id,), fetchall=True)
-            groups = flat_to_list(groups)
-            user['groups'] = groups
+            for user in users:
+                user_roles = self.execute_query("""SELECT name FROM role WHERE id IN 
+                                                (SELECT role_id FROM user_role WHERE user_id = %s);""",
+                                                params=(user.id,), fetchall=True)
+                user_roles = flat_to_list(user_roles)
+                user['roles'] = user_roles
+
+                user_groups = self.execute_query("""SELECT name FROM "group" WHERE id IN 
+                                                (SELECT group_id FROM user_group WHERE user_id = %s);""",
+                                                 params=(user.id,), fetchall=True)
+                user_groups = flat_to_list(user_groups)
+                user['groups'] = user_groups
         return users
+
+    def get_user_data(self, *, user_id):
+        user_data = self.execute_query("""SELECT id, username FROM "user" WHERE id = %s;""",
+                                       params=(user_id,), as_obj=True)
+        user_roles = self.execute_query("""SELECT name FROM role WHERE id IN 
+                                        (SELECT role_id FROM user_role WHERE user_id = %s);""",
+                                        params=(user_id,), fetchall=True)
+        user_roles = flat_to_list(user_roles)
+        user_data['roles'] = user_roles
+
+        user_groups = self.execute_query("""SELECT name FROM "group" WHERE id IN 
+                                        (SELECT group_id FROM user_group WHERE user_id = %s);""",
+                                         params=(user_data.id,), fetchall=True)
+        user_groups = flat_to_list(user_groups)
+        user_data['groups'] = user_groups
+
+        return user_data
 
     def add_user(self, *, username, password, roles, groups):
         if self.check_user_exists(username):
@@ -161,13 +193,14 @@ class PostgresConnector:
             user_id = self.execute_query("""INSERT INTO "user" (username, password) VALUES (%s, %s) RETURNING id;""",
                                          conn=conn, params=(username, password))
             for role in roles:
-                role_id = self.execute_query("""SELECT id FROM role WHERE name = %s;""", params=(role,))
-                self.execute_query("""INSERT INTO user_role (user_id, role_id) VALUES (%s, %s);""",
-                                   conn=conn, params=(user_id, role_id), with_fetch=False)
+                self.execute_query("""INSERT INTO user_role (role_id, user_id) 
+                                    VALUES ((SELECT id FROM role WHERE name = %s), %s);""",
+                                   conn=conn, params=(role, user_id), with_fetch=False)
             for group in groups:
-                group_id = self.execute_query("""SELECT id FROM "group" WHERE name = %s;""", params=(group,))
-                self.execute_query("""INSERT INTO user_group (user_id, group_id) VALUES (%s, %s);""",
-                                   conn=conn, params=(user_id, group_id), with_fetch=False)
+                self.execute_query("""INSERT INTO user_group (group_id, user_id) 
+                                    VALUES ((SELECT id FROM "group" WHERE name = %s), %s);""",
+                                   conn=conn, params=(group, user_id), with_fetch=False)
+            return user_id
 
     def update_user(self, *, user_id, username, password, roles, groups):
         if username:
@@ -177,51 +210,46 @@ class PostgresConnector:
             self.execute_query("""UPDATE "user" SET password = %s WHERE id = %s;""", params=(password, user_id),
                                with_commit=True, with_fetch=False)
 
-        current_roles = self.execute_query("""SELECT name FROM role WHERE id IN 
-                                            (SELECT role_id FROM user_role WHERE user_id = %s);""",
-                                           params=(user_id,), fetchall=True)
-        current_roles = flat_to_set(current_roles)
-        target_roles = set(roles)
+        if roles:
+            current_roles = self.execute_query("""SELECT name FROM role WHERE id IN 
+                                                (SELECT role_id FROM user_role WHERE user_id = %s);""",
+                                               params=(user_id,), fetchall=True)
+            current_roles = flat_to_set(current_roles)
+            target_roles = set(roles)
 
-        roles_for_add = target_roles - current_roles
-        roles_for_delete = current_roles - target_roles
+            roles_for_add = target_roles - current_roles
+            roles_for_delete = current_roles - target_roles
 
-        with self.transaction('update_user_roles') as conn:
+            with self.transaction('update_user_roles') as conn:
+                for role in roles_for_add:
+                    self.execute_query("""INSERT INTO user_role (role_id, user_id) 
+                                        VALUES ((SELECT id FROM role WHERE name = %s), %s);""",
+                                       conn=conn, params=(role, user_id,), with_commit=True, with_fetch=False)
+                for role in roles_for_delete:
+                    self.execute_query("""DELETE FROM user_role WHERE role_id = (SELECT id FROM role WHERE name = %s) 
+                                        AND user_id = %s;""",
+                                       conn=conn, params=(role, user_id,), with_commit=True, with_fetch=False)
 
-            for role in roles_for_add:
-                role_id = self.execute_query("""SELECT id FROM role WHERE name = %s;""", conn=conn, params=(role,))
-                self.execute_query("""INSERT INTO user_role (user_id, role_id) VALUES (%s, %s);""",
-                                   conn=conn, params=(user_id, role_id,), with_commit=True, with_fetch=False)
-            for role in roles_for_delete:
-                role_id = self.execute_query("""SELECT id FROM role WHERE name = %s;""", conn=conn, params=(role,))
-                self.execute_query("""DELETE FROM user_role WHERE role_id = %s AND user_id = %s;""",
-                                   conn=conn, params=(role_id, user_id,), with_commit=True, with_fetch=False)
+        if groups:
+            current_groups = self.execute_query("""SELECT name FROM "group" WHERE id IN 
+                                                    (SELECT group_id FROM user_group WHERE user_id = %s);""",
+                                                params=(user_id,), fetchall=True)
+            current_groups = flat_to_set(current_groups)
+            target_groups = set(groups)
 
-        current_groups = self.execute_query("""SELECT name FROM "group" WHERE id IN 
-                                                (SELECT group_id FROM user_group WHERE user_id = %s);""",
-                                            params=(user_id,), fetchall=True)
-        current_groups = flat_to_set(current_groups)
-        target_groups = set(groups)
+            groups_for_add = target_groups - current_groups
+            groups_for_delete = current_groups - target_groups
 
-        groups_for_add = target_groups - current_groups
-        groups_for_delete = current_groups - target_groups
-
-        with self.transaction('update_user_groups') as conn:
-
-            for group in groups_for_add:
-                group_id = self.execute_query("""SELECT id FROM "group" WHERE name = %s;""", conn=conn, params=(group,))
-                self.execute_query("""INSERT INTO user_group (user_id, group_id) VALUES (%s, %s);""",
-                                   conn=conn, params=(user_id, group_id,), with_commit=True, with_fetch=False)
-            for group in groups_for_delete:
-                group_id = self.execute_query("""SELECT id FROM "group" WHERE name = %s;""", conn=conn, params=(group,))
-                self.execute_query("""DELETE FROM user_group WHERE user_id = %s AND group_id = %s;""",
-                                   conn=conn, params=(user_id, group_id,), with_commit=True, with_fetch=False)
+            with self.transaction('update_user_groups') as conn:
+                for group in groups_for_add:
+                    group_id = self.execute_query("""SELECT id FROM "group" WHERE name = %s;""", conn=conn, params=(group,))
+                    self.execute_query("""INSERT INTO user_group (user_id, group_id) VALUES (%s, %s);""",
+                                       conn=conn, params=(user_id, group_id,), with_commit=True, with_fetch=False)
+                for group in groups_for_delete:
+                    group_id = self.execute_query("""SELECT id FROM "group" WHERE name = %s;""", conn=conn, params=(group,))
+                    self.execute_query("""DELETE FROM user_group WHERE user_id = %s AND group_id = %s;""",
+                                       conn=conn, params=(user_id, group_id,), with_commit=True, with_fetch=False)
         return user_id
-
-    def get_user_info(self, token):
-        user_id = self.execute_query("""SELECT user_id FROM session WHERE token = %s;""", params=(token,))
-        user_info = self.execute_query("""SELECT * FROM "user" WHERE id = %s;""", params=(user_id,))
-        return user_info
 
     def delete_user(self, user_id):
         self.execute_query("""DELETE FROM "user" WHERE id = %s;""", params=(user_id,),
@@ -234,11 +262,7 @@ class PostgresConnector:
         role_id = self.execute_query("""SELECT id FROM role WHERE name = %s;""", params=(role_name,))
         return role_id
 
-    def get_roles_list(self):
-        roles_list = self.execute_query("""SELECT * FROM role;""", fetchall=True, as_obj=True)
-        return roles_list
-
-    def get_roles_data(self, user_id=None):
+    def get_roles_data(self, user_id=None, names_only=False, with_relations=False):
         if user_id:
             roles = self.execute_query("""SELECT * FROM role WHERE id IN 
                                         (SELECT role_id FROM user_role WHERE user_id = %s);""",
@@ -246,12 +270,25 @@ class PostgresConnector:
         else:
             roles = self.execute_query("""SELECT * FROM role;""", fetchall=True, as_obj=True)
 
-        for role in roles:
-            permissions = self.execute_query("""SELECT name FROM permission WHERE id IN 
-                                            (SELECT permission_id FROM role_permission WHERE role_id = %s);""",
-                                             params=(role.id,), fetchall=True)
-            permissions = flat_to_list(permissions)
-            role['permissions'] = permissions
+        if names_only:
+            roles = [r['name'] for r in roles]
+        else:
+            for role in roles:
+                permissions = self.execute_query("""SELECT name FROM permission WHERE id IN 
+                                                (SELECT permission_id FROM role_permission WHERE role_id = %s);""",
+                                                 params=(role.id,), fetchall=True)
+                permissions = flat_to_list(permissions)
+                role['permissions'] = permissions
+                users = self.execute_query("""SELECT username FROM "user" WHERE id in 
+                                                (SELECT user_id FROM user_role WHERE role_id = %s)""",
+                                           params=(role.id,), fetchall=True)
+                users = flat_to_list(users)
+                role['users'] = users
+
+            if with_relations:
+                all_permissions = self.get_permissions_data(names_only=True)
+                all_users = self.get_users_data(names_only=True)
+                roles = {'roles': roles, 'permissions': all_permissions, 'users': all_users}
         return roles
 
     def get_role_data(self, role_id):
@@ -264,7 +301,7 @@ class PostgresConnector:
         role['permissions'] = permissions
         users = self.execute_query("""SELECT username FROM "user" WHERE id in 
                                 (SELECT user_id FROM user_role WHERE role_id = %s)""",
-                                   params=(role_id,), fetchall=True)
+                                   params=(role.id,), fetchall=True)
         users = flat_to_list(users)
         role['users'] = users
         return role
@@ -290,50 +327,55 @@ class PostgresConnector:
                                    conn=conn, params=(permission_id, role_id,), with_fetch=False)
         return role_id
 
-    def update_role(self, *, role_id, users, permissions):
-        current_users = self.execute_query("""SELECT username FROM "user" WHERE id IN 
-                                            (SELECT user_id FROM user_role WHERE role_id = %s);""",
-                                           params=(role_id,), fetchall=True)
-        current_users = flat_to_set(current_users)
-        target_users = set(users)
+    def update_role(self, *, role_id, role_name, users, permissions):
+        if role_name:
+            self.execute_query("""UPDATE role SET name = %s WHERE id = %s;""", params=(role_name, role_id),
+                               with_commit=True, with_fetch=False)
+        if users:
+            current_users = self.execute_query("""SELECT username FROM "user" WHERE id IN 
+                                                (SELECT user_id FROM user_role WHERE role_id = %s);""",
+                                               params=(role_id,), fetchall=True)
+            current_users = flat_to_set(current_users)
+            target_users = set(users)
 
-        users_for_add = target_users - current_users
-        users_for_delete = current_users - target_users
+            users_for_add = target_users - current_users
+            users_for_delete = current_users - target_users
 
-        with self.transaction('update_role_users') as conn:
+            with self.transaction('update_role_users') as conn:
 
-            for user in users_for_add:
-                user_id = self.execute_query("""SELECT id FROM "user" WHERE username = %s;""",
-                                             conn=conn, params=(user,))
-                self.execute_query("""INSERT INTO user_role (user_id, role_id) VALUES (%s, %s);""",
-                                   conn=conn, params=(user_id, role_id,), with_commit=True, with_fetch=False)
-            for user in users_for_delete:
-                user_id = self.execute_query("""SELECT id FROM "user" WHERE username = %s;""",
-                                             conn=conn, params=(user,))
-                self.execute_query("""DELETE FROM user_role WHERE user_id = %s AND role_id = %s;""",
-                                   conn=conn, params=(user_id, role_id), with_commit=True)
+                for user in users_for_add:
+                    user_id = self.execute_query("""SELECT id FROM "user" WHERE username = %s;""",
+                                                 conn=conn, params=(user,))
+                    self.execute_query("""INSERT INTO user_role (user_id, role_id) VALUES (%s, %s);""",
+                                       conn=conn, params=(user_id, role_id,), with_fetch=False)
+                for user in users_for_delete:
+                    user_id = self.execute_query("""SELECT id FROM "user" WHERE username = %s;""",
+                                                 conn=conn, params=(user,))
+                    self.execute_query("""DELETE FROM user_role WHERE user_id = %s AND role_id = %s;""",
+                                       conn=conn, params=(user_id, role_id), with_fetch=False)
 
-        current_permissions = self.execute_query("""SELECT name FROM permission WHERE id IN 
-                                                (SELECT permission_id FROM role_permission WHERE role_id = %s);""",
-                                                 params=(role_id,), fetchall=True)
-        current_permissions = flat_to_set(current_permissions)
-        target_permissions = set(permissions)
+        if permissions:
+            current_permissions = self.execute_query("""SELECT name FROM permission WHERE id IN 
+                                                    (SELECT permission_id FROM role_permission WHERE role_id = %s);""",
+                                                     params=(role_id,), fetchall=True)
+            current_permissions = flat_to_set(current_permissions)
+            target_permissions = set(permissions)
 
-        permissions_for_add = target_permissions - current_permissions
-        permissions_for_delete = current_permissions - target_permissions
+            permissions_for_add = target_permissions - current_permissions
+            permissions_for_delete = current_permissions - target_permissions
 
-        with self.transaction('update_role_permissions') as conn:
+            with self.transaction('update_role_permissions') as conn:
 
-            for permission in permissions_for_add:
-                permission_id = self.execute_query("""SELECT id FROM permission WHERE name = %s;""",
-                                                   conn=conn, params=(permission,))
-                self.execute_query("""INSERT INTO role_permission (permission_id, role_id) VALUES (%s, %s);""",
-                                   conn=conn, params=(permission_id, role_id,), with_commit=True, with_fetch=False)
-            for permission in permissions_for_delete:
-                permission_id = self.execute_query("""SELECT id FROM permission WHERE name = %s;""",
-                                                   conn=conn, params=(permission,))
-                self.execute_query("""DELETE FROM role_permission WHERE permission_id = %s AND role_id = %s;""",
-                                   conn=conn, params=(permission_id, role_id), with_commit=True)
+                for permission in permissions_for_add:
+                    permission_id = self.execute_query("""SELECT id FROM permission WHERE name = %s;""",
+                                                       conn=conn, params=(permission,))
+                    self.execute_query("""INSERT INTO role_permission (permission_id, role_id) VALUES (%s, %s);""",
+                                       conn=conn, params=(permission_id, role_id,), with_fetch=False)
+                for permission in permissions_for_delete:
+                    permission_id = self.execute_query("""SELECT id FROM permission WHERE name = %s;""",
+                                                       conn=conn, params=(permission,))
+                    self.execute_query("""DELETE FROM role_permission WHERE permission_id = %s AND role_id = %s;""",
+                                       conn=conn, params=(permission_id, role_id), with_fetch=False)
         return role_id
 
     def get_role(self, role_id):
@@ -351,7 +393,7 @@ class PostgresConnector:
         group_id = self.execute_query("""SELECT id FROM "group" WHERE name = %s;""", params=(group_name,))
         return group_id
 
-    def get_groups_data(self, user_id=None):
+    def get_groups_data(self, user_id=None, names_only=False):
         if user_id:
             groups = self.execute_query("""SELECT * FROM "group" WHERE id IN 
                                         (SELECT group_id FROM user_group WHERE user_id = %s);""",
@@ -359,13 +401,38 @@ class PostgresConnector:
         else:
             groups = self.execute_query("""SELECT * FROM "group";""", fetchall=True, as_obj=True)
 
-        for group in groups:
-            indexes = self.execute_query("""SELECT name FROM index WHERE id IN 
-                                        (SELECT index_id FROM index_group WHERE group_id = %s);""",
-                                         params=(group.id,), fetchall=True)
-            indexes = flat_to_list(indexes)
-            group['indexes'] = indexes
+        if names_only:
+            groups = [g['name'] for g in groups]
+        else:
+            for group in groups:
+                users = self.execute_query("""SELECT username FROM "user" WHERE id IN 
+                                            (SELECT user_id FROM user_group WHERE group_id = %s);""",
+                                           params=(group.id,), fetchall=True)
+                users = flat_to_list(users)
+                group['users'] = users
+
+                indexes = self.execute_query("""SELECT name FROM index WHERE id IN 
+                                            (SELECT index_id FROM index_group WHERE group_id = %s);""",
+                                             params=(group.id,), fetchall=True)
+                indexes = flat_to_list(indexes)
+                group['indexes'] = indexes
         return groups
+
+    def get_group_data(self, group_id):
+        group = self.execute_query("""SELECT * FROM "group" WHERE id = %s;""",
+                                   params=(group_id,), as_obj=True)
+        users = self.execute_query("""SELECT username FROM "user" WHERE id IN 
+                                    (SELECT user_id FROM user_group WHERE group_id = %s);""",
+                                   params=(group.id,), fetchall=True)
+        users = flat_to_list(users)
+        group['users'] = users
+
+        indexes = self.execute_query("""SELECT name FROM index WHERE id IN 
+                                    (SELECT index_id FROM index_group WHERE group_id = %s);""",
+                                     params=(group.id,), fetchall=True)
+        indexes = flat_to_list(indexes)
+        group['indexes'] = indexes
+        return group
 
     def add_group(self, *, group_name, color, users, indexes):
         if self.check_group_exists(group_name):
@@ -384,11 +451,57 @@ class PostgresConnector:
                                    conn=conn, params=(index, group_id,), with_fetch=False)
             return group_id
 
-    def update_group(self):
-        pass
+    def update_group(self, group_id, name, color, users, indexes):
+        if name:
+            self.execute_query("""UPDATE "group" SET name = %s WHERE id = %s;""",
+                               params=(name, group_id), with_commit=True, with_fetch=False)
+        if color:
+            self.execute_query("""UPDATE "group" SET color = %s WHERE id = %s;""",
+                               params=(color, group_id), with_commit=True, with_fetch=False)
 
-    def delete_group(self):
-        pass
+        current_users = self.execute_query("""SELECT username FROM "user" WHERE id IN 
+                                            (SELECT user_id FROM user_group WHERE group_id = %s);""",
+                                           params=(group_id,), fetchall=True)
+        current_users = flat_to_set(current_users)
+        target_users = set(users)
+
+        users_for_add = target_users - current_users
+        users_for_delete = current_users - target_users
+
+        with self.transaction('update_group_users') as conn:
+            for user in users_for_add:
+                self.execute_query("""INSERT INTO user_group (user_id, group_id) 
+                                    VALUES ((SELECT id FROM "user" WHERE username = %s), %s);""",
+                                   conn=conn, params=(user, group_id,), with_commit=True, with_fetch=False)
+            for user in users_for_delete:
+                self.execute_query("""DELETE FROM user_group
+                                    WHERE user_id = (SELECT id FROM "user" WHERE username = %s) AND group_id = %s;""",
+                                   conn=conn, params=(user, group_id), with_commit=True)
+
+        current_indexes = self.execute_query("""SELECT name FROM index WHERE id IN 
+                                            (SELECT index_id FROM index_group WHERE group_id = %s);""",
+                                             params=(group_id,), fetchall=True)
+        current_indexes = flat_to_set(current_indexes)
+        target_indexes = set(indexes)
+
+        indexes_for_add = target_indexes - current_indexes
+        indexes_for_delete = current_indexes - target_indexes
+
+        with self.transaction('update_group_indexes') as conn:
+            for index in indexes_for_add:
+                self.execute_query("""INSERT INTO index_group (index_id, group_id) 
+                                    VALUES ((SELECT id FROM index WHERE name = %s), %s);""",
+                                   conn=conn, params=(index, group_id,), with_commit=True, with_fetch=False)
+            for index in indexes_for_delete:
+                self.execute_query("""DELETE FROM index_group WHERE index_id = (SELECT id FROM index WHERE name = %s)
+                                    AND group_id = %s;""",
+                                   conn=conn, params=(index, group_id), with_commit=True)
+        return group_id
+
+    def delete_group(self, group_id):
+        self.execute_query("""DELETE FROM "group" WHERE id = %s;""", params=(group_id,),
+                           with_commit=True, with_fetch=False)
+        return group_id
 
     # __INDEXES___ #################################################################
 
@@ -406,6 +519,21 @@ class PostgresConnector:
 
     # __PERMISSIONS__ ###############################################################
 
-    def get_permissions_list(self):
-        permissions = self.execute_query("""SELECT * FROM permission;""", fetchall=True, as_obj=True)
+    def get_permissions_data(self, user_id=None, names_only=False):
+        if user_id:
+            user_roles = self.get_roles_data(user_id=user_id, names_only=True)
+            permissions = list()
+            for role in user_roles:
+                role_id = self.execute_query("""SELECT id FROM role WHERE name = %s;""", params=(role,))
+                role_permissions = self.execute_query("""SELECT * FROM permission WHERE id IN 
+                                                    (SELECT permission_id FROM role_permission WHERE role_id = %s);""",
+                                                      params=(role_id,), fetchall=True, as_obj=True)
+                permissions.extend(role_permissions)
+        else:
+            permissions = self.execute_query("""SELECT * FROM permission;""", fetchall=True, as_obj=True)
+            if names_only:
+                permissions = [p['name'] for p in permissions]
         return permissions
+
+    def add_permission(self):
+        pass
