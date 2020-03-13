@@ -13,7 +13,7 @@ from psycopg2.pool import ThreadedConnectionPool
 
 from handlers.auth.auth import AuthLoginHandler, AuthCreateHandler,\
     RolesHandler, RoleHandler, UsersHandler, UserHandler, PermissionsHandler,\
-    GroupsHandler, GroupHandler
+    GroupsHandler, GroupHandler, PermissionListHandler
 
 from handlers.jobs.makejob import MakeJob
 from handlers.jobs.loadjob import LoadJob
@@ -114,13 +114,13 @@ def main():
 
         (r'/api/users', UsersHandler, {"db_conn_pool": db_pool}),
         (r'/api/user', UserHandler, {"db_conn_pool": db_pool}),
+        (r'/api/user/permissions', PermissionListHandler, {"db_conn_pool": db_pool}),
 
         (r'/api/permissions', PermissionsHandler, {"db_conn_pool": db_pool}),
         (r'/api/permission', PermissionsHandler, {"db_conn_pool": db_pool}),
 
         (r'/api/groups', GroupsHandler, {"db_conn_pool": db_pool}),
         (r'/api/group', GroupHandler, {"db_conn_pool": db_pool}),
-
 
     ],
         cookie_secret='57ed6cf3-b908-47ca-a3de-88a76aa794cb',
