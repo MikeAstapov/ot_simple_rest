@@ -30,7 +30,8 @@ lark_parser-0.7.1-py3.6
 
 ## Contributing
 
-Nikolay Ryabykh
+Nikolay Ryabykh (nryabykh@ot.ru)
+Sergei Ermilov (sermilov@ot.ru)
 
 ## Versioning
 
@@ -39,7 +40,7 @@ Git. Only Git.
 ## Authors
 
 Andrey Starchenkov (astarchenkov@ot.ru)  
-Sergei Ermilov (sermilov@ot.ru)
+Anastasiia Safonova (asafonova@ot.ru)
 
 ## License
 

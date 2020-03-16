@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2020-02-20
+### Changed
+- Now caches consist not even of dataset, so we add subdir "data" for datasets.  
+
 ## [0.13.1] - 2020-02-20
 ### Fixed
 - Command appendpipe quoted masquerading.  
