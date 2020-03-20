@@ -11,9 +11,17 @@ import tornado.web
 
 from psycopg2.pool import ThreadedConnectionPool
 
-from handlers.auth.auth import AuthLoginHandler, RolesHandler, RoleHandler,\
-    UsersHandler, UserHandler, PermissionsHandler, PermissionHandler, GroupsHandler,\
-    GroupHandler, UserPermissionsHandler, IndexesHandler, IndexHandler, DashboardHandler
+from handlers.eva.auth import AuthLoginHandler
+from handlers.eva.dashs import DashboardHandler, DashboardsHandler
+from handlers.eva.quizs import QuizHandler, QuizsHandler
+from handlers.eva.role_model import UserHandler, UsersHandler, RoleHandler, RolesHandler, \
+    PermissionsHandler, PermissionHandler, GroupsHandler, GroupHandler, UserPermissionsHandler, \
+    IndexesHandler, IndexHandler, UserGroupsHandler, UserDashboardsHandler, GroupDashboardsHandler
+
+# from handlers.eva.auth import AuthLoginHandler, RolesHandler, RoleHandler, UsersHandler,\
+#     UserHandler, PermissionsHandler, PermissionHandler, GroupsHandler, GroupHandler,\
+#     UserPermissionsHandler, IndexesHandler, IndexHandler, DashboardHandler, UserGroupsHandler, \
+#     QuizsHandler
 
 # from handlers.jobs.makejob import MakeJob
 # from handlers.jobs.loadjob import LoadJob
@@ -110,10 +118,13 @@ def main():
 
         (r'/api/users', UsersHandler, {"db_conn_pool": db_pool}),
         (r'/api/user', UserHandler, {"db_conn_pool": db_pool}),
+        (r'/api/user/groups', UserGroupsHandler, {"db_conn_pool": db_pool}),
         (r'/api/user/permissions', UserPermissionsHandler, {"db_conn_pool": db_pool}),
+        (r'/api/user/dashboards', UserDashboardsHandler, {"db_conn_pool": db_pool}),
 
         (r'/api/groups', GroupsHandler, {"db_conn_pool": db_pool}),
         (r'/api/group', GroupHandler, {"db_conn_pool": db_pool}),
+        (r'/api/group/dashboards', GroupDashboardsHandler, {"db_conn_pool": db_pool}),
 
         (r'/api/roles', RolesHandler, {"db_conn_pool": db_pool}),
         (r'/api/role', RoleHandler, {"db_conn_pool": db_pool}),
@@ -124,8 +135,13 @@ def main():
         (r'/api/indexes', IndexesHandler, {"db_conn_pool": db_pool}),
         (r'/api/index', IndexHandler, {"db_conn_pool": db_pool}),
 
-        (r'/api/dashboard/save', DashboardHandler, {"db_conn_pool": db_pool}),
-        (r'/api/dashboard/load', DashboardHandler, {"db_conn_pool": db_pool}),
+        (r'/api/dashs', DashboardsHandler, {"db_conn_pool": db_pool}),
+        (r'/api/dash/save', DashboardHandler, {"db_conn_pool": db_pool}),
+        (r'/api/dash/load', DashboardHandler, {"db_conn_pool": db_pool}),
+
+        (r'/qapi/quizs', QuizsHandler, {"db_conn_pool": db_pool}),
+        (r'/qapi/quiz', QuizHandler, {"db_conn_pool": db_pool}),
+        (r'/qapi/quiz/new', QuizHandler, {"db_conn_pool": db_pool})
     ],
         cookie_secret='57ed6cf3-b908-47ca-a3de-88a76aa794cb',
         login_url=r'/api/auth/login',

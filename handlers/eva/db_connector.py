@@ -203,17 +203,17 @@ class PostgresConnector:
             target_roles = set(roles)
 
             roles_for_add = target_roles - current_roles
-            roles_for_delete = current_roles - target_roles
+            roles_for_delete = tuple(current_roles - target_roles)
 
             with self.transaction('update_user_roles') as conn:
                 for role in roles_for_add:
                     self.execute_query("""INSERT INTO user_role (role_id, user_id) 
                                         VALUES ((SELECT id FROM role WHERE name = %s), %s);""",
-                                       conn=conn, params=(role, user_id,), with_commit=True, with_fetch=False)
-                for role in roles_for_delete:
-                    self.execute_query("""DELETE FROM user_role WHERE role_id = (SELECT id FROM role WHERE name = %s) 
+                                       conn=conn, params=(role, user_id,), with_fetch=False)
+                if roles_for_delete:
+                    self.execute_query("""DELETE FROM user_role WHERE role_id IN (SELECT id FROM role WHERE name IN %s) 
                                         AND user_id = %s;""",
-                                       conn=conn, params=(role, user_id,), with_commit=True, with_fetch=False)
+                                       conn=conn, params=(roles_for_delete, user_id,), with_fetch=False)
 
         if isinstance(groups, list):
             current_groups = self.execute_query("""SELECT name FROM "group" WHERE id IN 
@@ -223,19 +223,18 @@ class PostgresConnector:
             target_groups = set(groups)
 
             groups_for_add = target_groups - current_groups
-            groups_for_delete = current_groups - target_groups
+            groups_for_delete = tuple(current_groups - target_groups)
 
             with self.transaction('update_user_groups') as conn:
                 for group in groups_for_add:
-                    group_id = self.execute_query("""SELECT id FROM "group" WHERE name = %s;""", conn=conn,
-                                                  params=(group,))
+                    group_id = self.execute_query("""SELECT id FROM "group" WHERE name = %s;""",
+                                                  conn=conn, params=(group,))
                     self.execute_query("""INSERT INTO user_group (user_id, group_id) VALUES (%s, %s);""",
-                                       conn=conn, params=(user_id, group_id,), with_commit=True, with_fetch=False)
-                for group in groups_for_delete:
-                    group_id = self.execute_query("""SELECT id FROM "group" WHERE name = %s;""", conn=conn,
-                                                  params=(group,))
-                    self.execute_query("""DELETE FROM user_group WHERE user_id = %s AND group_id = %s;""",
-                                       conn=conn, params=(user_id, group_id,), with_commit=True, with_fetch=False)
+                                       conn=conn, params=(user_id, group_id,), with_fetch=False)
+                if groups_for_delete:
+                    self.execute_query("""DELETE FROM user_group WHERE user_id = %s AND group_id IN 
+                                        (SELECT id FROM "group" WHERE name in %s);""",
+                                       conn=conn, params=(user_id, groups_for_delete,), with_fetch=False)
         return user_id
 
     def delete_user(self, user_id):
@@ -256,7 +255,6 @@ class PostgresConnector:
                                        fetchall=True, params=(user_id,), as_obj=True)
         else:
             roles = self.execute_query("""SELECT * FROM role;""", fetchall=True, as_obj=True)
-
         if names_only:
             roles = [r['name'] for r in roles]
         else:
@@ -324,20 +322,18 @@ class PostgresConnector:
             target_users = set(users)
 
             users_for_add = target_users - current_users
-            users_for_delete = current_users - target_users
+            users_for_delete = tuple(current_users - target_users)
 
             with self.transaction('update_role_users') as conn:
 
                 for user in users_for_add:
-                    user_id = self.execute_query("""SELECT id FROM "user" WHERE name = %s;""",
-                                                 conn=conn, params=(user,))
-                    self.execute_query("""INSERT INTO user_role (user_id, role_id) VALUES (%s, %s);""",
-                                       conn=conn, params=(user_id, role_id,), with_fetch=False)
-                for user in users_for_delete:
-                    user_id = self.execute_query("""SELECT id FROM "user" WHERE name = %s;""",
-                                                 conn=conn, params=(user,))
-                    self.execute_query("""DELETE FROM user_role WHERE user_id = %s AND role_id = %s;""",
-                                       conn=conn, params=(user_id, role_id), with_fetch=False)
+                    self.execute_query("""INSERT INTO user_role (user_id, role_id) 
+                                        VALUES ((SELECT id FROM "user" WHERE name = %s), %s);""",
+                                       conn=conn, params=(user, role_id,), with_fetch=False)
+                if users_for_delete:
+                    self.execute_query("""DELETE FROM user_role WHERE user_id IN 
+                                        (SELECT id FROM "user" WHERE name IN %s) AND role_id = %s;""",
+                                       conn=conn, params=(users_for_delete, role_id), with_fetch=False)
 
         if isinstance(permissions, list):
             current_permissions = self.execute_query("""SELECT name FROM permission WHERE id IN 
@@ -347,20 +343,18 @@ class PostgresConnector:
             target_permissions = set(permissions)
 
             permissions_for_add = target_permissions - current_permissions
-            permissions_for_delete = current_permissions - target_permissions
+            permissions_for_delete = tuple(current_permissions - target_permissions)
 
             with self.transaction('update_role_permissions') as conn:
 
                 for permission in permissions_for_add:
-                    permission_id = self.execute_query("""SELECT id FROM permission WHERE name = %s;""",
-                                                       conn=conn, params=(permission,))
-                    self.execute_query("""INSERT INTO role_permission (permission_id, role_id) VALUES (%s, %s);""",
-                                       conn=conn, params=(permission_id, role_id,), with_fetch=False)
-                for permission in permissions_for_delete:
-                    permission_id = self.execute_query("""SELECT id FROM permission WHERE name = %s;""",
-                                                       conn=conn, params=(permission,))
-                    self.execute_query("""DELETE FROM role_permission WHERE permission_id = %s AND role_id = %s;""",
-                                       conn=conn, params=(permission_id, role_id), with_fetch=False)
+                    self.execute_query("""INSERT INTO role_permission (permission_id, role_id) 
+                                        VALUES ((SELECT id FROM permission WHERE name = %s), %s);""",
+                                       conn=conn, params=(permission, role_id,), with_fetch=False)
+                if permissions_for_delete:
+                    self.execute_query("""DELETE FROM role_permission WHERE permission_id IN 
+                                        (SELECT id FROM permission WHERE name IN %s) AND role_id = %s;""",
+                                       conn=conn, params=(permissions_for_delete, role_id), with_fetch=False)
         return role_id
 
     def get_role(self, role_id):
@@ -378,7 +372,7 @@ class PostgresConnector:
         group_id = self.execute_query("""SELECT id FROM "group" WHERE name = %s;""", params=(group_name,))
         return group_id
 
-    def get_groups_data(self, *, user_id=None, names_only=False):
+    def get_groups_data(self, *, user_id=None, names_only=False, with_relations=True):
         if user_id:
             groups = self.execute_query("""SELECT * FROM "group" WHERE id IN 
                                         (SELECT group_id FROM user_group WHERE user_id = %s);""",
@@ -388,13 +382,19 @@ class PostgresConnector:
 
         if names_only:
             groups = [g['name'] for g in groups]
-        else:
+        elif with_relations:
             for group in groups:
                 users = self.execute_query("""SELECT name FROM "user" WHERE id IN 
                                             (SELECT user_id FROM user_group WHERE group_id = %s);""",
                                            params=(group.id,), fetchall=True)
                 users = flat_to_list(users)
                 group['users'] = users
+
+                dashboards = self.execute_query("""SELECT name FROM dash WHERE id IN 
+                                                (SELECT dash_id FROM dash_group WHERE group_id = %s);""",
+                                                params=(group.id,), fetchall=True)
+                dashboards = flat_to_list(dashboards)
+                group['dashs'] = dashboards
 
                 indexes = self.execute_query("""SELECT name FROM index WHERE id IN 
                                             (SELECT index_id FROM index_group WHERE group_id = %s);""",
@@ -412,6 +412,12 @@ class PostgresConnector:
         users = flat_to_list(users)
         group['users'] = users
 
+        dashboards = self.execute_query("""SELECT name FROM dash WHERE id IN 
+                                        (SELECT dash_id FROM dash_group WHERE group_id = %s);""",
+                                        params=(group.id,), fetchall=True)
+        dashboards = flat_to_list(dashboards)
+        group['dashs'] = dashboards
+
         indexes = self.execute_query("""SELECT name FROM index WHERE id IN 
                                     (SELECT index_id FROM index_group WHERE group_id = %s);""",
                                      params=(group.id,), fetchall=True)
@@ -419,7 +425,7 @@ class PostgresConnector:
         group['indexes'] = indexes
         return group
 
-    def add_group(self, *, name, color, users, indexes):
+    def add_group(self, *, name, color, users=None, indexes=None, dashs=None):
         if self.check_group_exists(name):
             raise QueryError(f'group {name} already exists')
 
@@ -436,9 +442,15 @@ class PostgresConnector:
                     self.execute_query("""INSERT INTO index_group (index_id, group_id) 
                                         VALUES ((SELECT id FROM index WHERE name = %s), %s);""",
                                        conn=conn, params=(index, group_id,), with_fetch=False)
+
+            if dashs:
+                for dash in dashs:
+                    self.execute_query("""INSERT INTO dash_group (dash_id, group_id) 
+                                        VALUES ((SELECT id FROM dash WHERE name = %s), %s);""",
+                                       conn=conn, params=(dash, group_id,), with_fetch=False)
         return group_id
 
-    def update_group(self, *, group_id, name, color, users=None, indexes=None):
+    def update_group(self, *, group_id, name, color, users=None, indexes=None, dashs=None):
         if name:
             self.execute_query("""UPDATE "group" SET name = %s WHERE id = %s;""",
                                params=(name, group_id), with_commit=True, with_fetch=False)
@@ -454,17 +466,17 @@ class PostgresConnector:
             target_users = set(users)
 
             users_for_add = target_users - current_users
-            users_for_delete = current_users - target_users
+            users_for_delete = tuple(current_users - target_users)
 
             with self.transaction('update_group_users') as conn:
                 for user in users_for_add:
                     self.execute_query("""INSERT INTO user_group (user_id, group_id) 
                                         VALUES ((SELECT id FROM "user" WHERE name = %s), %s);""",
                                        conn=conn, params=(user, group_id,), with_fetch=False)
-                for user in users_for_delete:
+                if users_for_delete:
                     self.execute_query("""DELETE FROM user_group
-                                        WHERE user_id = (SELECT id FROM "user" WHERE name = %s) AND group_id = %s;""",
-                                       conn=conn, params=(user, group_id), with_fetch=False)
+                                        WHERE user_id IN (SELECT id FROM "user" WHERE name IN %s) AND group_id = %s;""",
+                                       conn=conn, params=(users_for_delete, group_id), with_fetch=False)
 
         if isinstance(indexes, list):
             current_indexes = self.execute_query("""SELECT name FROM index WHERE id IN 
@@ -474,17 +486,37 @@ class PostgresConnector:
             target_indexes = set(indexes)
 
             indexes_for_add = target_indexes - current_indexes
-            indexes_for_delete = current_indexes - target_indexes
+            indexes_for_delete = tuple(current_indexes - target_indexes)
 
             with self.transaction('update_group_indexes') as conn:
                 for index in indexes_for_add:
                     self.execute_query("""INSERT INTO index_group (index_id, group_id) 
                                         VALUES ((SELECT id FROM index WHERE name = %s), %s);""",
                                        conn=conn, params=(index, group_id,), with_fetch=False)
-                for index in indexes_for_delete:
-                    self.execute_query("""DELETE FROM index_group WHERE index_id = (SELECT id FROM index WHERE name = %s)
-                                        AND group_id = %s;""",
-                                       conn=conn, params=(index, group_id), with_fetch=False)
+                if indexes_for_delete:
+                    self.execute_query("""DELETE FROM index_group WHERE index_id IN 
+                                        (SELECT id FROM index WHERE name IN %s) AND group_id = %s;""",
+                                       conn=conn, params=(indexes_for_delete, group_id), with_fetch=False)
+
+        if isinstance(dashs, list):
+            current_dashs = self.execute_query("""SELECT name FROM dash WHERE id IN 
+                                                (SELECT dash_id FROM dash_group WHERE group_id = %s);""",
+                                               params=(group_id,), fetchall=True)
+            current_dashs = flat_to_set(current_dashs)
+            target_dashs = set(dashs)
+
+            dashs_for_add = target_dashs - current_dashs
+            dashs_for_delete = tuple(current_dashs - target_dashs)
+
+            with self.transaction('update_group_dashs') as conn:
+                for dash in dashs_for_add:
+                    self.execute_query("""INSERT INTO dash_group (dash_id, group_id) 
+                                        VALUES ((SELECT id FROM dash WHERE name = %s), %s);""",
+                                       conn=conn, params=(dash, group_id,), with_fetch=False)
+                if dashs_for_delete:
+                    self.execute_query("""DELETE FROM dash_group WHERE dash_id IN 
+                                        (SELECT id FROM index WHERE name IN %s) AND group_id = %s;""",
+                                       conn=conn, params=(dashs_for_delete, group_id), with_fetch=False)
         return group_id
 
     def delete_group(self, group_id):
@@ -559,17 +591,17 @@ class PostgresConnector:
             target_groups = set(groups)
 
             groups_for_add = target_groups - current_groups
-            groups_for_delete = current_groups - target_groups
+            groups_for_delete = tuple(current_groups - target_groups)
 
             with self.transaction('update_index_groups') as conn:
                 for group in groups_for_add:
                     self.execute_query("""INSERT INTO index_group (group_id, index_id) 
                                         VALUES ((SELECT id FROM "group" WHERE name = %s), %s);""",
                                        conn=conn, params=(group, index_id,), with_fetch=False)
-                for group in groups_for_delete:
-                    self.execute_query("""DELETE FROM index_group 
-                                        WHERE group_id = (SELECT if FROM "group" WHERE name = %s) AND index_id = %s;""",
-                                       conn=conn, params=(group, index_id), with_fetch=False)
+                if groups_for_delete:
+                    self.execute_query("""DELETE FROM index_group  WHERE group_id IN 
+                                        (SELECT id FROM "group" WHERE name IN %s) AND index_id = %s;""",
+                                       conn=conn, params=(groups_for_delete, index_id), with_fetch=False)
         return index_id
 
     def delete_index(self, index_id):
@@ -645,17 +677,17 @@ class PostgresConnector:
             target_roles = set(roles)
 
             roles_for_add = target_roles - current_roles
-            roles_for_delete = current_roles - target_roles
+            roles_for_delete = tuple(current_roles - target_roles)
 
             with self.transaction('update_group_users') as conn:
                 for role in roles_for_add:
                     self.execute_query("""INSERT INTO role_permission (role_id, permission_id) 
                                         VALUES ((SELECT id FROM role WHERE name = %s), %s);""",
                                        conn=conn, params=(role, permission_id,), with_fetch=False)
-                for role in roles_for_delete:
-                    self.execute_query("""DELETE FROM role_permission
-                                        WHERE role_id = (SELECT id FROM role WHERE name = %s) AND permission_id = %s;""",
-                                       conn=conn, params=(role, permission_id), with_fetch=False)
+                if roles_for_delete:
+                    self.execute_query("""DELETE FROM role_permission WHERE role_id IN 
+                                        (SELECT id FROM role WHERE name IN %s) AND permission_id = %s;""",
+                                       conn=conn, params=(roles_for_delete, permission_id), with_fetch=False)
         return permission_id
 
     def delete_permission(self, permission_id):
@@ -669,7 +701,27 @@ class PostgresConnector:
         dash_id = self.execute_query("""SELECT id FROM dash WHERE name = %s;""", params=(dash_name,))
         return dash_id
 
-    def save_dashboard(self, *, name, body):
+    def get_dashs_data(self, *, group_id=None, names_only=False):
+        if group_id:
+            dashs = self.execute_query("""SELECT * FROM dash WHERE id IN
+                                        (SELECT dash_id FROM dash_group WHERE group_id = %s);""",
+                                       params=(group_id,), fetchall=True, as_obj=True)
+        else:
+            dashs = self.execute_query("""SELECT * FROM dash;""", fetchall=True, as_obj=True)
+
+        if names_only:
+            dashs = [d['name'] for d in dashs]
+        else:
+            for dash in dashs:
+                groups = self.execute_query("""SELECT name FROM "group" WHERE id IN 
+                                            (SELECT group_id FROM dash_group WHERE dash_id = %s);""",
+                                            params=(dash.id,), fetchall=True)
+                groups = flat_to_list(groups)
+                groups = list({v['id']: v for v in groups}.values())
+                dash['groups'] = groups
+        return dashs
+
+    def save_dash(self, *, name, body, groups=None):
         dash_id = self.check_dash_exists(dash_name=name)
         with self.transaction('save_dashboard_data') as conn:
             if not dash_id:
@@ -678,9 +730,15 @@ class PostgresConnector:
             else:
                 self.execute_query("""UPDATE dash SET body = %s WHERE id = %s;""",
                                    conn=conn, params=(body, dash_id,), with_fetch=False)
+
+            if isinstance(groups, list):
+                for group in groups:
+                    self.execute_query("""INSERT INTO dash_group (group_id, dash_id) 
+                                        VALUES ((SELECT id FROM "group" WHERE name = %s), %s);""",
+                                       conn=conn, params=(group, dash_id,), with_fetch=False)
         return dash_id
 
-    def load_dashboard(self, name):
+    def load_dash(self, name):
         dash_id = self.check_dash_exists(dash_name=name)
         if dash_id:
             dash_body = self.execute_query("""SELECT body FROM dash WHERE id = %s;""", params=(dash_id,))
@@ -688,10 +746,52 @@ class PostgresConnector:
             raise ValueError(f'Dash with id={dash_id} not exists')
         return dash_body
 
-    def delete_dashboard(self, name):
+    def delete_dash(self, name):
         dash_id = self.check_dash_exists(dash_name=name)
         if dash_id:
             with self.transaction('delete_dashboard_data') as conn:
                 self.execute_query("""DELETE FROM dash WHERE id = %s;""",
                                    conn=conn, params=(dash_id,), with_fetch=False)
         return dash_id
+
+    # __QUIZS__ ###############################################################
+
+    def check_quiz_exists(self, quiz_name):
+        quiz_id = self.execute_query("""SELECT id FROM quiz WHERE name = %s;""", params=(quiz_name,))
+        return quiz_id
+
+    def get_quizs_data(self):
+        quizs_data = self.execute_query("""SELECT * FROM quiz;""", fetchall=True, as_obj=True)
+        return quizs_data
+
+    def add_quiz(self, quiz_name, questions):
+        if self.check_quiz_exists(quiz_name=quiz_name):
+            raise QueryError(f'quiz {quiz_name} already exists')
+
+        with self.transaction('create_quiz_data') as conn:
+            quiz_id = self.execute_query("""INSERT INTO quiz (name) values (%s) RETURNING id;""",
+                                         conn=conn, params=(quiz_name,))
+            if isinstance(questions, list):
+                for question in questions:
+                    question_id = self.execute_query("""INSERT INTO question (text, type) 
+                                                    VALUES (%s, %s) RETURNING id;""",
+                                                     conn=conn, params=(question['text'], question['type']))
+                    self.execute_query("""INSERT INTO quiz_question (quiz_id, question_id, sid)
+                                        VALUES (%s, %s, %s);""", )
+
+        return quiz_id
+
+    def get_quiz_data(self, quiz_id):
+        quiz_data = self.execute_query("""SELECT * FROM quiz WHERE id = %s;""", params=(quiz_id,), as_obj=True)
+        if not quiz_data:
+            raise QueryError(f'quiz with id={quiz_id} not exists')
+        questions_data = self.execute_query("""SELECT text, type, sid FROM question, quiz_question 
+                                            WHERE id IN (SELECT question_id FROM quiz_question WHERE quiz_id = %s);""",
+                                            params=(quiz_id,), fetchall=True, as_obj=True)
+        quiz_data['questions'] = questions_data
+        return quiz_data
+
+    def delete_quiz(self, quiz_id):
+        self.execute_query("""DELETE FROM quiz WHERE id = %s;""",
+                           params=(quiz_id,), with_commit=True, with_fetch=False)
+        return quiz_id
