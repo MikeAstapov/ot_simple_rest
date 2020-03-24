@@ -211,7 +211,11 @@ class GroupHandler(BaseHandler):
         if 'read_groups' not in self.permissions and 'admin_all' not in self.permissions:
             raise tornado.web.HTTPError(403, "no permission for read groups")
 
-        group_data = self.db.get_group_data(group_id)
+        try:
+            group_data = self.db.get_group_data(group_id)
+        except Exception as err:
+            raise tornado.web.HTTPError(400, str(err))
+
         all_users = self.db.get_users_data(names_only=True)
         all_indexes = self.db.get_indexes_data(names_only=True)
         all_dashs = self.db.get_dashs_data(names_only=True)
@@ -257,7 +261,7 @@ class GroupHandler(BaseHandler):
         if 'delete_groups' in self.permissions or 'admin_all' in self.permissions:
             group_id = self.db.delete_group(group_id)
         else:
-            raise tornado.web.HTTPError(403, "no permission for delete groups")
+            raise tornado.web.HTTPError(403, "no permission for delete roles")
         self.write({'id': group_id})
 
 

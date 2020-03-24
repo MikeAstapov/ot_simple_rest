@@ -31,15 +31,6 @@ class PostgresConnector:
         self.pool = conn_pool
         self.logger = logging.getLogger('osr')
 
-    def get_column_names(self, table_name):
-        conn = self.pool.getconn()
-        cur = conn.cursor()
-        cur.execute('SELECT * FROM "%s" LIMIT 0;' % table_name)
-        columns = [desc[0] for desc in cur.description]
-        cur.close()
-        self.pool.putconn(conn)
-        return columns
-
     @contextmanager
     def transaction(self, name="transaction", **kwargs):
         options = {
@@ -406,6 +397,9 @@ class PostgresConnector:
     def get_group_data(self, group_id):
         group = self.execute_query("""SELECT * FROM "group" WHERE id = %s;""",
                                    params=(group_id,), as_obj=True)
+        if not group:
+            raise ValueError(f'group with id={group_id} is not exists')
+
         users = self.execute_query("""SELECT name FROM "user" WHERE id IN 
                                     (SELECT user_id FROM user_group WHERE group_id = %s);""",
                                    params=(group.id,), fetchall=True)
@@ -697,9 +691,9 @@ class PostgresConnector:
 
     # __DASHBOARDS__ ###############################################################
 
-    def check_dash_exists(self, dash_name):
-        dash_id = self.execute_query("""SELECT id FROM dash WHERE name = %s;""", params=(dash_name,))
-        return dash_id
+    def check_dash_exists(self, dash_id):
+        dash = self.execute_query("""SELECT name FROM dash WHERE id = %s;""", params=(dash_id,), as_obj=True)
+        return dash.name
 
     def get_dashs_data(self, *, group_id=None, names_only=False):
         if group_id:
@@ -715,43 +709,76 @@ class PostgresConnector:
             for dash in dashs:
                 groups = self.execute_query("""SELECT name FROM "group" WHERE id IN 
                                             (SELECT group_id FROM dash_group WHERE dash_id = %s);""",
-                                            params=(dash.id,), fetchall=True)
-                groups = flat_to_list(groups)
-                groups = list({v['id']: v for v in groups}.values())
+                                            params=(dash.id,), fetchall=True, as_obj=True)
+                groups = list({v['name']: v for v in groups}.values())
                 dash['groups'] = groups
         return dashs
 
-    def save_dash(self, *, name, body, groups=None):
-        dash_id = self.check_dash_exists(dash_name=name)
-        with self.transaction('save_dashboard_data') as conn:
-            if not dash_id:
-                dash_id = self.execute_query("""INSERT INTO dash (name, body) VALUES (%s, %s) RETURNING id;""",
-                                             conn=conn, params=(name, body,))
-            else:
-                self.execute_query("""UPDATE dash SET body = %s WHERE id = %s;""",
-                                   conn=conn, params=(body, dash_id,), with_fetch=False)
+    def get_dash_data(self, dash_id):
+        dash_data = self.execute_query("""SELECT * FROM dash WHERE id = %s;""",
+                                       params=(dash_id,), as_obj=True)
+        if not dash_data:
+            raise ValueError(f'Dash with id={dash_id} is not exists')
 
+        groups = self.execute_query("""SELECT name FROM "group" WHERE id IN 
+                                    (SELECT group_id FROM dash_group WHERE dash_id = %s);""",
+                                    params=(dash_id,), fetchall=True)
+        groups = flat_to_list(groups)
+        dash_data['groups'] = groups
+        return dash_data
+
+    def add_dash(self, *, name, body, groups=None):
+        dash_id = self.check_dash_exists(dash_name=name)
+        if dash_id:
+            raise QueryError(f'dash with name={name} is already exists')
+
+        with self.transaction('add_dashboard_data') as conn:
+            dash = self.execute_query("""INSERT INTO dash (name, body) VALUES (%s, %s) RETURNING id;""",
+                                      conn=conn, params=(name, body,), as_obj=True)
             if isinstance(groups, list):
                 for group in groups:
                     self.execute_query("""INSERT INTO dash_group (group_id, dash_id) 
                                         VALUES ((SELECT id FROM "group" WHERE name = %s), %s);""",
+                                       conn=conn, params=(group, dash.id,), with_fetch=False)
+        return dash.id
+
+    def update_dash(self, *, dash_id, name, body, groups=None):
+        dash_name = self.check_dash_exists(dash_id)
+        if not dash_name:
+            raise QueryError(f'dash with id={dash_id} is not exists')
+
+        with self.transaction('update_dash_data') as conn:
+            if name:
+                self.execute_query("""UPDATE dash SET name = %s WHERE id = %s;""",
+                                   conn=conn, params=(name, dash_id), with_fetch=False)
+            if body:
+                self.execute_query("""UPDATE dash SET body = %s WHERE id = %s;""",
+                                   conn=conn, params=(body, dash_id), with_fetch=False)
+
+        if isinstance(groups, list):
+            current_groups = self.execute_query("""SELECT name FROM "group" WHERE id IN 
+                                                (SELECT group_id FROM dash_group WHERE dash_id = %s);""",
+                                                params=(dash_id,), fetchall=True)
+            current_groups = flat_to_set(current_groups)
+            target_groups = set(groups)
+
+            groups_for_add = target_groups - current_groups
+            groups_for_delete = tuple(current_groups - target_groups)
+
+            with self.transaction('update_dash_groups') as conn:
+                for group in groups_for_add:
+                    self.execute_query("""INSERT INTO dash_group (group_id, dash_id) 
+                                        VALUES ((SELECT id FROM "group" WHERE name = %s), %s);""",
                                        conn=conn, params=(group, dash_id,), with_fetch=False)
-        return dash_id
+                if groups_for_delete:
+                    self.execute_query("""DELETE FROM dash_group  WHERE group_id IN 
+                                        (SELECT id FROM "group" WHERE name IN %s) AND dash_id = %s;""",
+                                       conn=conn, params=(groups_for_delete, dash_id), with_fetch=False)
+        return dash_name
 
-    def load_dash(self, name):
-        dash_id = self.check_dash_exists(dash_name=name)
-        if dash_id:
-            dash_body = self.execute_query("""SELECT body FROM dash WHERE id = %s;""", params=(dash_id,))
-        else:
-            raise ValueError(f'Dash with id={dash_id} not exists')
-        return dash_body
-
-    def delete_dash(self, name):
-        dash_id = self.check_dash_exists(dash_name=name)
-        if dash_id:
-            with self.transaction('delete_dashboard_data') as conn:
-                self.execute_query("""DELETE FROM dash WHERE id = %s;""",
-                                   conn=conn, params=(dash_id,), with_fetch=False)
+    def delete_dash(self, dash_id):
+        self.execute_query("""DELETE FROM dash WHERE id = %s;""",
+                           params=(dash_id,), with_commit=True, with_fetch=False)
         return dash_id
 
     # __QUIZS__ ###############################################################
@@ -764,20 +791,21 @@ class PostgresConnector:
         quizs_data = self.execute_query("""SELECT * FROM quiz;""", fetchall=True, as_obj=True)
         return quizs_data
 
-    def add_quiz(self, quiz_name, questions):
-        if self.check_quiz_exists(quiz_name=quiz_name):
-            raise QueryError(f'quiz {quiz_name} already exists')
+    def add_quiz(self, *, name, questions):
+        if self.check_quiz_exists(quiz_name=name):
+            raise QueryError(f'quiz {name} already exists')
 
         with self.transaction('create_quiz_data') as conn:
             quiz_id = self.execute_query("""INSERT INTO quiz (name) values (%s) RETURNING id;""",
-                                         conn=conn, params=(quiz_name,))
+                                         conn=conn, params=(name,))
             if isinstance(questions, list):
                 for question in questions:
-                    question_id = self.execute_query("""INSERT INTO question (text, type) 
-                                                    VALUES (%s, %s) RETURNING id;""",
-                                                     conn=conn, params=(question['text'], question['type']))
-                    self.execute_query("""INSERT INTO quiz_question (quiz_id, question_id, sid)
-                                        VALUES (%s, %s, %s);""", )
+                    question_id = self.execute_query(
+                        """INSERT INTO question (text, type) VALUES (%s, %s) RETURNING id;""",
+                        conn=conn, params=(question['text'], question['type']), )
+                    self.execute_query("""INSERT INTO quiz_question (quiz_id, question_id, sid) VALUES
+                                        (%s, %s, %s);""", conn=conn, params=(quiz_id, question_id, question['sid'],),
+                                       with_fetch=False)
 
         return quiz_id
 

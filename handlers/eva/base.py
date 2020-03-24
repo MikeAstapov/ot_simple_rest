@@ -52,3 +52,4 @@ class BaseHandler(tornado.web.RequestHandler):
 
         if not self.current_user:
             raise tornado.web.HTTPError(401, "unauthorized")
+

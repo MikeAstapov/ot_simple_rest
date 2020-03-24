@@ -23,28 +23,47 @@ class DashboardsHandler(BaseHandler):
 
 class DashboardHandler(BaseHandler):
     async def get(self):
-        dash_name = self.get_argument('name', None)
-        if not dash_name:
-            raise tornado.web.HTTPError(400, "param 'name' is needed")
-
-        dash = self.db.load_dash(name=dash_name)
-        self.write({'data': dash})
+        dash_id = self.get_argument('id', None)
+        if not dash_id:
+            raise tornado.web.HTTPError(400, "param 'id' is needed")
+        try:
+            dash = self.db.get_dash_data(dash_id=dash_id)
+        except Exception as err:
+            raise tornado.web.HTTPError(409, str(err))
+        all_groups = self.db.get_groups_data(names_only=True)
+        self.write({'data': dash, 'groups': all_groups})
 
     async def post(self):
         dash_name = self.data.get('name', None)
-        dash_body = self.data.get('body', None)
+        dash_body = self.data.get('body', "")
         dash_groups = self.data.get('groups', None)
-        if None in [dash_name, dash_body]:
-            raise tornado.web.HTTPError(400, "params 'name' and 'body' is needed")
-
-        dash_id = self.db.save_dash(name=dash_name,
-                                    body=dash_body,
-                                    groups=dash_groups)
+        if not dash_name:
+            raise tornado.web.HTTPError(400, "params 'name' is needed")
+        try:
+            dash_id = self.db.add_dash(name=dash_name,
+                                       body=dash_body,
+                                       groups=dash_groups)
+        except Exception as err:
+            raise tornado.web.HTTPError(409, str(err))
         self.write({'id': dash_id})
 
+    async def put(self):
+        dash_id = self.data.get('id', None)
+        if not dash_id:
+            raise tornado.web.HTTPError(400, "param 'id' is needed")
+
+        try:
+            dash_name = self.db.update_dash(dash_id=dash_id,
+                                            name=self.data.get('name', None),
+                                            body=self.data.get('body', None),
+                                            groups=self.data.get('groups', None))
+        except Exception as err:
+            raise tornado.web.HTTPError(409, str(err))
+        self.write({'name': dash_name})
+
     async def delete(self):
-        dash_name = self.get_argument('name', None)
-        if not dash_name:
+        dash_id = self.get_argument('id', None)
+        if not dash_id:
             raise tornado.web.HTTPError(400, "param 'name' is needed")
-        dash_id = self.db.delete_dash(name=dash_name)
+        dash_id = self.db.delete_dash(dash_id=dash_id)
         self.write({'id': dash_id})

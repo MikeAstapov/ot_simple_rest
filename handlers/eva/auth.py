@@ -54,3 +54,4 @@ class AuthLoginHandler(BaseHandler):
             raise tornado.web.HTTPError(401, "unauthorized")
         else:
             self.write({'status': 'success'})
+
