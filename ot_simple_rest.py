@@ -13,24 +13,19 @@ from psycopg2.pool import ThreadedConnectionPool
 
 from handlers.eva.auth import AuthLoginHandler
 from handlers.eva.dashs import DashboardHandler, DashboardsHandler
-from handlers.eva.quizs import QuizHandler, QuizsHandler
+from handlers.eva.quizs import QuizsHandler, QuizCreateHandler, QuizDeleteHandler
 from handlers.eva.role_model import UserHandler, UsersHandler, RoleHandler, RolesHandler, \
     PermissionsHandler, PermissionHandler, GroupsHandler, GroupHandler, UserPermissionsHandler, \
     IndexesHandler, IndexHandler, UserGroupsHandler, UserDashboardsHandler, GroupDashboardsHandler
 
-# from handlers.eva.auth import AuthLoginHandler, RolesHandler, RoleHandler, UsersHandler,\
-#     UserHandler, PermissionsHandler, PermissionHandler, GroupsHandler, GroupHandler,\
-#     UserPermissionsHandler, IndexesHandler, IndexHandler, DashboardHandler, UserGroupsHandler, \
-#     QuizsHandler
-
-# from handlers.jobs.makejob import MakeJob
-# from handlers.jobs.loadjob import LoadJob
-# from handlers.jobs.checkjob import CheckJob
-# from handlers.jobs.getresult import GetResult
-# from handlers.jobs.saveotrest import SaveOtRest
-# from handlers.service.makerolemodel import MakeRoleModel
-# from handlers.service.makedatamodels import MakeDataModels
-# from handlers.service.pingpong import PingPong
+from handlers.jobs.makejob import MakeJob
+from handlers.jobs.loadjob import LoadJob
+from handlers.jobs.checkjob import CheckJob
+from handlers.jobs.getresult import GetResult
+from handlers.jobs.saveotrest import SaveOtRest
+from handlers.service.makerolemodel import MakeRoleModel
+from handlers.service.makedatamodels import MakeDataModels
+from handlers.service.pingpong import PingPong
 
 from jobs_manager.manager import JobsManager
 from task_scheduler.tasks import DbTasksSchduler
@@ -79,6 +74,7 @@ def main():
     config.read(os.path.join(basedir, 'ot_simple_rest.conf'))
 
     db_conf = dict(config['db_conf'])
+    db_conf_eva = dict(config['db_conf_eva'])
     mem_conf = dict(config['mem_conf'])
     disp_conf = dict(config['dispatcher'])
     resolver_conf = dict(config['resolver'])
@@ -93,6 +89,7 @@ def main():
     logger.info('MEM configuration: %s' % mem_conf)
 
     db_pool = ThreadedConnectionPool(int(pool_conf['min_size']), int(pool_conf['max_size']), **db_conf)
+    db_pool_eva = ThreadedConnectionPool(int(pool_conf['min_size']), int(pool_conf['max_size']), **db_conf_eva)
 
     # Create jobs manager instance and start it
     manager = JobsManager(db_conn_pool=db_pool, mem_conf=mem_conf, disp_conf=disp_conf,
@@ -100,48 +97,47 @@ def main():
     manager.start()
 
     # Create and start task scheduler
-    scheduler = DbTasksSchduler(db_conn_pool=db_pool)
+    scheduler = DbTasksSchduler(db_conn_pool=db_pool_eva)
     scheduler.start()
 
     # Set TORNADO application with custom handlers.
     application = tornado.web.Application([
-        # (r'/ping', PingPong),
-        # (r'/checkjob', CheckJob, {"manager": manager}),
-        # (r'/getresult', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
-        # (r'/makejob', MakeJob, {"manager": manager}),
-        # (r'/loadjob', LoadJob, {"manager": manager}),
-        # (r'/otrest', SaveOtRest, {"db_conn_pool": db_pool, "mem_conf": mem_conf}),
-        # (r'/makerolemodel', MakeRoleModel, {"db_conn_pool": db_pool}),
-        # (r'/makedatamodels', MakeDataModels, {"db_conn_pool": db_pool}),
+        (r'/api/ping', PingPong),
+        (r'/api/checkjob', CheckJob, {"manager": manager}),
+        (r'/api/getresult', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
+        (r'/api/makejob', MakeJob, {"manager": manager}),
+        (r'/api/loadjob', LoadJob, {"manager": manager}),
+        (r'/api/otrest', SaveOtRest, {"db_conn_pool": db_pool, "mem_conf": mem_conf}),
+        (r'/api/makerolemodel', MakeRoleModel, {"db_conn_pool": db_pool}),
+        (r'/api/makedatamodels', MakeDataModels, {"db_conn_pool": db_pool}),
 
-        (r'/api/auth/login', AuthLoginHandler, {"db_conn_pool": db_pool}),
+        (r'/api/auth/login', AuthLoginHandler, {"db_conn_pool": db_pool_eva}),
 
-        (r'/api/users', UsersHandler, {"db_conn_pool": db_pool}),
-        (r'/api/user', UserHandler, {"db_conn_pool": db_pool}),
-        (r'/api/user/groups', UserGroupsHandler, {"db_conn_pool": db_pool}),
-        (r'/api/user/permissions', UserPermissionsHandler, {"db_conn_pool": db_pool}),
-        (r'/api/user/dashboards', UserDashboardsHandler, {"db_conn_pool": db_pool}),
+        (r'/api/users', UsersHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/user', UserHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/user/groups', UserGroupsHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/user/permissions', UserPermissionsHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/user/dashs', UserDashboardsHandler, {"db_conn_pool": db_pool_eva}),
 
-        (r'/api/groups', GroupsHandler, {"db_conn_pool": db_pool}),
-        (r'/api/group', GroupHandler, {"db_conn_pool": db_pool}),
-        (r'/api/group/dashboards', GroupDashboardsHandler, {"db_conn_pool": db_pool}),
+        (r'/api/groups', GroupsHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/group', GroupHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/group/dashs', GroupDashboardsHandler, {"db_conn_pool": db_pool_eva}),
 
-        (r'/api/roles', RolesHandler, {"db_conn_pool": db_pool}),
-        (r'/api/role', RoleHandler, {"db_conn_pool": db_pool}),
+        (r'/api/roles', RolesHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/role', RoleHandler, {"db_conn_pool": db_pool_eva}),
 
-        (r'/api/permissions', PermissionsHandler, {"db_conn_pool": db_pool}),
-        (r'/api/permission', PermissionHandler, {"db_conn_pool": db_pool}),
+        (r'/api/permissions', PermissionsHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/permission', PermissionHandler, {"db_conn_pool": db_pool_eva}),
 
-        (r'/api/indexes', IndexesHandler, {"db_conn_pool": db_pool}),
-        (r'/api/index', IndexHandler, {"db_conn_pool": db_pool}),
+        (r'/api/indexes', IndexesHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/index', IndexHandler, {"db_conn_pool": db_pool_eva}),
 
-        (r'/api/dashs', DashboardsHandler, {"db_conn_pool": db_pool}),
-        (r'/api/dash/save', DashboardHandler, {"db_conn_pool": db_pool}),
-        (r'/api/dash/load', DashboardHandler, {"db_conn_pool": db_pool}),
+        (r'/api/dashs', DashboardsHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/dash', DashboardHandler, {"db_conn_pool": db_pool_eva}),
 
-        (r'/qapi/quizs', QuizsHandler, {"db_conn_pool": db_pool}),
-        (r'/qapi/quiz', QuizHandler, {"db_conn_pool": db_pool}),
-        (r'/qapi/quiz/new', QuizHandler, {"db_conn_pool": db_pool})
+        (r'/qapi/quizs', QuizsHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/quiz/create', QuizCreateHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/quiz/delete', QuizDeleteHandler, {"db_conn_pool": db_pool_eva})
     ],
         cookie_secret='57ed6cf3-b908-47ca-a3de-88a76aa794cb',
         login_url=r'/api/auth/login',
@@ -157,3 +153,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
