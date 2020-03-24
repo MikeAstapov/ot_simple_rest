@@ -60,7 +60,8 @@ class GetResult(tornado.web.RequestHandler):
 
         if not os.path.exists(cache_full_path):
             self.logger.error('No cache with id={}'.format(cid))
-            self.write({'status': 'failed', 'error': 'No cache with id={}'.format(cid)})
+            return self.write({'status': 'failed', 'error': 'No cache with id={}'.format(cid)})
+            # raise tornado.web.HTTPError(405, f'No cache with id={cid}')
 
         self.logger.debug('Cache with id={} exists'.format(cid))
         listing = os.listdir(cache_full_path)
