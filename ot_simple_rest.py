@@ -12,6 +12,7 @@ import tornado.web
 from psycopg2.pool import ThreadedConnectionPool
 
 from handlers.eva.auth import AuthLoginHandler
+from handlers.eva.logs import LogsHandler
 from handlers.eva.dashs import DashboardHandler, DashboardsHandler
 from handlers.eva.quizs import QuizsHandler, QuizCreateHandler, QuizDeleteHandler
 from handlers.eva.role_model import UserHandler, UsersHandler, RoleHandler, RolesHandler, \
@@ -112,6 +113,8 @@ def main():
         (r'/api/makedatamodels', MakeDataModels, {"db_conn_pool": db_pool}),
 
         (r'/api/auth/login', AuthLoginHandler, {"db_conn_pool": db_pool_eva}),
+
+        (r'/api/logs/save', LogsHandler, {"db_conn_pool": db_pool_eva}),
 
         (r'/api/users', UsersHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/user', UserHandler, {"db_conn_pool": db_pool_eva}),
