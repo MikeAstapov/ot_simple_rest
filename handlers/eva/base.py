@@ -20,6 +20,7 @@ class BaseHandler(tornado.web.RequestHandler):
         self.db = PostgresConnector(db_conn_pool)
         self.permissions = None
         self.data = None
+        self.token = None
 
     def set_default_headers(self):
         self.set_header('Access-Control-Allow-Credentials', True)
@@ -40,6 +41,7 @@ class BaseHandler(tornado.web.RequestHandler):
         self.data = json.loads(self.request.body) if self.request.body else dict()
         client_token = self.get_cookie('eva_token')
         if client_token:
+            self.token = client_token
             try:
                 token_data = self.decode_token(client_token)
                 user_id = token_data['user_id']
@@ -52,4 +54,3 @@ class BaseHandler(tornado.web.RequestHandler):
 
         if not self.current_user:
             raise tornado.web.HTTPError(401, "unauthorized")
-
