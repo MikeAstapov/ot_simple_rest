@@ -9,27 +9,27 @@
 #}
 
 
-server {
-    listen 8081;
-
-    location ^~ /qapi {
-        proxy_pass_header Server;
-        proxy_set_header Host $http_host;
-        proxy_redirect off;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Scheme $scheme;
-        proxy_pass http://localhost:50000;
-    }
-
-        location / {
-        proxy_pass_header Server;
-        proxy_set_header Host $http_host;
-        proxy_redirect off;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Scheme $scheme;
-        proxy_pass http://192.168.4.186:8081/;
-    }      
-}
+#server {
+#    listen 8081;
+#
+#    location ^~ /qapi {
+#        proxy_pass_header Server;
+#        proxy_set_header Host $http_host;
+#        proxy_redirect off;
+#        proxy_set_header X-Real-IP $remote_addr;
+#        proxy_set_header X-Scheme $scheme;
+#        proxy_pass http://localhost:50000;
+#    }
+#
+#        location / {
+#        proxy_pass_header Server;
+#        proxy_set_header Host $http_host;
+#        proxy_redirect off;
+#        proxy_set_header X-Real-IP $remote_addr;
+#        proxy_set_header X-Scheme $scheme;
+#        proxy_pass http://192.168.4.186:8081/;
+#    }      
+#}
 
 server {
     listen 80;
@@ -51,18 +51,18 @@ server {
         proxy_pass http://localhost:50000;
     }
 
-    location ^~ /sockjs-node/ {
-        proxy_set_header X-Real-IP  $remote_addr;
-        proxy_set_header X-Forwarded-For $remote_addr;
-        proxy_set_header Host $http_host;
-    
-        proxy_pass http://192.168.4.186:80/sockjs-node/; 
-    
-        proxy_redirect off; 
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
+    #location ^~ /sockjs-node/ {
+    #    proxy_set_header X-Real-IP  $remote_addr;
+    #    proxy_set_header X-Forwarded-For $remote_addr;
+    #    proxy_set_header Host $http_host;
+    #
+    #    proxy_pass http://192.168.4.186:80/sockjs-node/; 
+    #
+    #    proxy_redirect off; 
+    #    proxy_http_version 1.1;
+    #    proxy_set_header Upgrade $http_upgrade;
+    #    proxy_set_header Connection "upgrade";
+    #}
 
     #location / {
     #    proxy_pass_header Server;
@@ -74,11 +74,8 @@ server {
     #}
 
     location / {
-        alias /opt/otp/eva;
-        sendfile on;
-        sendfile_max_chunk 1m;
-        tcp_nopush on;
-        try_files $uri index.html;
+        root /opt/otp/ot_simple_rest/static_content;
+        index index.html;
     }
 
 }
