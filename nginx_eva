@@ -76,6 +76,7 @@ server {
     location / {
         root /opt/otp/ot_simple_rest/static_content;
         index index.html;
+        try_files $uri $uri/ /index.html?$args;
     }
 
 }
