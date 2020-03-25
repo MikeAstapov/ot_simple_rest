@@ -111,3 +111,9 @@ CREATE TABLE dataAnswer(
     date timestamptz DEFAULT CURRENT_TIMESTAMP
 );
 
+INSERT INTO "user" (name, password) VALUES ('admin', '12345678');
+INSERT INTO permissions (name) VALUES ('admin_all');
+INSERT INTO role (name) VALUES ('admin');
+INSERT INTO user_role (user_id, role_id) VALUES (1, 1);
+INSERT INTO role_permission (role_id, permission_id) VALUES (1, 1);
+
