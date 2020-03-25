@@ -32,7 +32,7 @@ class GetResult(tornado.web.RequestHandler):
         self.with_nginx = False if static_conf['use_nginx'] == 'False' else True
 
         self.logger = logging.getLogger('osr')
-        self._cache_name_template = 'search_{}.cache'
+        self._cache_name_template = 'search_{}.cache/data'
 
     async def get(self):
         """
