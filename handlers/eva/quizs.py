@@ -46,9 +46,11 @@ class QuizDeleteHandler(BaseHandler):
 
 class QuizQuestionsHandler(BaseHandler):
     async def get(self):
-        quiz_ids = self.get_arguments('ids')
+        quiz_ids = self.get_argument('ids', None)
         if not quiz_ids:
             raise tornado.web.HTTPError(400, "params 'ids' is needed")
+        quiz_ids = quiz_ids.split(',')
+        quiz_ids = [int(i) for i in quiz_ids]
         try:
             questions = self.db.get_quiz_questions(quiz_ids=quiz_ids)
         except Exception as err:

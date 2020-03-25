@@ -821,10 +821,16 @@ class PostgresConnector:
     def get_quiz_questions(self, quiz_ids):
         data = dict()
         for quiz_id in quiz_ids:
-            questions_data = self.execute_query("SELECT text, type, sid FROM question, quiz_question "
-                                                "WHERE id IN (SELECT question_id FROM quiz_question WHERE quiz_id = %s);",
-                                                params=(quiz_id,), fetchall=True, as_obj=True)
-            data[quiz_id] = questions_data
+            questions = self.execute_query("SELECT question_id, sid FROM quiz_question WHERE quiz_id = %s;",
+                                           params=(quiz_id,), fetchall=True, as_obj=True)
+            quest_data = list()
+            for q in questions:
+                question_data = self.execute_query("SELECT text, type FROM question WHERE id = %s;",
+                                                   params=(q['question_id'],), as_obj=True)
+                question_data['sid'] = q['sid']
+                quest_data.append(question_data)
+
+            data[quiz_id] = quest_data
         return data
 
     def delete_quiz(self, quiz_id):
