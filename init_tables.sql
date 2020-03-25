@@ -1,11 +1,6 @@
-CREATE database testing;
-CREATE USER tester with encrypted password '12345678';
-GRANT ALL PRIVILEGES ON database testing to tester;
-
-
 CREATE TABLE "user" (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(512) NOT NULL UNIQUE,
+    name VARCHAR(512) NOT NULL UNIQUE,
     password VARCHAR(512) NOT NULL
 );
 
@@ -111,9 +106,9 @@ CREATE TABLE dataAnswer(
     date timestamptz DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO "user" (username, password) VALUES ('admin', '12345678');
+
+INSERT INTO "user" (name, password) VALUES ('admin', '$2b$12$ODxOO2wd6vRy2wT4euCJxeKPwU7.GW7HvTrcFmCQgTFbMQOfj851e');
 INSERT INTO permission (name) VALUES ('admin_all');
 INSERT INTO role (name) VALUES ('admin');
 INSERT INTO user_role (user_id, role_id) VALUES (1, 1);
 INSERT INTO role_permission (role_id, permission_id) VALUES (1, 1);
-
