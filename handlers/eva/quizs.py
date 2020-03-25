@@ -44,6 +44,18 @@ class QuizDeleteHandler(BaseHandler):
         self.write({'id': quiz_id})
 
 
+class QuizQuestionsHandler(BaseHandler):
+    async def get(self):
+        quiz_ids = self.get_arguments('ids')
+        if not quiz_ids:
+            raise tornado.web.HTTPError(400, "params 'ids' is needed")
+        try:
+            questions = self.db.get_quiz_questions(quiz_ids=quiz_ids)
+        except Exception as err:
+            raise tornado.web.HTTPError(409, str(err))
+        self.write(questions)
+
+
 class QuizSaveHandler(BaseHandler):
     async def get(self):
         quiz_id = self.get_argument('id', None)
@@ -52,7 +64,7 @@ class QuizSaveHandler(BaseHandler):
         try:
             quiz = self.db.get_quiz_data(quiz_id=quiz_id)
         except Exception as err:
-            raise tornado.web.HTTPError(400, str(err))
+            raise tornado.web.HTTPError(409, str(err))
         self.write({'data': quiz})
 
     async def post(self):

@@ -14,7 +14,7 @@ from psycopg2.pool import ThreadedConnectionPool
 from handlers.eva.auth import AuthLoginHandler
 from handlers.eva.logs import LogsHandler
 from handlers.eva.dashs import DashboardHandler, DashboardsHandler
-from handlers.eva.quizs import QuizsHandler, QuizCreateHandler, QuizDeleteHandler
+from handlers.eva.quizs import QuizsHandler, QuizCreateHandler, QuizDeleteHandler, QuizQuestionsHandler
 from handlers.eva.role_model import UserHandler, UsersHandler, RoleHandler, RolesHandler, \
     PermissionsHandler, PermissionHandler, GroupsHandler, GroupHandler, UserPermissionsHandler, \
     IndexesHandler, IndexHandler, UserGroupsHandler, UserDashboardsHandler, GroupDashboardsHandler
@@ -140,7 +140,8 @@ def main():
 
         (r'/qapi/quizs', QuizsHandler, {"db_conn_pool": db_pool_eva}),
         (r'/qapi/quiz/create', QuizCreateHandler, {"db_conn_pool": db_pool_eva}),
-        (r'/qapi/quiz/delete', QuizDeleteHandler, {"db_conn_pool": db_pool_eva})
+        (r'/qapi/quiz/delete', QuizDeleteHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/quiz/questions', QuizQuestionsHandler, {"db_conn_pool": db_pool_eva})
     ],
         cookie_secret='57ed6cf3-b908-47ca-a3de-88a76aa794cb',
         login_url=r'/api/auth/login',
