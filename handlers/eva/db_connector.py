@@ -691,9 +691,9 @@ class PostgresConnector:
 
     # __DASHBOARDS__ ###############################################################
 
-    def check_dash_exists(self, dash_id):
-        dash = self.execute_query("""SELECT name FROM dash WHERE id = %s;""", params=(dash_id,), as_obj=True)
-        return dash.name
+    def check_dash_exists(self, dash_name):
+        dash_id = self.execute_query("""SELECT id FROM dash WHERE name = %s;""", params=(dash_name,))
+        return dash_id
 
     def get_dashs_data(self, *, group_id=None, names_only=False):
         if group_id:
@@ -743,7 +743,7 @@ class PostgresConnector:
         return dash.id
 
     def update_dash(self, *, dash_id, name, body, groups=None):
-        dash_name = self.check_dash_exists(dash_id)
+        dash_name = self.execute_query("""SELECT name FROM dash WHERE id = %s;""", params=(dash_id,))
         if not dash_name:
             raise QueryError(f'dash with id={dash_id} is not exists')
 
