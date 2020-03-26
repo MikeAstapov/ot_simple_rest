@@ -85,7 +85,7 @@ def main():
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    logger = set_logger(config['general'].get('level', 'INFO'), './logs/otsimplerest.log', 'osr')
+    logger = set_logger(config['general'].get('level', 'INFO'), './otsimplerest.log', 'osr')
     logger.info('DB configuration: %s' % db_conf)
     logger.info('MEM configuration: %s' % mem_conf)
 
