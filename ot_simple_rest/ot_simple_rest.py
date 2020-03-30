@@ -84,7 +84,12 @@ def main():
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    logger = set_logger(config['general'].get('level', 'INFO'), './otsimplerest.log', 'osr')
+    base_logs_dir = config['general'].get('logs_path', '.')
+    if not os.path.exists(base_logs_dir):
+        os.makedirs(base_logs_dir)
+
+    logger = set_logger(config['general'].get('level', 'INFO'),
+                        os.path.join(base_logs_dir, 'otsimplerest.log'), 'osr')
     logger.info('DB configuration: %s' % db_conf)
     logger.info('MEM configuration: %s' % mem_conf)
 
@@ -113,7 +118,8 @@ def main():
 
         (r'/api/auth/login', AuthLoginHandler, {"db_conn_pool": db_pool_eva}),
 
-        (r'/api/logs/save', LogsHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/logs/save', LogsHandler, {"db_conn_pool": db_pool_eva,
+                                          "logs_path": config['general'].get('logs_path', '.')}),
 
         (r'/api/users', UsersHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/user', UserHandler, {"db_conn_pool": db_pool_eva}),
@@ -137,9 +143,7 @@ def main():
         (r'/api/dashs', DashboardsHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/dash', DashboardHandler, {"db_conn_pool": db_pool_eva})
     ],
-        cookie_secret='57ed6cf3-b908-47ca-a3de-88a76aa794cb',
-        login_url=r'/api/auth/login',
-        debug=True
+        login_url=r'/api/auth/login'
     )
 
     logger.info('Starting server')
