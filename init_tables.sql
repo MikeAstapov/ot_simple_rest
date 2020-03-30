@@ -70,43 +70,6 @@ CREATE TABLE role_permission (
 );
 
 
--- ###### QUIZ ######
-
-CREATE TABLE quiz (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
-);
-
-CREATE TABLE question (
-    id SERIAL PRIMARY KEY,
-    text TEXT,
-    type VARCHAR(100) NOT NULL
-);
-
-CREATE TABLE quiz_question (
-    quiz_id INT NOT NULL REFERENCES quiz(id) ON DELETE CASCADE,
-    question_id INT NOT NULL REFERENCES question(id) ON DELETE CASCADE,
-    sid INT NOT NULL,
-    CONSTRAINT quiz_question_id UNIQUE(quiz_id, question_id)
-);
-
-CREATE TABLE boolAnswer (
-    id INT NOT NULL REFERENCES question(id) ON DELETE CASCADE,
-    value BOOLEAN,
-    description TEXT
-);
-
-CREATE TABLE textAnswer (
-    id INT NOT NULL REFERENCES question(id) ON DELETE CASCADE,
-    description TEXT
-);
-
-CREATE TABLE dataAnswer(
-    id INT NOT NULL REFERENCES question(id) ON DELETE CASCADE,
-    date timestamptz DEFAULT CURRENT_TIMESTAMP
-);
-
-
 INSERT INTO "user" (name, password) VALUES ('admin', '$2b$12$ODxOO2wd6vRy2wT4euCJxeKPwU7.GW7HvTrcFmCQgTFbMQOfj851e');
 INSERT INTO permission (name) VALUES ('admin_all');
 INSERT INTO role (name) VALUES ('admin');
