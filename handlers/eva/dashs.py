@@ -8,14 +8,14 @@ class DashboardsHandler(BaseHandler):
         kwargs = {}
 
         if 'list_dashs' in self.permissions or 'admin_all' in self.permissions:
-            target_user_id = self.get_argument('id', None)
-            if target_user_id:
-                kwargs['user_id'] = target_user_id
+            target_group_id = self.get_argument('id', None)
+            if target_group_id:
+                kwargs['group_id'] = target_group_id
             names_only = self.get_argument('names_only', None)
             if names_only:
                 kwargs['names_only'] = names_only
         else:
-            kwargs['user_id'] = self.current_user
+            kwargs['group_id'] = self.current_user
 
         roles = self.db.get_dashs_data(**kwargs)
         self.write({'data': roles})
