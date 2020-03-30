@@ -8,10 +8,13 @@ class Timerange:
     def get_timestamp(time):
         if time == "now":
             return int(datetime.now().timestamp())
-        regex = r"(-|\+|^)(\d+)(s|m|h|d|w|M|y)"
+        regex = r"(-|\+|^)?(\d+)(s|m|h|d|w|M|y)?"
         result = re.match(regex, time)
         if result is not None:
             diff_num = int(result.group(2))
+            if not result.group(1) and not result.group(3):
+                return diff_num
+
             dict_delta = {
                 's': timedelta(seconds=diff_num),
                 'm': timedelta(minutes=diff_num),
