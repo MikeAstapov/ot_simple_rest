@@ -40,7 +40,7 @@ Git. Only Git.
 ## Authors
 
 Andrey Starchenkov (astarchenkov@ot.ru)  
-Anton Khromov (akhromov@ot.ru)
+Anton Khromov (akhromov@ot.ru)  
 Anastasiia Safonova (asafonova@ot.ru)
 
 ## License
