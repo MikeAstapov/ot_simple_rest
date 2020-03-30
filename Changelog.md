@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.15.4] - 2020-03-25
 ### Added
 - Authorization service.
-- EVA & Quiz endpoints.
+- Endpoints for EVA application.
 - Scheduler for periodic DB manipulations.
 - Configuration with NGINX for static content serving.
 
