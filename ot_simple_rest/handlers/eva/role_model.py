@@ -417,17 +417,22 @@ class UserGroupsHandler(BaseHandler):
 
 class UserDashboardsHandler(BaseHandler):
     async def get(self):
-        user_id = self.get_argument('id', None)
-        if not user_id:
-            raise tornado.web.HTTPError(400, "param 'id' is needed")
+        if 'admin_all' in self.permissions:
+            return self.write({'data': self.db.get_dashs_data(names_only=True)})
+
+        names_only = self.get_argument('names_only', None)
 
         dashs = list()
-        user_groups = self.db.get_groups_data(user_id=user_id, with_relations=False)
+        user_groups = self.db.get_groups_data(user_id=self.current_user, with_relations=False)
+
         for group in user_groups:
-            user_dashs = self.db.get_dashs_data(group_id=group['id'])
+            user_dashs = self.db.get_dashs_data(group_id=group['id'], names_only=names_only)
             dashs.extend(user_dashs)
 
-        dashs = list({v['id']: v for v in dashs}.values())
+        if names_only:
+            dashs = set(dashs)
+        else:
+            dashs = list({v['id']: v for v in dashs}.values())
         self.write({'data': dashs})
 
 
