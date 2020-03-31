@@ -41,12 +41,12 @@ class DashboardHandler(BaseHandler):
         if not dash_name:
             raise tornado.web.HTTPError(400, "params 'name' is needed")
         try:
-            dash_id = self.db.add_dash(name=dash_name,
-                                       body=dash_body,
-                                       groups=dash_groups)
+            _id, modified = self.db.add_dash(name=dash_name,
+                                             body=dash_body,
+                                             groups=dash_groups)
         except Exception as err:
             raise tornado.web.HTTPError(409, str(err))
-        self.write({'id': dash_id})
+        self.write({'id': _id, 'modified': modified})
 
     async def put(self):
         dash_id = self.data.get('id', None)
@@ -54,13 +54,13 @@ class DashboardHandler(BaseHandler):
             raise tornado.web.HTTPError(400, "param 'id' is needed")
 
         try:
-            dash_name = self.db.update_dash(dash_id=dash_id,
-                                            name=self.data.get('name', None),
-                                            body=self.data.get('body', None),
-                                            groups=self.data.get('groups', None))
+            name, modified = self.db.update_dash(dash_id=dash_id,
+                                           name=self.data.get('name', None),
+                                           body=self.data.get('body', None),
+                                           groups=self.data.get('groups', None))
         except Exception as err:
             raise tornado.web.HTTPError(409, str(err))
-        self.write({'name': dash_name})
+        self.write({'id': dash_id, 'name': name, 'modified': modified})
 
     async def delete(self):
         dash_id = self.get_argument('id', None)
