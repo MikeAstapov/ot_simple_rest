@@ -12,7 +12,8 @@ CREATE TABLE role (
 CREATE TABLE dash (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    body TEXT
+    body TEXT,
+    modified TIMESTAMP DEFAULT now()
 );
 
 CREATE TABLE permission (
