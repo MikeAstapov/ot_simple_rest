@@ -363,7 +363,7 @@ class PostgresConnector:
         group_id = self.execute_query('SELECT id FROM "group" WHERE name = %s;', params=(group_name,))
         return group_id
 
-    def get_groups_data(self, *, user_id=None, names_only=False, with_relations=True):
+    def get_groups_data(self, *, user_id=None, names_only=False):
         if user_id:
             groups = self.execute_query('SELECT * FROM "group" WHERE id IN '
                                         '(SELECT group_id FROM user_group WHERE user_id = %s);',
@@ -373,7 +373,7 @@ class PostgresConnector:
 
         if names_only:
             groups = [g['name'] for g in groups]
-        elif with_relations:
+        else:
             for group in groups:
                 users = self.execute_query('SELECT name FROM "user" WHERE id IN '
                                            '(SELECT user_id FROM user_group WHERE group_id = %s);',
@@ -715,8 +715,8 @@ class PostgresConnector:
         return dashs
 
     def get_dash_data(self, dash_id):
-        dash_data = self.execute_query("SELECT * FROM dash WHERE id = %s;",
-                                       params=(dash_id,), as_obj=True)
+        dash_data = self.execute_query("SELECT id, name, body, round(extract(epoch from modified)) as modified "
+                                       "FROM dash WHERE id = %s;", params=(dash_id,), as_obj=True)
         if not dash_data:
             raise ValueError(f'Dash with id={dash_id} is not exists')
 
@@ -748,6 +748,8 @@ class PostgresConnector:
             raise QueryError(f'dash with id={dash_id} is not exists')
 
         with self.transaction('update_dash_data') as conn:
+            self.execute_query("UPDATE dash SET modified = now() WHERE id = %s;",
+                               conn=conn, params=(name, dash_id), with_fetch=False)
             if name:
                 self.execute_query("UPDATE dash SET name = %s WHERE id = %s;",
                                    conn=conn, params=(name, dash_id), with_fetch=False)
@@ -780,3 +782,4 @@ class PostgresConnector:
         self.execute_query("DELETE FROM dash WHERE id = %s;",
                            params=(dash_id,), with_commit=True, with_fetch=False)
         return dash_id
+

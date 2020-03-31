@@ -11,11 +11,11 @@ class UsersHandler(BaseHandler):
     async def get(self):
         kwargs = {}
 
-        if 'list_users' in self.permissions or 'admin_all' in self.permissions:
-            names_only = self.get_argument('names_only', None)
-            if names_only:
-                kwargs['names_only'] = names_only
-        else:
+        names_only = self.get_argument('names_only', None)
+        if names_only:
+            kwargs['names_only'] = names_only
+
+        if 'list_users' not in self.permissions and 'admin_all' not in self.permissions:
             kwargs['user_id'] = self.current_user
 
         users = self.db.get_users_data(**kwargs)
@@ -227,8 +227,8 @@ class GroupHandler(BaseHandler):
         color = self.data.get('color', None)
         if None in [group_name, color]:
             raise tornado.web.HTTPError(400, "params 'name' and 'color' is required")
-        if 'create_groups' not in self.permissions and 'admin_all' not in self.permissions:
-            raise tornado.web.HTTPError(403, "no permission for create groups")
+        # if 'create_groups' not in self.permissions and 'admin_all' not in self.permissions:
+        #     raise tornado.web.HTTPError(403, "no permission for create groups")
 
         try:
             group_id = self.db.add_group(name=group_name,
@@ -244,8 +244,8 @@ class GroupHandler(BaseHandler):
         group_id = self.data.get('id', None)
         if not group_id:
             raise tornado.web.HTTPError(400, "param 'id' is needed")
-        if 'manage_groups' not in self.permissions and 'admin_all' not in self.permissions:
-            raise tornado.web.HTTPError(403, "no permission for manage groups")
+        # if 'manage_groups' not in self.permissions and 'admin_all' not in self.permissions:
+        #     raise tornado.web.HTTPError(403, "no permission for manage groups")
         self.db.update_group(group_id=group_id,
                              name=self.data.get('name', None),
                              color=self.data.get('color', None),
@@ -336,13 +336,14 @@ class IndexesHandler(BaseHandler):
     async def get(self):
         kwargs = {}
 
+        names_only = self.get_argument('names_only', None)
+        if names_only:
+            kwargs['names_only'] = names_only
+
         if 'list_indexes' in self.permissions or 'admin_all' in self.permissions:
             target_user_id = self.get_argument('id', None)
             if target_user_id:
                 kwargs['user_id'] = target_user_id
-            names_only = self.get_argument('names_only', None)
-            if names_only:
-                kwargs['names_only'] = names_only
         else:
             kwargs['user_id'] = self.current_user
 
@@ -408,9 +409,10 @@ class UserGroupsHandler(BaseHandler):
     async def get(self):
         kwargs = {}
 
-        kwargs['with_relations'] = False
         if 'read_groups' not in self.permissions and 'admin_all' not in self.permissions:
             kwargs['user_id'] = self.current_user
+
+        kwargs['names_only'] = self.get_argument('names_only', None)
         user_groups = self.db.get_groups_data(**kwargs)
         self.write({'data': user_groups})
 
@@ -423,14 +425,14 @@ class UserDashboardsHandler(BaseHandler):
         names_only = self.get_argument('names_only', None)
 
         dashs = list()
-        user_groups = self.db.get_groups_data(user_id=self.current_user, with_relations=False)
+        user_groups = self.db.get_groups_data(user_id=self.current_user)
 
         for group in user_groups:
             user_dashs = self.db.get_dashs_data(group_id=group['id'], names_only=names_only)
             dashs.extend(user_dashs)
 
         if names_only:
-            dashs = set(dashs)
+            dashs = list(set(dashs))
         else:
             dashs = list({v['id']: v for v in dashs}.values())
         self.write({'data': dashs})
@@ -444,3 +446,4 @@ class GroupDashboardsHandler(BaseHandler):
 
         group_dashs = self.db.get_dashs_data(group_id=group_id)
         self.write({'data': group_dashs})
+

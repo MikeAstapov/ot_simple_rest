@@ -15,12 +15,13 @@ class DashboardsHandler(BaseHandler):
             if names_only:
                 kwargs['names_only'] = names_only
         else:
-            kwargs['group_id'] = self.current_user
+            raise tornado.web.HTTPError(403, "no permission for list dashs")
 
         roles = self.db.get_dashs_data(**kwargs)
         self.write({'data': roles})
 
 
+# TODO: Make two separate handlers for full dash data and data without body
 class DashboardHandler(BaseHandler):
     async def get(self):
         dash_id = self.get_argument('id', None)
@@ -67,3 +68,4 @@ class DashboardHandler(BaseHandler):
             raise tornado.web.HTTPError(400, "param 'name' is needed")
         dash_id = self.db.delete_dash(dash_id=dash_id)
         self.write({'id': dash_id})
+

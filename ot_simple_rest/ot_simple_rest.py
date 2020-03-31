@@ -124,8 +124,11 @@ def main():
         (r'/api/users', UsersHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/user', UserHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/user/groups', UserGroupsHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/user/roles', RolesHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/user/permissions', UserPermissionsHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/user/dashs', UserDashboardsHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/user/users', UsersHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/user/indexes', IndexesHandler, {"db_conn_pool": db_pool_eva}),
 
         (r'/api/groups', GroupsHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/group', GroupHandler, {"db_conn_pool": db_pool_eva}),
