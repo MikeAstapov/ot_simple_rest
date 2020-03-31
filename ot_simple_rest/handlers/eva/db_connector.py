@@ -697,11 +697,12 @@ class PostgresConnector:
 
     def get_dashs_data(self, *, group_id=None, names_only=False):
         if group_id:
-            dashs = self.execute_query("SELECT * FROM dash WHERE id IN "
-                                       "(SELECT dash_id FROM dash_group WHERE group_id = %s);",
+            dashs = self.execute_query("SELECT id, name, body, round(extract(epoch from modified)) as modified "
+                                       "FROM dash WHERE id IN (SELECT dash_id FROM dash_group WHERE group_id = %s);",
                                        params=(group_id,), fetchall=True, as_obj=True)
         else:
-            dashs = self.execute_query("""SELECT * FROM dash;""", fetchall=True, as_obj=True)
+            dashs = self.execute_query("SELECT id, name, body, round(extract(epoch from modified)) as modified FROM dash;",
+                                       fetchall=True, as_obj=True)
 
         if names_only:
             dashs = [d['name'] for d in dashs]
