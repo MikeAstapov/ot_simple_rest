@@ -13,7 +13,7 @@ CREATE TABLE dash (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     body TEXT,
-    modified TIMESTAMP DEFAULT now()
+    modified TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
 CREATE TABLE permission (
