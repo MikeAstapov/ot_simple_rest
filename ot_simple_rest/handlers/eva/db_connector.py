@@ -749,7 +749,7 @@ class PostgresConnector:
 
         with self.transaction('update_dash_data') as conn:
             self.execute_query("UPDATE dash SET modified = now() WHERE id = %s;",
-                               conn=conn, params=(name, dash_id), with_fetch=False)
+                               conn=conn, params=(dash_id,), with_fetch=False)
             if name:
                 self.execute_query("UPDATE dash SET name = %s WHERE id = %s;",
                                    conn=conn, params=(name, dash_id), with_fetch=False)
