@@ -69,36 +69,48 @@ class UserHandler(BaseHandler):
             raise tornado.web.HTTPError(400, "param 'id' is needed")
 
         if 'manage_users' in self.permissions or 'admin_all' in self.permissions:
-            user_data = self.db.get_auth_data(user_id=target_user_id)
-            old_password = user_data.pop("password")
-            old_username = user_data.pop("name")
-
             new_password = self.data.get("password", None)
             if new_password:
-                password_equal = await tornado.ioloop.IOLoop.current().run_in_executor(
-                    None,
-                    bcrypt.checkpw,
-                    tornado.escape.utf8(new_password),
-                    tornado.escape.utf8(old_password),
-                )
                 new_hashed_password = await tornado.ioloop.IOLoop.current().run_in_executor(
                     None,
                     bcrypt.hashpw,
                     tornado.escape.utf8(new_password),
                     bcrypt.gensalt(),
                 )
-                new_password = tornado.escape.to_unicode(new_hashed_password) if not password_equal else None
-
-            new_username = self.data.get('name', None)
-            new_username = new_username if new_username != old_username else None
-
-            user_id = self.db.update_user(user_id=target_user_id,
-                                          name=new_username,
-                                          password=new_password,
-                                          roles=self.data.get('roles', None),
-                                          groups=self.data.get('groups', None))
+                new_password = tornado.escape.to_unicode(new_hashed_password)
         else:
-            raise tornado.web.HTTPError(403, "no permission for manage users")
+            user_data = self.db.get_auth_data(user_id=target_user_id)
+            stored_password = user_data.pop("password")
+
+            old_password = self.data.get("old_password", None)
+            new_password = self.data.get("new_password", None)
+
+            if new_password and old_password:
+                password_equal = await tornado.ioloop.IOLoop.current().run_in_executor(
+                    None,
+                    bcrypt.checkpw,
+                    tornado.escape.utf8(old_password),
+                    tornado.escape.utf8(stored_password),
+                )
+
+                if not password_equal:
+                    raise tornado.web.HTTPError(403, "old password value is incorrect")
+
+                new_hashed_password = await tornado.ioloop.IOLoop.current().run_in_executor(
+                    None,
+                    bcrypt.hashpw,
+                    tornado.escape.utf8(new_password),
+                    bcrypt.gensalt(),
+                )
+                new_password = tornado.escape.to_unicode(new_hashed_password)
+
+        new_username = self.data.get('name', None)
+        user_id = self.db.update_user(user_id=target_user_id,
+                                      name=new_username,
+                                      password=new_password,
+                                      roles=self.data.get('roles', None),
+                                      groups=self.data.get('groups', None))
+
         self.write({'id': user_id})
 
     async def delete(self):
