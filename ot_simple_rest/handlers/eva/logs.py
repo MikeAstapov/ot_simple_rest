@@ -8,6 +8,7 @@ from handlers.eva.base import BaseHandler
 
 class LogsHandler(BaseHandler):
     def initialize(self, **kwargs):
+        super().initialize(kwargs['db_conn_pool'])
         self.logs_path = kwargs['logs_path']
 
     async def post(self):
