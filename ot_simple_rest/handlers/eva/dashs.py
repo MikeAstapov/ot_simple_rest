@@ -55,9 +55,9 @@ class DashboardHandler(BaseHandler):
 
         try:
             name, modified = self.db.update_dash(dash_id=dash_id,
-                                           name=self.data.get('name', None),
-                                           body=self.data.get('body', None),
-                                           groups=self.data.get('groups', None))
+                                                 name=self.data.get('name', None),
+                                                 body=self.data.get('body', None),
+                                                 groups=self.data.get('groups', None))
         except Exception as err:
             raise tornado.web.HTTPError(409, str(err))
         self.write({'id': dash_id, 'name': name, 'modified': modified})
