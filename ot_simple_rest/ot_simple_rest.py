@@ -97,8 +97,7 @@ def main():
     db_pool_eva = ThreadedConnectionPool(int(pool_conf['min_size']), int(pool_conf['max_size']), **db_conf_eva)
 
     # Create jobs manager instance and start it
-    manager = JobsManager(db_conn_pool=db_pool, mem_conf=mem_conf, disp_conf=disp_conf,
-                          resolver_conf=resolver_conf, user_conf=user_conf)
+    manager = JobsManager(db_conn_pool=db_pool, mem_conf=mem_conf, disp_conf=disp_conf, resolver_conf=resolver_conf)
     manager.start()
 
     # Create and start task scheduler
@@ -110,7 +109,7 @@ def main():
         (r'/api/ping', PingPong),
         (r'/api/checkjob', CheckJob, {"manager": manager}),
         (r'/api/getresult', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
-        (r'/api/makejob', MakeJob, {"manager": manager}),
+        (r'/api/makejob', MakeJob, {"db_conn_pool": db_pool_eva, "manager": manager, "user_conf": user_conf}),
         (r'/api/loadjob', LoadJob, {"manager": manager}),
         (r'/api/otrest', SaveOtRest, {"db_conn_pool": db_pool, "mem_conf": mem_conf}),
         (r'/api/makerolemodel', MakeRoleModel, {"db_conn_pool": db_pool}),

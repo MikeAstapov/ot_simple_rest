@@ -25,14 +25,14 @@ class Job:
 
     logger = logging.getLogger('osr')
 
-    def __init__(self, request, db_conn, mem_conf, resolver_conf,
-                 check_index_access, tracker_max_interval):
+    def __init__(self, *, request, db_conn, mem_conf, resolver_conf,
+                 tracker_max_interval, indexes=None):
         self.request = request
+        self.indexes = indexes
         self.db = db_conn
         self.mem_conf = mem_conf
         self.resolver_conf = resolver_conf
         self.tracker_max_interval = tracker_max_interval
-        self.check_index_access = check_index_access
 
         self.status = {'status': 'created'}
 
@@ -74,42 +74,6 @@ class Job:
     def validate():
         # TODO: Implement in a future release
         return True
-
-    def user_has_right(self, username, indexes):
-        """
-        It checks Role Model if user has access to requested indexes.
-
-        :param username: User from query meta.
-        :type username: String.
-        :param indexes: Requested indexes parsed from SPL query.
-        :type indexes: List.
-        :return: Boolean access flag and resolved indexes.
-        """
-        if not self.check_index_access or not indexes:
-            return True, indexes
-
-        accessed_indexes = []
-
-        user_indexes = self.db.check_user_role(username)
-        access_flag = False
-        if user_indexes:
-            if '*' in user_indexes:
-                access_flag = True
-            else:
-                for index in indexes:
-                    index = index.replace('"', '').replace('\\', '')
-                    for _index in user_indexes:
-                        indexes_from_rm = re.findall(index.replace("*", ".*"), _index)
-                        self.logger.debug("Indexes from rm: %s. Left index: %s. Right index: %s." % (
-                            indexes_from_rm, index, _index
-                        ))
-                        for ifrm in indexes_from_rm:
-                            accessed_indexes.append(ifrm)
-            if accessed_indexes:
-                access_flag = True
-        self.logger.debug(f'User has a right: {access_flag}')
-
-        return access_flag, accessed_indexes
 
     def check_cache(self, cache_ttl, original_spl, tws, twf, field_extraction, preview):
         """
@@ -212,78 +176,69 @@ class Job:
 
         sid = request['sid'][0].decode()
 
-        # Step 4. Check for Role Model Access to requested indexes.
-        access_flag, indexes = self.user_has_right(username, indexes)
-        if access_flag:
-            self.logger.debug("User has access. Indexes: %s." % indexes)
-            resolver = Resolver(indexes, tws, twf, self.db, sid, self.request.remote_ip,
-                                self.resolver_conf.get('no_subsearch_commands'))
-            resolved_spl = resolver.resolve(original_spl)
-            self.logger.debug("Resolved_spl: %s" % resolved_spl)
+        resolver = Resolver(self.indexes, tws, twf, self.db, sid, self.request.remote_ip,
+                            self.resolver_conf.get('no_subsearch_commands'))
+        resolved_spl = resolver.resolve(original_spl)
+        self.logger.debug("Resolved_spl: %s" % resolved_spl)
 
-            # Step 5. Make searches queue based on subsearches of main query.
-            searches = []
-            for search in resolved_spl['subsearches'].values():
-                if ('otrest' or 'otloadjob') in search[0]:
-                    continue
-                searches.append(search)
+        # Make searches queue based on subsearches of main query.
+        searches = []
+        for search in resolved_spl['subsearches'].values():
+            if ('otrest' or 'otloadjob') in search[0]:
+                continue
+            searches.append(search)
 
-            # Append main search query to the end.
-            searches.append(resolved_spl['search'])
-            self.logger.debug("Searches: %s" % searches)
-            response = {"status": "fail", "error": "No any searches were resolved"}
-            for search in searches:
+        # Append main search query to the end.
+        searches.append(resolved_spl['search'])
+        self.logger.debug("Searches: %s" % searches)
+        response = {"status": "fail", "error": "No any searches were resolved"}
+        for search in searches:
 
-                # Step 6. Check if the same query Job is already calculated and has ready cache.
-                cache_id, creating_date = self.check_cache(cache_ttl, search[0], tws, twf, field_extraction, preview)
+            # Check if the same query Job is already calculated and has ready cache.
+            cache_id, creating_date = self.check_cache(cache_ttl, search[0], tws, twf, field_extraction, preview)
 
-                if cache_id is None:
-                    self.logger.debug('No cache')
+            if cache_id is None:
+                self.logger.debug('No cache')
 
-                    # Check for validation.
-                    if self.validate():
+                # Check for validation.
+                if self.validate():
 
-                        # Step 7. Check if the same query Job is already be running.
-                        job_id, creating_date = self.check_running(search[0], tws, twf, field_extraction, preview)
-                        self.logger.debug('Running job_id: %s, creating_date: %s' % (job_id, creating_date))
-                        if job_id is None:
+                    # Check if the same query Job is already be running.
+                    job_id, creating_date = self.check_running(search[0], tws, twf, field_extraction, preview)
+                    self.logger.debug('Running job_id: %s, creating_date: %s' % (job_id, creating_date))
+                    if job_id is None:
 
-                            # Form the list of subsearches for each search.
-                            subsearches = []
-                            if 'subsearch=' in search[1]:
-                                _subsearches = re.findall(r'subsearch=([\w\d]+)', search[1])
-                                for each in _subsearches:
-                                    subsearches.append(resolved_spl['subsearches'][each][0])
+                        # Form the list of subsearches for each search.
+                        subsearches = []
+                        if 'subsearch=' in search[1]:
+                            _subsearches = re.findall(r'subsearch=([\w\d]+)', search[1])
+                            for each in _subsearches:
+                                subsearches.append(resolved_spl['subsearches'][each][0])
 
-                            # Step 8. Register new Job in Dispatcher DB.
-                            self.logger.debug('Search: %s. Subsearches: %s.' % (search[1], subsearches))
-                            job_id, creating_date = self.db.add_job(search=search, subsearches=subsearches,
-                                                                    tws=tws, twf=twf, cache_ttl=cache_ttl,
-                                                                    username=username,
-                                                                    field_extraction=field_extraction,
-                                                                    preview=preview)
+                        # Register new Job in Dispatcher DB.
+                        self.logger.debug('Search: %s. Subsearches: %s.' % (search[1], subsearches))
+                        job_id, creating_date = self.db.add_job(search=search, subsearches=subsearches,
+                                                                tws=tws, twf=twf, cache_ttl=cache_ttl,
+                                                                username=username,
+                                                                field_extraction=field_extraction,
+                                                                preview=preview)
 
-                            # Add SID to DB if search is not subsearch.
-                            if search == searches[-1]:
-                                self.db.add_sid(sid=sid, remote_ip=self.request.remote_ip,
-                                                original_spl=original_spl)
+                        # Add SID to DB if search is not subsearch.
+                        if search == searches[-1]:
+                            self.db.add_sid(sid=sid, remote_ip=self.request.remote_ip,
+                                            original_spl=original_spl)
 
-                        # Return id of new Job.
-                        response = {"_time": creating_date, "status": "success", "job_id": job_id}
-
-                    else:
-                        # Return validation error.
-                        response = {"status": "fail", "error": "Validation failed"}
+                    # Return id of new Job.
+                    response = {"_time": creating_date, "status": "success", "job_id": job_id}
 
                 else:
-                    # Return id of the same already calculated Job with ready cache. Ot.Simple Splunk app JobLoader will
-                    # request it to download.
-                    response = {"_time": creating_date, "status": "success", "job_id": cache_id}
+                    # Return validation error.
+                    response = {"status": "fail", "error": "Validation failed"}
 
-        else:
-            # Return Role Model Access error.
-            self.logger.debug("User has no access.")
-            response = {"status": "fail", "error": "User has no access to index"}
+            else:
+                # Return id of the same already calculated Job with ready cache. Ot.Simple Splunk app JobLoader will
+                # request it to download.
+                response = {"_time": creating_date, "status": "success", "job_id": cache_id}
 
         self.logger.debug('Response: %s' % response)
         self.status = response
@@ -329,7 +284,7 @@ class Job:
                     self.logger.info('Cache for task_id=%s was found.' % cid)
                     response = {'status': 'success', 'cid': cid}
             elif status == 'finished' and not expiring_date:
-                response = {'status': 'nocache'}
+                response = {'status': 'nocache', 'error': 'No cache for this job'}
             elif status in ['new', 'running']:
                 response = {'status': status}
             elif status in ['failed', 'canceled']:
@@ -341,3 +296,4 @@ class Job:
             # Return missed job error.
             response = {'status': 'notfound', 'error': 'Job is not found'}
         self.status = response
+

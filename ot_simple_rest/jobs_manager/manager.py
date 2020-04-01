@@ -34,12 +34,11 @@ class JobsManager:
     If jobs queue is empty, monitoring is waiting for new jobs.
     """
     def __init__(self, db_conn_pool, mem_conf, disp_conf,
-                 resolver_conf, user_conf):
+                 resolver_conf):
         self.db_conn = PostgresConnector(db_conn_pool)
         self.mem_conf = mem_conf
         self.disp_conf = disp_conf
         self.r_conf = resolver_conf
-        self.check_index = False if user_conf['check_index_access'] == 'False' else True
         self.tracker_max_interval = float(disp_conf['tracker_max_interval'])
 
         self._enable = False
@@ -47,7 +46,7 @@ class JobsManager:
 
         logger.info('Jobs manager started')
 
-    async def make_job(self, request):
+    async def make_job(self, *, request, indexes):
         """
         Creates Job instance with needed params and queue it for create job.
 
@@ -56,11 +55,11 @@ class JobsManager:
         """
         try:
             job = Job(request=request,
+                      indexes=indexes,
                       db_conn=self.db_conn,
                       mem_conf=self.mem_conf,
                       resolver_conf=self.r_conf,
-                      tracker_max_interval=self.tracker_max_interval,
-                      check_index_access=self.check_index)
+                      tracker_max_interval=self.tracker_max_interval)
             await self.jobs_queue.put(job)
         except Exception as err:
             response = {"status": "fail", "timestamp": str(datetime.now()), "error": str(err)}
@@ -81,8 +80,7 @@ class JobsManager:
                   db_conn=self.db_conn,
                   mem_conf=self.mem_conf,
                   resolver_conf=self.r_conf,
-                  tracker_max_interval=self.tracker_max_interval,
-                  check_index_access=self.check_index)
+                  tracker_max_interval=self.tracker_max_interval)
         logger.debug('CheckJob was created')
         job.start_check(with_load)
         return job.status
@@ -129,3 +127,4 @@ class JobsManager:
         :return:        None
         """
         self._enable = False
+
