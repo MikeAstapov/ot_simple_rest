@@ -7,8 +7,7 @@ CREATE TABLE quiz (
 
 CREATE TABLE filled_quiz (
     id SERIAL PRIMARY KEY,
-    quiz_id INT REFERENCES quiz(id) ON DELETE CASCADE,
-    name VARCHAR(100) NOT NULL
+    quiz_id INT REFERENCES quiz(id) ON DELETE CASCADE
 );
 
 CREATE TABLE question (
