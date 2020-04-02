@@ -2,8 +2,5 @@
 
 sudo -u postgres psql << EOF
 drop database eva;
+drop database dispatcher;
 EOF
-
-#sudo -u postgres psql << EOF
-#drop user tester;
-#EOF
