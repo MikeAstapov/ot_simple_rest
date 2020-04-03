@@ -65,11 +65,13 @@ def set_logger(loglevel, logfile, logger_name):
         'handlers': {
             'file_handler_standard': {
                 'filename': logfile,
+                'level': levels[loglevel],
                 'class': 'logging.FileHandler',
                 'formatter': 'standard'
             },
             'file_handler_with_hid': {
                 'filename': logfile,
+                'level': levels[loglevel],
                 'class': 'logging.FileHandler',
                 'formatter': 'with_hid'
             }
@@ -78,21 +80,18 @@ def set_logger(loglevel, logfile, logger_name):
             'osr': {
                 'handlers': ['file_handler_standard'],
                 'level': levels[loglevel],
-                'propagate': True
+                'propagate': False
             },
             'osr_hid': {
                 'handlers': ['file_handler_with_hid'],
-                'level': levels[loglevel],
-                'propagate': True
-            }
+                'level': levels[loglevel]
+            },
+        },
+        'root': {
+            'handlers': ['file_handler_standard'],
+            'level': levels[loglevel]
         }
     }
-
-#     logging.basicConfig(
-#         filename=logfile,
-#         level=levels[loglevel],
-#         format="%(asctime)s %(levelname)-s PID=%(process)d %(module)s:%(lineno)d \
-# func=%(funcName)s - %(message)s")
 
     logging.config.dictConfig(log_dict)
     logger = logging.getLogger(logger_name)
