@@ -14,6 +14,7 @@ build: $(COMPONENTS)
 	mkdir build
 	cp -r ot_simple_rest build
 	cp -r venv build/ot_simple_rest
+	ln -s /opt/otp/logs/ot_simple_rest build/ot_simple_rest/logs
 	cp start.sh build/ot_simple_rest/start.sh
 	cp stop.sh build/ot_simple_rest/stop.sh
 	cp ot_simple_rest.conf build/ot_simple_rest/ot_simple_rest.conf
@@ -36,6 +37,7 @@ start.sh:
 cd /opt/otp/ot_simple_rest/logs\n\
 source /opt/otp/ot_simple_rest/venv/bin/activate && /opt/otp/ot_simple_rest/venv/bin/python3 /opt/otp/ot_simple_rest/ot_simple_rest.py > stdout.log 2> stderr.log &\n\
 " > $@
+	chmod +x $@
 
 stop.sh:
 	echo Create stop.sh
@@ -43,6 +45,7 @@ stop.sh:
 \n\
 kill \`ps ax | grep \"/opt/otp/ot_simple_rest/venv/bin/python3 /opt/otp/ot_simple_rest/ot_simple_rest.py\" | grep -v grep | awk '{print \$$1}'\`\
 " > $@
+	chmod +x $@
 
 ot_simple_rest.conf:
 	echo -e "[general]\n\
