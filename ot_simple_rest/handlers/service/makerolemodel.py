@@ -4,6 +4,7 @@ import logging
 import tornado.web
 from tornado.ioloop import IOLoop
 
+from handlers.jobs.db_connector import PostgresConnector
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -22,14 +23,14 @@ class MakeRoleModel(tornado.web.RequestHandler):
 
     logger = logging.getLogger('osr')
 
-    def initialize(self, db_conn):
+    def initialize(self, db_conn_pool):
         """
         Gets configs.
 
         :param db_conn: DB connector object.
         :return:
         """
-        self.db = db_conn
+        self.db = PostgresConnector(db_conn_pool)
 
     async def post(self):
         """
