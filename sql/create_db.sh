@@ -8,5 +8,4 @@ grant all privileges on database eva to dispatcher;
 grant all privileges on database dispatcher to dispatcher;
 EOF
 
-#export PGPASSWORD='P@$$w0rd'
-psql -d eva -U dispatcher -a -f init_tables.sql
+psql -d eva -U dispatcher -a -f eva.sql
