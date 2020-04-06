@@ -2,24 +2,29 @@ import unittest
 from configparser import ConfigParser
 
 import sys
-sys.path.append('/opt/ot_simple_rest')
+sys.path.append('../ot_simple_rest')
 
-from handlers.jobs.db_connector import PostgresConnector
+from ot_simple_rest.handlers.jobs.db_connector import PostgresConnector
 
-from tests.rest.checkjob_tester import CheckjobTester
-from tests.rest.makejob_tester import MakejobTester
-from tests.rest.makerolemodel_tester import MakeRoleModelTester
+from rest.checkjob_tester import CheckjobTester
+from rest.makejob_tester import MakejobTester
+from rest.getresult_tester import GetresultTester
+from rest.makerolemodel_tester import MakeRoleModelTester
 
-spl = '| ot ttl=60 | search index="pprbappcore_business" cx-communication.availability.name=* ' \
-      '| stats values(host) as hosts | mvexpand hosts | simple'
+from psycopg2.pool import ThreadedConnectionPool
+
+spl = '| ot ttl=60 | makeresults count=10 | simple'
 
 config = ConfigParser()
-config.read('test_rest.conf')
+config.read('tests/rest/test_rest.conf')
+
+pool = ThreadedConnectionPool(2, 4, **dict(config['db_conf']))
+db = PostgresConnector(pool)
 
 
 class TestCheckJob(unittest.TestCase):
     """
-    Test suite for /checkjob OT_REST endpoint.
+    Test suite for /api/checkjob OT_REST endpoint.
     Testing for different job statuses:
     - job not created
     - status is 'new'
@@ -29,7 +34,6 @@ class TestCheckJob(unittest.TestCase):
     - status is 'canceled'
     """
 
-    db = PostgresConnector(dict(config['db_conf']))
     tester = CheckjobTester(db, dict(config['rest_conf']))
     tester.set_query(spl)
 
@@ -57,7 +61,7 @@ class TestCheckJob(unittest.TestCase):
 
 class TestMakeJob(unittest.TestCase):
     """
-    Test suite for /makejob OT_REST endpoint.
+    Test suite for /api/makejob OT_REST endpoint.
     Testing for different job statuses:
     - job not created
     - status is 'new'
@@ -67,8 +71,6 @@ class TestMakeJob(unittest.TestCase):
     - status is 'external'
     - status is 'canceled'
     """
-
-    db = PostgresConnector(dict(config['db_conf']))
     tester = MakejobTester(db, dict(config['rest_conf']))
     tester.set_query(spl)
 
@@ -99,16 +101,33 @@ class TestMakeJob(unittest.TestCase):
 
 class TestMakeRoleModel(unittest.TestCase):
     """
-    Test suite for /makerolemodel OT_REST endpoint.
+    Test suite for /api/makerolemodel OT_REST endpoint.
     Test cases:
     - create role model
     """
-    db = PostgresConnector(dict(config['db_conf']))
     tester = MakeRoleModelTester(db, dict(config['rest_conf']))
 
     def test__create_model(self):
         self.assertTrue(self.tester.create_model())
 
 
+class TestGetResult(unittest.TestCase):
+    """
+    Test suite for /api/getresult OT_REST endpoint.
+    Test cases:
+    - returns list of data urls
+    """
+    tester = GetresultTester(dict(config['rest_conf']), 
+                             dict(config['mem_conf']), 
+                             dict(config['static']))
+
+    def test__get_result(self):
+        self.assertTrue(self.tester.test__getresult())
+
+
 if __name__ == '__main__':
-    unittest.main()
+    try:
+        unittest.main(verbosity=2)
+    except Exception as err:
+        print(err)
+        exit(1)
