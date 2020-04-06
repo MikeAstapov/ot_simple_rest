@@ -1,6 +1,6 @@
 # OT Simple. REST.
 
-We can't live without Splunk. Splunk is our all. At all. So this app is helper for connection to Spark from Splunk.
+Rest for EVA or other UI for data visualization.
 
 ## Getting Started
 
@@ -13,8 +13,8 @@ Also you need gcc and python3-devel.
 
 ### Installing
 
-Install Python3 and virtual environment.
 Install postgresql-devel lib.
+Install Python3 and virtual environment from requirements.txt.
 
 ## Deployment
 
@@ -23,15 +23,21 @@ source ./venv/bin/activate
 
 ## Built with
 
-Python 3.6.8  
-tornado-6.0.2-py3.6  
-psycopg2-2.8.3-py3.6  
-lark_parser-0.7.1-py3.6
+python3.6.8  
+bcrypt  3.1.7  
+cffi  1.14.0  
+click  7.1.1  
+parglare  0.9.2  
+psycopg2  2.8.3  
+pycparser  2.20  
+PyJWT  1.7.1  
+six  1.12.0  
+tornado  6.0.2  
 
 ## Contributing
 
-Nikolay Ryabykh  
-Sergei Ermilov
+Nikolay Ryabykh (nryabykh@ot.ru)  
+Sergei Ermilov (sermilov@ot.ru)  
 
 ## Versioning
 
@@ -41,7 +47,7 @@ Git. Only Git.
 
 Andrey Starchenkov (astarchenkov@ot.ru)  
 Anton Khromov (akhromov@ot.ru)  
-Anastasiia Safonova (asafonova@ot.ru)
+Anastasiia Safonova (asafonova@ot.ru)  
 
 ## License
 
