@@ -24,7 +24,7 @@ venv:
 	echo Create venv
 	mkdir -p /opt/otp/ot_simple_rest
 	python3 -m venv --copies /opt/otp/ot_simple_rest/venv
-	#/opt/otp/ot_simple_rest/venv/bin/pip3 install -r requirements.txt
+	/opt/otp/ot_simple_rest/venv/bin/pip3 install -r requirements.txt
 	cp -r /opt/otp/ot_simple_rest/venv venv
 	#cd ot_simple_rest; python3 -m venv --copies ./python3
 	#cd ot_simple_rest; python3/bin/pip3 install -r ../requirements.txt
