@@ -13,7 +13,7 @@ __license__ = ""
 __version__ = "0.2.4"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
-__status__ = "Development"
+__status__ = "Production"
 
 
 class MakeRoleModel(tornado.web.RequestHandler):

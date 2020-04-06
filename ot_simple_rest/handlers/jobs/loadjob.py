@@ -2,14 +2,14 @@ import logging
 
 import tornado.web
 
-__author__ = "Andrey Starchenkov"
+__author__ = "Andrey Starchenkov, Anton Khromov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
 __version__ = "0.9.2"
-__maintainer__ = "Andrey Starchenkov"
-__email__ = "astarchenkov@ot.ru"
-__status__ = "Development"
+__maintainer__ = "Anton Khromov"
+__email__ = "akhromov@ot.ru"
+__status__ = "Production"
 
 
 class LoadJob(tornado.web.RequestHandler):
