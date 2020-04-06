@@ -40,29 +40,26 @@ class CheckjobTester:
     def tick_dispatcher(self):
         query_str = f"""INSERT INTO Ticks (applicationId) VALUES('test_app') 
         RETURNING extract(epoch from lastCheck) as lastCheck;"""
-        self.db.cur.execute(query_str)
-        self.db.conn.commit()
+        self.db.execute_query(query_str, with_commit=True)
 
     def get_jobs_from_db(self, limit=None):
         query_str = f"""SELECT id, creating_date, status FROM splqueries 
         WHERE original_spl='{self.original_spl}' ORDER BY creating_date DESC;"""
         if limit:
             query_str = query_str.replace(';', f' LIMIT {limit};')
-        self.db.cur.execute(query_str)
 
         if limit == 1:
-            result = self.db.cur.fetchone()
+            result = self.db.execute_query(query_str)
             if not result:
                 return None
             job_id, creating_date, status = result
             return {'id': job_id, 'date': datetime.strftime(creating_date, '%Y-%m-%d %H:%M:%S'), 'status': status}
         else:
-            return self.db.cur.fetchall()
+            return self.db.cur.execute(query_str, fetchall=True)
 
     def update_job_status(self, status, job_id):
         query_str = f"""UPDATE splqueries SET status='{status}' WHERE id={job_id};"""
-        self.db.cur.execute(query_str)
-        self.db.conn.commit()
+        self.db.execute_query(query_str, with_commit=True, with_fetch=False)
 
     def add_job_with_cache(self):
         self.tick_dispatcher()
@@ -89,7 +86,7 @@ class CheckjobTester:
         data = self.request_data
         data['original_spl'] = self._current_spl
         data['sid'] = str(uuid.uuid4())
-        resp = requests.get(f'http://{self.config["host"]}:{self.config["port"]}/checkjob', params=data)
+        resp = requests.get(f'http://{self.config["host"]}:{self.config["port"]}/api/checkjob', params=data)
         resp.raise_for_status()
         return resp.json()
 
@@ -98,8 +95,7 @@ class CheckjobTester:
         del_spl_query = f"""DELETE FROM splqueries WHERE original_spl='{self.original_spl}';"""
         del_cache_query = f"""DELETE FROM cachesdl WHERE original_spl='{self.original_spl}';"""
         for query in [del_cache_query, del_ticks_query, del_spl_query]:
-            self.db.cur.execute(query)
-        self.db.conn.commit()
+            self.db.execute_query(query, with_commit=True, with_fetch=False)
 
     def test__no_job(self):
         try:
@@ -142,7 +138,7 @@ class CheckjobTester:
             resp = self.send_request()
         finally:
             self._cleanup()
-        return resp == {'status': 'nocache'}
+        return resp == {'status': 'nocache', 'error': 'No cache for this job'}
 
     def test__failed(self):
         try:

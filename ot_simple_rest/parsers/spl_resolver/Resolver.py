@@ -14,7 +14,7 @@ __license__ = ""
 __version__ = "0.3.19"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
-__status__ = "Development"
+__status__ = "Production"
 
 
 class Resolver:

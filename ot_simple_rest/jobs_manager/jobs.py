@@ -12,9 +12,9 @@ __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
 __version__ = "0.0.1"
-__maintainer__ = "Andrey Starchenkov"
-__email__ = "astarchenkov@ot.ru"
-__status__ = "Development"
+__maintainer__ = "Anton Khromov"
+__email__ = "akhromov@ot.ru"
+__status__ = "Production"
 
 
 class Job:
@@ -23,10 +23,11 @@ class Job:
     and get jobs result from cache.
     """
 
-    logger = logging.getLogger('osr')
+    logger = logging.getLogger('osr_hid')
 
-    def __init__(self, *, request, db_conn, mem_conf, resolver_conf,
+    def __init__(self, *, id, request, db_conn, mem_conf, resolver_conf,
                  tracker_max_interval, indexes=None):
+        self.handler_id = id
         self.request = request
         self.indexes = indexes
         self.db = db_conn
@@ -38,7 +39,7 @@ class Job:
 
     def check_dispatcher_status(self):
         delta = self.db.check_dispatcher_status()
-        self.logger.debug("Dispatcher last check: %s." % delta)
+        self.logger.debug(f"Dispatcher last check: {delta}.", extra={'hid': self.handler_id})
         if delta and delta <= self.tracker_max_interval:
             return True
         return False
@@ -50,10 +51,10 @@ class Job:
         :type cid: Integer.
         :return: List of cache table lines.
         """
-        self.logger.debug(f'Started loading cache {cid}.')
+        self.logger.debug(f'Started loading cache {cid}.', extra={'hid': self.handler_id})
         _path = self.mem_conf['path']
         path_to_cache_dir = f'{_path}/search_{cid}.cache/'
-        self.logger.debug(f'Path to cache {path_to_cache_dir}.')
+        self.logger.debug(f'Path to cache {path_to_cache_dir}.', extra={'hid': self.handler_id})
         file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
         with open(path_to_cache_dir + "_SCHEMA") as fr:
             df_schema = fr.read()
@@ -61,7 +62,7 @@ class Job:
         length = len(file_names)
         for i in range(length):
             file_name = file_names[i]
-            self.logger.debug(f'Reading part: {file_name}')
+            self.logger.debug(f'Reading part: {file_name}', extra={'hid': self.handler_id})
             yield f'"{file_name}": '
             with open(path_to_cache_dir + file_name) as fr:
                 body = fr.read()
@@ -93,12 +94,12 @@ class Job:
         :return: Job cache's id and date of creating.
         """
         cache_id = creating_date = None
-        self.logger.debug('cache_ttl: %s' % cache_ttl)
+        self.logger.debug(f'cache_ttl: {cache_ttl}', extra={'hid': self.handler_id})
         if cache_ttl:
             cache_id, creating_date = self.db.check_cache(original_spl=original_spl, tws=tws, twf=twf,
                                                           field_extraction=field_extraction, preview=preview)
 
-        self.logger.debug('cache_id: %s, creating_date: %s' % (cache_id, creating_date))
+        self.logger.debug(f'cache_id: {cache_id}, creating_date: {creating_date}', extra={'hid': self.handler_id})
         return cache_id, creating_date
 
     def check_running(self, original_spl, tws, twf, field_extraction, preview):
@@ -120,12 +121,11 @@ class Job:
         job_id, creating_date = self.db.check_running(original_spl=original_spl, tws=tws, twf=twf,
                                                       field_extraction=field_extraction, preview=preview)
 
-        self.logger.debug('job_id: %s, creating_date: %s' % (job_id, creating_date))
+        self.logger.debug(f'job_id: {job_id}, creating_date: {creating_date}', extra={'hid': self.handler_id})
         return job_id, creating_date
 
     def get_request_params(self):
         request = self.request.arguments
-        self.logger.debug(request)
         # Step 1. Remove OT.Simple Splunk app service data from SPL query.
         original_spl = request["original_spl"][0].decode()
         cache_ttl = re.findall(r"\|\s*ot[^|]*ttl\s*=\s*(\d+)", original_spl)
@@ -158,7 +158,7 @@ class Job:
         :return:
         """
         request = self.request.body_arguments
-        self.logger.debug(f'Request: {request}')
+        self.logger.debug(f'Request: {request}', extra={'hid': self.handler_id})
 
         # Get cache lifetime.
         cache_ttl = int(request['cache_ttl'][0])
@@ -170,16 +170,15 @@ class Job:
         preview = params['preview']
 
         username = request['username'][0].decode()
-        indexes = re.findall(r"index=(\S+)", params['original_spl'])
 
-        self.logger.debug(f"Discrete time window: [{tws},{twf}].")
+        self.logger.debug(f"Discrete time window: [{tws},{twf}].", extra={'hid': self.handler_id})
 
         sid = request['sid'][0].decode()
 
         resolver = Resolver(self.indexes, tws, twf, self.db, sid, self.request.remote_ip,
                             self.resolver_conf.get('no_subsearch_commands'))
         resolved_spl = resolver.resolve(original_spl)
-        self.logger.debug("Resolved_spl: %s" % resolved_spl)
+        self.logger.debug(f"Resolved_spl: {resolved_spl}", extra={'hid': self.handler_id})
 
         # Make searches queue based on subsearches of main query.
         searches = []
@@ -190,7 +189,7 @@ class Job:
 
         # Append main search query to the end.
         searches.append(resolved_spl['search'])
-        self.logger.debug("Searches: %s" % searches)
+        self.logger.debug(f"Searches: {searches}", extra={'hid': self.handler_id})
         response = {"status": "fail", "error": "No any searches were resolved"}
         for search in searches:
 
@@ -198,14 +197,15 @@ class Job:
             cache_id, creating_date = self.check_cache(cache_ttl, search[0], tws, twf, field_extraction, preview)
 
             if cache_id is None:
-                self.logger.debug('No cache')
+                self.logger.debug(f'No cache', extra={'hid': self.handler_id})
 
                 # Check for validation.
                 if self.validate():
 
                     # Check if the same query Job is already be running.
                     job_id, creating_date = self.check_running(search[0], tws, twf, field_extraction, preview)
-                    self.logger.debug('Running job_id: %s, creating_date: %s' % (job_id, creating_date))
+                    self.logger.debug(f'Running job_id: {job_id}, creating_date: {creating_date}',
+                                      extra={'hid': self.handler_id})
                     if job_id is None:
 
                         # Form the list of subsearches for each search.
@@ -216,7 +216,8 @@ class Job:
                                 subsearches.append(resolved_spl['subsearches'][each][0])
 
                         # Register new Job in Dispatcher DB.
-                        self.logger.debug('Search: %s. Subsearches: %s.' % (search[1], subsearches))
+                        self.logger.debug(f'Search: {search[1]}. Subsearches: {subsearches}.',
+                                          extra={'hid': self.handler_id})
                         job_id, creating_date = self.db.add_job(search=search, subsearches=subsearches,
                                                                 tws=tws, twf=twf, cache_ttl=cache_ttl,
                                                                 username=username,
@@ -240,7 +241,7 @@ class Job:
                 # request it to download.
                 response = {"_time": creating_date, "status": "success", "job_id": cache_id}
 
-        self.logger.debug('Response: %s' % response)
+        self.logger.debug(f'Response: {response}', extra={'hid': self.handler_id})
         self.status = response
         await asyncio.sleep(0.001)
 
@@ -253,7 +254,7 @@ class Job:
         dispatcher_status = self.check_dispatcher_status()
         if not dispatcher_status:
             msg = 'SuperDispatcher is offline. Please check Spark Cluster.'
-            self.logger.warning(msg)
+            self.logger.warning(msg, extra={'hid': self.handler_id})
             self.status = {'status': 'failed', 'error': msg}
             return
 
@@ -263,13 +264,13 @@ class Job:
         field_extraction = params['field_extraction']
         preview = params['preview']
 
-        self.logger.debug(f"Discrete time window: [{tws},{twf}].")
+        self.logger.debug(f"Discrete time window: [{tws},{twf}].", extra={'hid': self.handler_id})
 
         # Step 2. Get Job's status based on (original_spl, tws, twf) parameters.
 
         job_status_data = self.db.check_job_status(original_spl=original_spl, tws=tws, twf=twf,
                                                    field_extraction=field_extraction, preview=preview)
-        self.logger.info(job_status_data)
+        self.logger.info(job_status_data, extra={'hid': self.handler_id})
 
         # Check if such Job presents.
         if job_status_data:
@@ -279,9 +280,9 @@ class Job:
                 if with_load:
                     # Step 4. Load results of Job from cache for transcending.
                     response = ''.join(list(self.load_and_send_from_memcache(cid)))
-                    self.logger.info(f'Cache is {cid} loaded.')
+                    self.logger.info(f'Cache cid={cid} was loaded.', extra={'hid': self.handler_id})
                 else:
-                    self.logger.info('Cache for task_id=%s was found.' % cid)
+                    self.logger.info(f'Cache for task_id={cid} was found.', extra={'hid': self.handler_id})
                     response = {'status': 'success', 'cid': cid}
             elif status == 'finished' and not expiring_date:
                 response = {'status': 'nocache', 'error': 'No cache for this job'}
@@ -290,10 +291,9 @@ class Job:
             elif status in ['failed', 'canceled']:
                 response = {'status': status, 'error': msg}
             else:
-                self.logger.warning(f'Unknown status of job: {status}')
+                self.logger.warning(f'Unknown status of job: {status}', extra={'hid': self.handler_id})
                 response = {'status': 'failed', 'error': f'Unknown error: {status}'}
         else:
             # Return missed job error.
             response = {'status': 'notfound', 'error': 'Job is not found'}
         self.status = response
-

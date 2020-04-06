@@ -10,7 +10,7 @@ __license__ = ""
 __version__ = "0.2.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
-__status__ = "Development"
+__status__ = "Production"
 
 
 class PingPong(tornado.web.RequestHandler):

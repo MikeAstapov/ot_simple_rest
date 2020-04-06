@@ -6,6 +6,16 @@ import tornado.web
 from handlers.eva.base import BaseHandler
 
 
+__author__ = "Anton Khromov"
+__copyright__ = "Copyright 2019, Open Technologies 98"
+__credits__ = []
+__license__ = ""
+__version__ = "0.0.1"
+__maintainer__ = "Anton Khromov"
+__email__ = "akhromov@ot.ru"
+__status__ = "Production"
+
+
 class LogsHandler(BaseHandler):
     def initialize(self, **kwargs):
         super().initialize(kwargs['db_conn_pool'])
