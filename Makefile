@@ -1,5 +1,5 @@
 
-#.SILENT: 
+.SILENT:
 
 COMPONENTS := venv start.sh stop.sh ot_simple_rest.conf ot_simple_rest.conf nginx sql
 
