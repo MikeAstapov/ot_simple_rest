@@ -5,6 +5,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [0.15.4] - 2020-03-25
+### Added
+- Authorization service.
+- Endpoints for EVA application.
+- Scheduler for periodic DB manipulations.
+- Configuration with NGINX for static content serving.
+
+## [0.14.0] - 2020-02-21
+### Added
+- Jobs manager for MakeJob jobs synchronization.
+- Ability to use NGINX or other for static data serving.
+- Work with SQL DB is in a separate module.
+- Tests for endpoints.
+- Using connection pool for PostgresConnector.
+
+### Fixed
+- Simultainously DB inserts in MakeJob handler.
 
 ## [0.14.0] - 2020-02-20
 ### Changed
