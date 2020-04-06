@@ -1,6 +1,6 @@
 # OT Simple. REST.
 
-EVA or other UI for data visualization.
+Rest for EVA or other UI for data visualization.
 
 ## Getting Started
 
@@ -23,20 +23,21 @@ source ./venv/bin/activate
 
 ## Built with
 
-bcrypt==3.1.7
-cffi==1.14.0
-click==7.1.1
-parglare==0.9.2
-psycopg2==2.8.3
-pycparser==2.20
-PyJWT==1.7.1
-six==1.12.0
-tornado==6.0.2
+python3.6.8  
+bcrypt  3.1.7  
+cffi  1.14.0  
+click  7.1.1  
+parglare  0.9.2  
+psycopg2  2.8.3  
+pycparser  2.20  
+PyJWT  1.7.1  
+six  1.12.0  
+tornado  6.0.2  
 
 ## Contributing
 
-Nikolay Ryabykh (nryabykh@ot.ru)
-Sergei Ermilov (sermilov@ot.ru)
+Nikolay Ryabykh (nryabykh@ot.ru)  
+Sergei Ermilov (sermilov@ot.ru)  
 
 ## Versioning
 
@@ -46,7 +47,7 @@ Git. Only Git.
 
 Andrey Starchenkov (astarchenkov@ot.ru)  
 Anton Khromov (akhromov@ot.ru)  
-Anastasiia Safonova (asafonova@ot.ru)
+Anastasiia Safonova (asafonova@ot.ru)  
 
 ## License
 
