@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ot_simple_rest.py
 
-import logging
+import logging.config
 import os
 from configparser import ConfigParser
 
@@ -49,12 +49,51 @@ def set_logger(loglevel, logfile, logger_name):
         'DEBUG': logging.DEBUG
     }
 
-    logging.basicConfig(
-        filename=logfile,
-        level=levels[loglevel],
-        format="%(asctime)s %(levelname)-s PID=%(process)d %(module)s:%(lineno)d \
-func=%(funcName)s - %(message)s")
+    log_dict = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'standard': {
+                'format': "%(asctime)s %(levelname)-s PID=%(process)d %(module)s:%(lineno)d "
+                          "func=%(funcName)s - %(message)s"
+            },
+            'with_hid': {
+                'format': "%(asctime)s %(levelname)-s PID=%(process)d HID=%(hid)s %(module)s:%(lineno)d "
+                          "func=%(funcName)s - %(message)s"
+            }
+        },
+        'handlers': {
+            'file_handler_standard': {
+                'filename': logfile,
+                'level': levels[loglevel],
+                'class': 'logging.FileHandler',
+                'formatter': 'standard'
+            },
+            'file_handler_with_hid': {
+                'filename': logfile,
+                'level': levels[loglevel],
+                'class': 'logging.FileHandler',
+                'formatter': 'with_hid'
+            }
+        },
+        'loggers': {
+            'osr': {
+                'handlers': ['file_handler_standard'],
+                'level': levels[loglevel],
+                'propagate': False
+            },
+            'osr_hid': {
+                'handlers': ['file_handler_with_hid'],
+                'level': levels[loglevel]
+            },
+        },
+        'root': {
+            'handlers': ['file_handler_standard'],
+            'level': levels[loglevel]
+        }
+    }
 
+    logging.config.dictConfig(log_dict)
     logger = logging.getLogger(logger_name)
     return logger
 
@@ -157,4 +196,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

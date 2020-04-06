@@ -46,15 +46,18 @@ class JobsManager:
 
         logger.info('Jobs manager started')
 
-    async def make_job(self, *, request, indexes):
+    async def make_job(self, *, hid, request, indexes):
         """
         Creates Job instance with needed params and queue it for create job.
 
+        :param hid:         handler identifier
         :param request:     request object from handler
+        :param indexes:     list of accessed indexes
         :return:            None
         """
         try:
-            job = Job(request=request,
+            job = Job(id=hid,
+                      request=request,
                       indexes=indexes,
                       db_conn=self.db_conn,
                       mem_conf=self.mem_conf,
@@ -68,15 +71,17 @@ class JobsManager:
             logger.debug('MakeJob was queued')
         return response
 
-    def check_job(self, request, with_load=False):
+    def check_job(self, *, hid, request, with_load=False):
         """
         Creates Job instance with needed params and start it for check job.
 
+        :param hid:         handler identifier
         :param request:     request object from handler
         :param with_load:   sign of need load results after finish
         :return:            results of checking job
         """
-        job = Job(request=request,
+        job = Job(id=hid,
+                  request=request,
                   db_conn=self.db_conn,
                   mem_conf=self.mem_conf,
                   resolver_conf=self.r_conf,
@@ -85,14 +90,15 @@ class JobsManager:
         job.start_check(with_load)
         return job.status
 
-    def load_job(self, request):
+    def load_job(self, *, hid, request):
         """
         Creates Job instance with needed params and start it for check job and load results.
 
+        :param hid:         handler identifier
         :param request:     request object from handler
         :return:            results of loading job
         """
-        return self.check_job(request, with_load=True)
+        return self.check_job(hid=hid, request=request, with_load=True)
 
     async def _start_monitoring(self):
         """
