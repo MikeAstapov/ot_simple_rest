@@ -24,6 +24,7 @@ class MakejobTester:
         self.config = config
 
         self._current_spl = None
+        self.cookies = None
 
         self.request_data = {
             'sid': None,
@@ -41,8 +42,7 @@ class MakejobTester:
 
     def update_job_status(self, status, job_id):
         query_str = f"""UPDATE splqueries SET status='{status}' WHERE id={job_id};"""
-        self.db.cur.execute(query_str, (status, job_id))
-        self.db.conn.commit()
+        self.db.execute_query(query_str, params=(status, job_id), with_commit=True, with_fetch=False)
 
     @property
     def original_spl(self):
@@ -63,30 +63,35 @@ class MakejobTester:
         WHERE original_spl='{self.original_spl}' ORDER BY creating_date DESC;"""
         if limit:
             query_str = query_str.replace(';', f' LIMIT {limit};')
-        self.db.cur.execute(query_str)
 
         if limit == 1:
-            result = self.db.cur.fetchone()
-            if not result:
-                return None
+            result = self.db.execute_query(query_str)
             job_id, creating_date, status = result
             return {'id': job_id, 'date': datetime.strftime(creating_date, '%Y-%m-%d %H:%M:%S'), 'status': status}
         else:
-            return self.db.cur.fetchall()
+            return self.db.execute_query(query_str, fetchall=True)
 
     def _cleanup(self):
         del_spl_query = f"""DELETE FROM splqueries WHERE original_spl='{self.original_spl}';"""
         del_cache_query = f"""DELETE FROM cachesdl WHERE original_spl='{self.original_spl}';"""
         del_splunksids_query = """DELETE FROM splunksids;"""
         for query in [del_spl_query, del_cache_query, del_splunksids_query]:
-            self.db.cur.execute(query)
-        self.db.conn.commit()
+            self.db.execute_query(query, with_commit=True, with_fetch=False)
+
+    def auth(self):
+        data = {'username': 'admin', 'password': '12345678'}
+        resp = requests.post(f'http://{self.config["host"]}:{self.config["port"]}/api/auth/login', json=data)
+        resp.raise_for_status()
+        self.cookies = resp.cookies
 
     def send_request(self):
         data = self.request_data
         data['original_spl'] = self.original_spl
         data['sid'] = str(uuid.uuid4())
-        resp = requests.post(f'http://{self.config["host"]}:{self.config["port"]}/makejob', data=data)
+        if not self.cookies:
+            self.auth()
+        resp = requests.post(f'http://{self.config["host"]}:{self.config["port"]}/api/makejob', 
+                             cookies=self.cookies, data=data)
         resp.raise_for_status()
         return resp.json()
 
