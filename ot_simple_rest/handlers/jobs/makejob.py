@@ -129,7 +129,7 @@ class MakeJob(BaseHandler):
         :return:
         """
         original_spl = self.get_original_spl()
-        indexes = re.findall(r"index=(\S+)", original_spl)
+        indexes = re.findall(r"index\s?=\s?([\"\']?_?\w+[_\w+]*[\"\']?)", original_spl)
         access_flag, indexes = self.user_has_right(indexes)
         if not access_flag:
             return self.write({"status": "fail", "error": "User has no access to index"})
