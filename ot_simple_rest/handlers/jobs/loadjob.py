@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 import tornado.web
 
@@ -31,8 +32,9 @@ class LoadJob(tornado.web.RequestHandler):
 
         :return:
         """
+        self.handler_id = str(uuid.uuid4())
         self.jobs_manager = manager
-        self.logger = logging.getLogger('osr')
+        self.logger = logging.getLogger('osr_hid')
 
     def write_error(self, status_code: int, **kwargs) -> None:
         """Override to implement custom error pages.
@@ -59,7 +61,7 @@ class LoadJob(tornado.web.RequestHandler):
 
         :return:
         """
-        response = self.jobs_manager.check_job(self.request, with_load=True)
-        self.logger.debug(f'LoadJob RESPONSE: {response}')
+        response = self.jobs_manager.load_job(hid=self.handler_id,
+                                              request=self.request)
+        self.logger.debug(f'LoadJob RESPONSE: {response}', extra={'hid': self.handler_id})
         self.write(response)
-
