@@ -26,8 +26,6 @@ class CheckJob(tornado.web.RequestHandler):
     5. Return Job's status or results.
     """
 
-    logger = logging.getLogger('osr')
-
     def initialize(self, manager):
         """
         Gets config and init logger.
