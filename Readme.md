@@ -51,7 +51,7 @@ Anastasiia Safonova (asafonova@ot.ru)
 
 ## License
 
-
+[OT.PLATFORM. License agreement.](License.md)  
 
 ## Acknowledgments
 
