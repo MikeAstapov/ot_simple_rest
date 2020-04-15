@@ -390,3 +390,14 @@ class TestResolver(unittest.TestCase):
         print('result', result)
         print('target', target)
         self.assertDictEqual(result, target)
+
+    def test_filter_in_subsearch(self):
+        spl = """readFile format=parquet path=oms_v1 | search Type=3 AND geoNum="1500*" | rename geoNum as GEON | eval tag="super_debug" | join type=left GEON [| otstats index="baspro-basp_registrywell" MEST=192 | rename WELLNAME  as GEON | eval IDBaspro=IDWELL | table GEON, IDBaspro | search GEON="1500"]"""
+        target = {'search': (
+            'readFile format=parquet path=oms_v1 | search Type=3 AND geoNum="1500*" | rename geoNum as GEON | eval tag="super_debug" | join type=left GEON [| otstats index="baspro-basp_registrywell" MEST=192 | rename WELLNAME  as GEON | eval IDBaspro=IDWELL | table GEON, IDBaspro | search GEON="1500"]',
+            'readFile format=parquet path=oms_v1 | filter {"query": "Type=\\"3\\" AND (geoNum rlike \'1500.*\')", "fields": ["Type", "geoNum"]}| rename geoNum as GEON | eval tag="super_debug" | join type=left GEON subsearch=subsearch_d1bbcfc889651a1819fef94f275890665d45561574ab282c86a2d3905d84d8c4'),
+            'subsearches': {'subsearch_d1bbcfc889651a1819fef94f275890665d45561574ab282c86a2d3905d84d8c4': ('| otstats index="baspro-basp_registrywell" MEST=192 | rename WELLNAME  as GEON | eval IDBaspro=IDWELL | table GEON, IDBaspro | search GEON="1500"', '| otstats {"baspro-basp_registrywell": {"query": "MEST=\\"192\\"", "tws": 0, "twf": 0}}| rename WELLNAME  as GEON | eval IDBaspro=IDWELL | table GEON, IDBaspro | filter {"query": "GEON=\\"1500\\"", "fields": ["GEON"]}')}}
+        result = self.resolver.resolve(spl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
