@@ -24,7 +24,7 @@ venv:
 	echo Create venv
 	mkdir -p /opt/otp/ot_simple_rest
 	python3 -m venv --copies /opt/otp/ot_simple_rest/venv
-	#/opt/otp/ot_simple_rest/venv/bin/pip3 install -r requirements.txt
+	/opt/otp/ot_simple_rest/venv/bin/pip3 install -r requirements.txt
 	cp -r /opt/otp/ot_simple_rest/venv venv
 	#cd ot_simple_rest; python3 -m venv --copies ./python3
 	#cd ot_simple_rest; python3/bin/pip3 install -r ../requirements.txt
@@ -36,6 +36,7 @@ start.sh:
 cd /opt/otp/ot_simple_rest/logs\n\
 source /opt/otp/ot_simple_rest/venv/bin/activate && /opt/otp/ot_simple_rest/venv/bin/python3 /opt/otp/ot_simple_rest/ot_simple_rest.py > stdout.log 2> stderr.log &\n\
 " > $@
+	chmod +x $@
 
 stop.sh:
 	echo Create stop.sh
@@ -43,6 +44,7 @@ stop.sh:
 \n\
 kill \`ps ax | grep \"/opt/otp/ot_simple_rest/venv/bin/python3 /opt/otp/ot_simple_rest/ot_simple_rest.py\" | grep -v grep | awk '{print \$$1}'\`\
 " > $@
+	chmod +x $@
 
 ot_simple_rest.conf:
 	echo -e "[general]\n\

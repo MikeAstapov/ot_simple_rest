@@ -43,3 +43,8 @@ venv.bak/
 
 # mkdocs documentation
 /site
+
+start.sh
+stop.sh
+ot_simple_rest.conf
+nginx/
