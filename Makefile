@@ -14,6 +14,7 @@ build: $(COMPONENTS)
 	mkdir build
 	cp -r ot_simple_rest build
 	cp -r venv build/ot_simple_rest
+	ln -s /opt/otp/logs/ot_simple_rest build/ot_simple_rest/logs
 	cp start.sh build/ot_simple_rest/start.sh
 	cp stop.sh build/ot_simple_rest/stop.sh
 	cp ot_simple_rest.conf build/ot_simple_rest/ot_simple_rest.conf
