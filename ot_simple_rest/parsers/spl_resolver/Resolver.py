@@ -7,13 +7,13 @@ import re
 from hashlib import sha256
 from parsers.spl_to_sparksql.splunk_parser import SPLtoSQL
 
-__author__ = "Andrey Starchenkov"
+__author__ = ["Andrey Starchenkov", "Anton Khromov"]
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Sergei Ermilov", "Anastasiya Safonova"]
 __license__ = ""
-__version__ = "0.3.19"
-__maintainer__ = "Andrey Starchenkov"
-__email__ = "astarchenkov@ot.ru"
+__version__ = "0.3.20"
+__maintainer__ = "Anton Khromov"
+__email__ = "akhromov@ot.ru"
 __status__ = "Production"
 
 
