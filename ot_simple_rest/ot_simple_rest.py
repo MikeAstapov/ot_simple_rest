@@ -13,7 +13,7 @@ from psycopg2.pool import ThreadedConnectionPool
 
 from handlers.eva.auth import AuthLoginHandler
 from handlers.eva.logs import LogsHandler
-from handlers.eva.dashs import DashboardHandler, DashboardsHandler
+from handlers.eva.dashs import DashboardHandler, DashboardsHandler, SvgLoadHandler
 from handlers.eva.role_model import UserHandler, UsersHandler, RoleHandler, RolesHandler, \
     PermissionsHandler, PermissionHandler, GroupsHandler, GroupHandler, UserPermissionsHandler, \
     IndexesHandler, IndexHandler, UserGroupsHandler, UserDashboardsHandler, GroupDashboardsHandler
@@ -182,7 +182,9 @@ def main():
         (r'/api/index', IndexHandler, {"db_conn_pool": db_pool_eva}),
 
         (r'/api/dashs', DashboardsHandler, {"db_conn_pool": db_pool_eva}),
-        (r'/api/dash', DashboardHandler, {"db_conn_pool": db_pool_eva})
+        (r'/api/dash', DashboardHandler, {"db_conn_pool": db_pool_eva}),
+
+        (r'/api/load/svg', SvgLoadHandler, {"db_conn_pool": db_pool_eva, "static_conf": static_conf})
     ],
         login_url=r'/api/auth/login'
     )
