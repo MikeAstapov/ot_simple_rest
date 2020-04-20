@@ -282,7 +282,7 @@ class GroupHandler(BaseHandler):
         if 'delete_groups' in self.permissions or 'admin_all' in self.permissions:
             group_id = self.db.delete_group(group_id)
         else:
-            raise tornado.web.HTTPError(403, "no permission for delete roles")
+            raise tornado.web.HTTPError(403, "no permission for delete groups")
         self.write({'id': group_id})
 
 
@@ -321,14 +321,14 @@ class PermissionHandler(BaseHandler):
         if not permission_name:
             raise tornado.web.HTTPError(400, "param 'name' is required")
         if 'create_permissions' not in self.permissions and 'admin_all' not in self.permissions:
-            raise tornado.web.HTTPError(403, "no permission for create groups")
+            raise tornado.web.HTTPError(403, "no permission for create permissions")
 
         try:
-            group_id = self.db.add_permission(name=permission_name,
-                                              roles=self.data.get('roles', None))
+            permission_id = self.db.add_permission(name=permission_name,
+                                                   roles=self.data.get('roles', None))
         except Exception as err:
             raise tornado.web.HTTPError(409, str(err))
-        self.write({'id': group_id})
+        self.write({'id': permission_id})
 
     async def put(self):
         permission_id = self.data.get('id', None)
@@ -347,10 +347,10 @@ class PermissionHandler(BaseHandler):
         if not permission_id:
             raise tornado.web.HTTPError(400, "param 'id' is needed")
         if 'delete_permissions' in self.permissions or 'admin_all' in self.permissions:
-            group_id = self.db.delete_permission(permission_id)
+            permission_id = self.db.delete_permission(permission_id)
         else:
             raise tornado.web.HTTPError(403, "no permission for delete permissions")
-        self.write({'id': group_id})
+        self.write({'id': permission_id})
 
 
 class IndexesHandler(BaseHandler):
@@ -368,8 +368,8 @@ class IndexesHandler(BaseHandler):
         else:
             kwargs['user_id'] = self.current_user
 
-        permissions = self.db.get_indexes_data(**kwargs)
-        self.write({'data': permissions})
+        indexes = self.db.get_indexes_data(**kwargs)
+        self.write({'data': indexes})
 
 
 class IndexHandler(BaseHandler):
@@ -415,10 +415,10 @@ class IndexHandler(BaseHandler):
         if not index_id:
             raise tornado.web.HTTPError(400, "param 'id' is needed")
         if 'delete_indexes' in self.permissions or 'admin_all' in self.permissions:
-            group_id = self.db.delete_index(index_id)
+            index_id = self.db.delete_index(index_id)
         else:
             raise tornado.web.HTTPError(403, "no permission for delete indexes")
-        self.write({'id': group_id})
+        self.write({'id': index_id})
 
 
 class UserPermissionsHandler(BaseHandler):
@@ -467,4 +467,3 @@ class GroupDashboardsHandler(BaseHandler):
 
         group_dashs = self.db.get_dashs_data(group_id=group_id)
         self.write({'data': group_dashs})
-
