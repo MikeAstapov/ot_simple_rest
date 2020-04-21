@@ -137,6 +137,14 @@ class TestEva(unittest.TestCase):
     - get users list
     - create/get/delete/edit role
     - get roles list
+    - create/get/delete/edit group
+    - get groups list
+    - create/get/delete/edit permission
+    - get permissions list
+    - create/get/delete/edit index
+    - get indexes list
+    - create/get/delete/edit dash
+    - get dashs list
     """
     tester = EvaTester(dict(config['rest_conf']), eva_db)
 
@@ -181,6 +189,69 @@ class TestEva(unittest.TestCase):
 
     def test__edit_group(self):
         self.assertTrue(self.tester.test__edit_group())
+
+    def test__get_group(self):
+        self.assertTrue(self.tester.test__get_group())
+
+    def test__get_groups_list(self):
+        self.assertTrue(self.tester.test__get_groups_list())
+
+    def test__create_permission(self):
+        self.assertTrue(self.tester.test__create_permission())
+
+    def test__delete_permission(self):
+        self.assertTrue(self.tester.test__delete_permission())
+
+    def test__edit_permission(self):
+        self.assertTrue(self.tester.test__edit_permission())
+
+    def test__get_permission(self):
+        self.assertTrue(self.tester.test__get_permission())
+
+    def test__get_permissions_list(self):
+        self.assertTrue(self.tester.test__get_permissions_list())
+
+    def test__create_index(self):
+        self.assertTrue(self.tester.test__create_index())
+
+    def test__delete_index(self):
+        self.assertTrue(self.tester.test__delete_index())
+
+    def test__edit_index(self):
+        self.assertTrue(self.tester.test__edit_index())
+
+    def test__get_index(self):
+        self.assertTrue(self.tester.test__get_index())
+
+    def test__get_indexes_list(self):
+        self.assertTrue(self.tester.test__get_indexes_list())
+
+    def test__create_dash(self):
+        self.assertTrue(self.tester.test__create_dash())
+
+    def test__delete_dash(self):
+        self.assertTrue(self.tester.test__delete_dash())
+
+    def test__edit_dash(self):
+        self.assertTrue(self.tester.test__edit_dash())
+
+    def test__get_dash(self):
+        self.assertTrue(self.tester.test__get_dash())
+
+    def test__get_dashs_list(self):
+        self.assertTrue(self.tester.test__get_dashs_list())
+
+    def test__get_user_permissions(self):
+        self.assertTrue(self.tester.test__get_user_permissions())
+
+    def test__get_user_groups(self):
+        self.assertTrue(self.tester.test__get_user_groups())
+
+    def test__get_user_dashs(self):
+        self.assertTrue(self.tester.test__get_user_dashs())
+
+    def test__get_group_dashs(self):
+        self.assertTrue(self.tester.test__get_group_dashs())
 
 
 if __name__ == '__main__':
