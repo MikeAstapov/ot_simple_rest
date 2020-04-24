@@ -37,7 +37,6 @@ class GetresultTester:
         resp.raise_for_status()
         return resp.json()
 
-
     def test__getresult(self):
         data_urls = {self.cache_template.format('search_100500.cache/data/data_part_000.json'),
                      self.cache_template.format('search_100500.cache/data/data_part_001.json'),
