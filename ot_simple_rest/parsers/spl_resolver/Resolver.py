@@ -7,13 +7,13 @@ import re
 from hashlib import sha256
 from parsers.spl_to_sparksql.splunk_parser import SPLtoSQL
 
-__author__ = "Andrey Starchenkov"
+__author__ = ["Andrey Starchenkov", "Anton Khromov"]
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Sergei Ermilov", "Anastasiya Safonova"]
 __license__ = ""
-__version__ = "0.3.19"
-__maintainer__ = "Andrey Starchenkov"
-__email__ = "astarchenkov@ot.ru"
+__version__ = "0.3.20"
+__maintainer__ = "Anton Khromov"
+__email__ = "akhromov@ot.ru"
 __status__ = "Production"
 
 
@@ -83,6 +83,8 @@ class Resolver:
 
         subsearch_query_service = re.sub(self.otstats_pattern_middle, self.create_otstats_graph, subsearch_query_service)
         subsearch_query_service = re.sub(self.otstats_pattern_start, self.create_otstats_graph, subsearch_query_service)
+
+        subsearch_query_service = re.sub(self.filter_pattern, self.create_filter_graph, subsearch_query_service)
 
         _subsearch_query = re.sub(self.quoted_return_pattern, self.return_quoted, subsearch_query)
         _subsearch_query_service = re.sub(self.quoted_return_pattern, self.return_quoted, subsearch_query_service)
