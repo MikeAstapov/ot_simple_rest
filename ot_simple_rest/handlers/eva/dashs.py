@@ -26,8 +26,8 @@ class DashboardsHandler(BaseHandler):
         else:
             raise tornado.web.HTTPError(403, "no permission for list dashs")
 
-        roles = self.db.get_dashs_data(**kwargs)
-        self.write({'data': roles})
+        dashs = self.db.get_dashs_data(**kwargs)
+        self.write({'data': dashs})
 
 
 # TODO: Make two separate handlers for full dash data and data without body

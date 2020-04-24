@@ -40,4 +40,4 @@ class LogsHandler(BaseHandler):
                 f.write(logs_text)
         except Exception as err:
             raise tornado.web.HTTPError(405, str(err))
-        self.write({'status': 'OK'})
+        self.write({'status': 'success'})
