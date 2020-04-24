@@ -33,7 +33,8 @@ class GetresultTester:
             shutil.rmtree(path_for_remove)
         
     def send_request(self):
-        resp = requests.get(f'http://{self.config["host"]}:{self.config["port"]}/api/getresult', params={'cid': 100500})
+        resp = requests.get(f'http://{self.config["host"]}:{self.config["port"]}/api/getresult',
+                            params={'cid': 100500})
         resp.raise_for_status()
         return resp.json()
 
@@ -46,5 +47,4 @@ class GetresultTester:
             job_data = self.send_request()
         finally:
             self._cleanup()
-        return set(job_data['data_urls']) == data_urls
-
+        return set(job_data.get('data_urls')) == data_urls

@@ -151,7 +151,7 @@ class TestGetResult(unittest.TestCase):
     config.set('rest_conf', 'host', 'localhost')
     config.set('rest_conf', 'port', '50000')
     config.add_section('mem_conf')
-    config.set('mem_conf', 'path', '/opt/otp/caches/')
+    config.set('mem_conf', 'path', '/tmp/caches')
     config.add_section('static')
     config.set('static', 'use_nginx', 'True')
     config.set('static', 'base_url', 'cache/{}')
