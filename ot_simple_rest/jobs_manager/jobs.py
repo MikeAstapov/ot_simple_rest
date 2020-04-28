@@ -36,6 +36,8 @@ class Job:
         self.tracker_max_interval = tracker_max_interval
 
         self.status = {'status': 'created'}
+        self.resolved_data = None
+        self.search = None
 
     def check_dispatcher_status(self):
         delta = self.db.check_dispatcher_status()
@@ -152,9 +154,9 @@ class Job:
         return {'original_spl': original_spl, 'field_extraction': field_extraction,
                 'preview': preview, 'tws': tws, 'twf': twf}
 
-    async def start_make(self):
+    def resolve(self):
         """
-        It checks for the same query Jobs and returns id for loading results to OT.Simple Splunk app.
+        It resolves search on subsearches and extracts info from request data.
         :return:
         """
         request = self.request.body_arguments
@@ -190,56 +192,72 @@ class Job:
         # Append main search query to the end.
         searches.append(resolved_spl['search'])
         self.logger.debug(f"Searches: {searches}", extra={'hid': self.handler_id})
+        self.resolved_data = {'searches': searches, 'tws': tws, 'twf': twf, 'cache_ttl': cache_ttl,
+                              'field_extraction': field_extraction, 'username': username, 'preview': preview,
+                              'resolved_spl': resolved_spl, 'original_spl': original_spl, 'sid': sid}
+
+    async def start_make(self):
+        """
+        It checks for the same query Jobs and returns id for loading results to OT.Simple Splunk app.
+        :return:
+        """
         response = {"status": "fail", "error": "No any searches were resolved"}
-        for search in searches:
+        cache_ttl = self.resolved_data['cache_ttl']
+        tws, twf = self.resolved_data['tws'], self.resolved_data['twf']
+        field_extraction = self.resolved_data['field_extraction']
+        preview = self.resolved_data['preview']
+        resolved_spl = self.resolved_data['resolved_spl']
+        original_spl = self.resolved_data['original_spl']
+        username = self.resolved_data['username']
+        sid = self.resolved_data['sid']
 
-            # Check if the same query Job is already calculated and has ready cache.
-            cache_id, creating_date = self.check_cache(cache_ttl, search[0], tws, twf, field_extraction, preview)
+        # Check if the same query Job is already calculated and has ready cache.
+        cache_id, creating_date = self.check_cache(cache_ttl, self.search[0], tws, twf, field_extraction, preview)
 
-            if cache_id is None:
-                self.logger.debug(f'No cache', extra={'hid': self.handler_id})
+        if cache_id is None:
+            self.logger.debug(f'No cache', extra={'hid': self.handler_id})
 
-                # Check for validation.
-                if self.validate():
+            # Check for validation.
+            if self.validate():
 
-                    # Check if the same query Job is already be running.
-                    job_id, creating_date = self.check_running(search[0], tws, twf, field_extraction, preview)
-                    self.logger.debug(f'Running job_id: {job_id}, creating_date: {creating_date}',
+                # Check if the same query Job is already be running.
+                job_id, creating_date = self.check_running(self.search[0], tws, twf, field_extraction, preview)
+                self.logger.debug(f'Running job_id: {job_id}, creating_date: {creating_date}',
+                                  extra={'hid': self.handler_id})
+                if job_id is None:
+
+                    # Form the list of subsearches for each search.
+                    subsearches = []
+                    if 'subsearch=' in self.search[1]:
+                        _subsearches = re.findall(r'subsearch=([\w\d]+)', self.search[1])
+                        for each in _subsearches:
+                            subsearches.append(resolved_spl['subsearches'][each][0])
+
+                    # Register new Job in Dispatcher DB.
+                    self.logger.debug(f'Search: {self.search[1]}. Subsearches: {subsearches}.',
                                       extra={'hid': self.handler_id})
-                    if job_id is None:
+                    job_id, creating_date = self.db.add_job(search=self.search, subsearches=subsearches,
+                                                            tws=tws, twf=twf, cache_ttl=cache_ttl,
+                                                            username=username,
+                                                            field_extraction=field_extraction,
+                                                            preview=preview)
 
-                        # Form the list of subsearches for each search.
-                        subsearches = []
-                        if 'subsearch=' in search[1]:
-                            _subsearches = re.findall(r'subsearch=([\w\d]+)', search[1])
-                            for each in _subsearches:
-                                subsearches.append(resolved_spl['subsearches'][each][0])
+                    # Add SID to DB if search is not subsearch.
+                    if self.search == self.resolved_data['searches'][-1]:
+                        self.db.add_sid(sid=sid, remote_ip=self.request.remote_ip,
+                                        original_spl=original_spl)
 
-                        # Register new Job in Dispatcher DB.
-                        self.logger.debug(f'Search: {search[1]}. Subsearches: {subsearches}.',
-                                          extra={'hid': self.handler_id})
-                        job_id, creating_date = self.db.add_job(search=search, subsearches=subsearches,
-                                                                tws=tws, twf=twf, cache_ttl=cache_ttl,
-                                                                username=username,
-                                                                field_extraction=field_extraction,
-                                                                preview=preview)
-
-                        # Add SID to DB if search is not subsearch.
-                        if search == searches[-1]:
-                            self.db.add_sid(sid=sid, remote_ip=self.request.remote_ip,
-                                            original_spl=original_spl)
-
-                    # Return id of new Job.
-                    response = {"_time": creating_date, "status": "success", "job_id": job_id}
-
-                else:
-                    # Return validation error.
-                    response = {"status": "fail", "error": "Validation failed"}
+                # Return id of new Job.
+                response = {"_time": creating_date, "status": "success", "job_id": job_id}
 
             else:
-                # Return id of the same already calculated Job with ready cache. Ot.Simple Splunk app JobLoader will
-                # request it to download.
-                response = {"_time": creating_date, "status": "success", "job_id": cache_id}
+                # Return validation error.
+                response = {"status": "fail", "error": "Validation failed"}
+
+        else:
+            # Return id of the same already calculated Job with ready cache. Ot.Simple Splunk app JobLoader will
+            # request it to download.
+            response = {"_time": creating_date, "status": "success", "job_id": cache_id}
 
         self.logger.debug(f'Response: {response}', extra={'hid': self.handler_id})
         self.status = response

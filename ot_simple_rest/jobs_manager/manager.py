@@ -33,6 +33,7 @@ class JobsManager:
     Job from the queue will be started later, when _start_monitoring detect it.
     If jobs queue is empty, monitoring is waiting for new jobs.
     """
+
     def __init__(self, db_conn_pool, mem_conf, disp_conf,
                  resolver_conf):
         self.db_conn = PostgresConnector(db_conn_pool)
@@ -56,14 +57,25 @@ class JobsManager:
         :return:            None
         """
         try:
-            job = Job(id=hid,
-                      request=request,
-                      indexes=indexes,
-                      db_conn=self.db_conn,
-                      mem_conf=self.mem_conf,
-                      resolver_conf=self.r_conf,
-                      tracker_max_interval=self.tracker_max_interval)
-            await self.jobs_queue.put(job)
+            parent_job = Job(id=hid,
+                             request=request,
+                             indexes=indexes,
+                             db_conn=self.db_conn,
+                             mem_conf=self.mem_conf,
+                             resolver_conf=self.r_conf,
+                             tracker_max_interval=self.tracker_max_interval)
+            parent_job.resolve()
+
+            for search in parent_job.resolved_data['searches']:
+                job = Job(id=hid,
+                          request=request,
+                          indexes=indexes,
+                          db_conn=self.db_conn,
+                          mem_conf=self.mem_conf,
+                          resolver_conf=self.r_conf,
+                          tracker_max_interval=self.tracker_max_interval)
+                job.search = search
+                await self.jobs_queue.put(job)
         except Exception as err:
             response = {"status": "fail", "timestamp": str(datetime.now()), "error": str(err)}
         else:
@@ -133,4 +145,3 @@ class JobsManager:
         :return:        None
         """
         self._enable = False
-
