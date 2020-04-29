@@ -65,17 +65,23 @@ class JobsManager:
                              resolver_conf=self.r_conf,
                              tracker_max_interval=self.tracker_max_interval)
             parent_job.resolve()
+            resolved_data = parent_job.resolved_data
 
-            for search in parent_job.resolved_data['searches']:
-                job = Job(id=hid,
-                          request=request,
-                          indexes=indexes,
-                          db_conn=self.db_conn,
-                          mem_conf=self.mem_conf,
-                          resolver_conf=self.r_conf,
-                          tracker_max_interval=self.tracker_max_interval)
-                job.search = search
-                await self.jobs_queue.put(job)
+            for search in resolved_data['searches']:
+                if search == resolved_data['searches'][-1]:
+                    parent_job.search = search
+                    await self.jobs_queue.put(parent_job)
+                else:
+                    job = Job(id=hid,
+                              request=request,
+                              indexes=indexes,
+                              db_conn=self.db_conn,
+                              mem_conf=self.mem_conf,
+                              resolver_conf=self.r_conf,
+                              tracker_max_interval=self.tracker_max_interval)
+                    job.resolved_data = resolved_data
+                    job.search = search
+                    await self.jobs_queue.put(job)
         except Exception as err:
             response = {"status": "fail", "timestamp": str(datetime.now()), "error": str(err)}
         else:
