@@ -11,7 +11,7 @@ __author__ = "Anton Khromov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __maintainer__ = "Anton Khromov"
 __email__ = "akhromov@ot.ru"
 __status__ = "Production"
@@ -33,6 +33,7 @@ class JobsManager:
     Job from the queue will be started later, when _start_monitoring detect it.
     If jobs queue is empty, monitoring is waiting for new jobs.
     """
+
     def __init__(self, db_conn_pool, mem_conf, disp_conf,
                  resolver_conf):
         self.db_conn = PostgresConnector(db_conn_pool)
@@ -56,14 +57,31 @@ class JobsManager:
         :return:            None
         """
         try:
-            job = Job(id=hid,
-                      request=request,
-                      indexes=indexes,
-                      db_conn=self.db_conn,
-                      mem_conf=self.mem_conf,
-                      resolver_conf=self.r_conf,
-                      tracker_max_interval=self.tracker_max_interval)
-            await self.jobs_queue.put(job)
+            parent_job = Job(id=hid,
+                             request=request,
+                             indexes=indexes,
+                             db_conn=self.db_conn,
+                             mem_conf=self.mem_conf,
+                             resolver_conf=self.r_conf,
+                             tracker_max_interval=self.tracker_max_interval)
+            parent_job.resolve()
+            resolved_data = parent_job.resolved_data
+
+            for search in resolved_data['searches']:
+                if search == resolved_data['searches'][-1]:
+                    parent_job.search = search
+                    await self.jobs_queue.put(parent_job)
+                else:
+                    job = Job(id=hid,
+                              request=request,
+                              indexes=indexes,
+                              db_conn=self.db_conn,
+                              mem_conf=self.mem_conf,
+                              resolver_conf=self.r_conf,
+                              tracker_max_interval=self.tracker_max_interval)
+                    job.resolved_data = resolved_data
+                    job.search = search
+                    await self.jobs_queue.put(job)
         except Exception as err:
             response = {"status": "fail", "timestamp": str(datetime.now()), "error": str(err)}
         else:
@@ -133,4 +151,3 @@ class JobsManager:
         :return:        None
         """
         self._enable = False
-
