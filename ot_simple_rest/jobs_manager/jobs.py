@@ -11,7 +11,7 @@ __author__ = "Anton Khromov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __maintainer__ = "Anton Khromov"
 __email__ = "akhromov@ot.ru"
 __status__ = "Production"
@@ -55,7 +55,7 @@ class Job:
         """
         self.logger.debug(f'Started loading cache {cid}.', extra={'hid': self.handler_id})
         _path = self.mem_conf['path']
-        path_to_cache_dir = f'{_path}/search_{cid}.cache/data/'
+        path_to_cache_dir = os.path.join(_path, f'search_{cid}.cache/data/')
         self.logger.debug(f'Path to cache {path_to_cache_dir}.', extra={'hid': self.handler_id})
         file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
         with open(path_to_cache_dir + "_SCHEMA") as fr:
