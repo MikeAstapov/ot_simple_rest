@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] - 2020-05-07
+### Changed
+- Fixed using cache\_ttl param from spl query.
+
 ## [1.0.3] - 2020-05-06
 ### Changed
 - Fixed simultainous subsearches running.
