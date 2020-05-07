@@ -11,7 +11,7 @@ __author__ = "Anton Khromov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 __maintainer__ = "Anton Khromov"
 __email__ = "akhromov@ot.ru"
 __status__ = "Production"
@@ -128,9 +128,10 @@ class Job:
 
     def get_request_params(self):
         request = self.request.arguments
-        # Step 1. Remove OT.Simple Splunk app service data from SPL query.
+        # Remove OT.Simple Splunk app service data from SPL query.
         original_spl = request["original_spl"][0].decode()
         cache_ttl = re.findall(r"\|\s*ot[^|]*ttl\s*=\s*(\d+)", original_spl)
+        cache_ttl = int(cache_ttl[0]) if cache_ttl else int(request['cache_ttl'][0])
         field_extraction = re.findall(r"\|\s*ot[^|]*field_extraction\s*=\s*(\S+)", original_spl)
         preview = re.findall(r"\|\s*ot[^|]*preview\s*=\s*(\S+)", original_spl)
         original_spl = re.sub(r"\|\s*ot\s[^|]*\|", "", original_spl)
@@ -149,10 +150,10 @@ class Job:
         twf = int(float(request['twf'][0]))
 
         # Update time window to discrete value.
-        tws, twf = backlasher.discretize(tws, twf, int(cache_ttl[0]) if cache_ttl else int(request['cache_ttl'][0]))
+        tws, twf = backlasher.discretize(tws, twf, cache_ttl)
 
         return {'original_spl': original_spl, 'field_extraction': field_extraction,
-                'preview': preview, 'tws': tws, 'twf': twf}
+                'preview': preview, 'tws': tws, 'twf': twf, 'cache_ttl': cache_ttl}
 
     def resolve(self):
         """
@@ -162,10 +163,9 @@ class Job:
         request = self.request.body_arguments
         self.logger.debug(f'Request: {request}', extra={'hid': self.handler_id})
 
-        # Get cache lifetime.
-        cache_ttl = int(request['cache_ttl'][0])
-
+        # Get params from request.
         params = self.get_request_params()
+        cache_ttl = params['cache_ttl']
         original_spl = params['original_spl']
         tws, twf = params['tws'], params['twf']
         field_extraction = params['field_extraction']
