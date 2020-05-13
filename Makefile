@@ -1,19 +1,47 @@
 
 .SILENT:
 
-COMPONENTS := venv start.sh stop.sh ot_simple_rest.conf ot_simple_rest.conf nginx sql
+COMPONENTS := venv .pth start.sh stop.sh ot_simple_rest.conf nginx sql
+
+TESTS_PTH = /tests
+OT_REST_PTH = /ot_simple_rest
+BASE_PTH = $(shell pwd)
 
 all:
-	echo ALL
+	echo -e "Required section:\n\
+ build - build project into build directory, with configuration file and enveroment\n\
+ clean - clean all addition file, build directory and output archive file\n\
+ test - run all tests ([unit test], [rest api test], [cluster mode test...])\n\
+ pack - make output archive, file name format \"ot_simple_rest_vX.Y.Z_BRANCHNAME.tar.gz\"\n\
+Addition section:\n\
+ venv\n\
+ start.sh\n\
+ stop.sh\n\
+ nginx\n\
+"
+
+GENERATE_VERSION = $(shell cat ot_simple_rest/ot_simple_rest.py | grep __version__ | head -n 1 | sed -re 's/[^"]+//' | sed -re 's/"//g' )
+GENERATE_BRANCH = $(shell git branch | grep -P '^\*' | sed -re 's/^..//' | tr '/' '_')
+SET_VERSION = $(eval VERSION=$(GENERATE_VERSION))
+SET_BRANCH = $(eval BRANCH=$(GENERATE_BRANCH))
+
+pack: build
+	$(SET_VERSION)
+	$(SET_BRANCH)
+	rm -f ot_simple_rest-*.tar.gz
+	echo Create archive \"ot_simple_rest-$(VERSION)-$(BRANCH).tar.gz\"
+	cd build; tar czf ../ot_simple_rest-$(VERSION)-$(BRANCH).tar.gz ot_simple_rest nginx sql
 
 ot_simple_rest.tar.gz: build
 	cd build; tar czf ../ot_simple_rest.tar.gz ot_simple_rest nginx sql && rm -rf ../build
 
 build: $(COMPONENTS)
+	# required section
 	echo Build
 	mkdir build
 	cp -r ot_simple_rest build
 	cp -r venv build/ot_simple_rest
+	cp .pth venv/lib/python3.6/site-packages
 	ln -s /opt/otp/logs/ot_simple_rest build/ot_simple_rest/logs
 	cp start.sh build/ot_simple_rest/start.sh
 	cp stop.sh build/ot_simple_rest/stop.sh
@@ -29,6 +57,10 @@ venv:
 	cp -r /opt/otp/ot_simple_rest/venv venv
 	#cd ot_simple_rest; python3 -m venv --copies ./python3
 	#cd ot_simple_rest; python3/bin/pip3 install -r ../requirements.txt
+
+.pth:
+	echo Create .pth file
+	echo "$(BASE_PTH)$(TESTS_PTH)\n$(BASE_PTH)$(OT_REST_PTH)" >> $@
 
 start.sh:
 	echo Create start.sh
@@ -96,8 +128,27 @@ clean_nginx:
 	echo Cleaning nginx directory
 	rm -rf nginx
 
-clean: 
-	rm -rf /opt/otp/ot_simple_rest/venv venv build start.sh stop.sh ot_simple_rest.conf nginx ot_simple_rest.tar.gz
+clean: .ot_simple_rest.pid
+	rm -rf /opt/otp/ot_simple_rest/venv venv build start.sh stop.sh ot_simple_rest.conf nginx ot_simple_rest.tar.gz .pth
+	if sudo -u postgres psql -l | grep test_eva > /dev/null; then echo "Drop DB..."; tests/rest/drop_db.sh; fi;
 
-test:
+test: venv init_db ot_simple_rest.pid
 	echo "Testing..."
+	venv/bin/python tests/test_rest.py || (kill -9 `cat ot_simple_rest.pid` && rm -f ot_simple_rest.pid && exit 2)
+	kill -9 `cat ot_simple_rest.pid`
+	rm -f ot_simple_rest.pid
+
+ot_simple_rest.pid:
+	echo "Starting daemon for testing"
+	venv/bin/python ot_simple_rest/ot_simple_rest.py & echo $$! > ot_simple_rest.pid
+	sleep 2
+
+.ot_simple_rest.pid:
+	if [ -e ot_simple_rest.pid ]; then kill -9 `cat ot_simple_rest.pid`; rm -f ot_simple_rest.pid; fi
+
+init_db:
+	echo "Check or create DB"
+	if sudo -u postgres psql -l | grep test_eva; then echo "Drop existing DB..."; tests/rest/drop_db.sh; fi;
+	echo "Create DB..."
+	tests/rest/create_db.sh
+
