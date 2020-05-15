@@ -62,7 +62,7 @@ class Macros:
 
         if utc_time is None:
             raise Exception("Time format is invalid")
-        elif utc_time is float:
+        elif type(utc_time) is float:
             epoch_time = utc_time
         else:
             epoch_time = utc_time.timestamp()
@@ -85,8 +85,6 @@ class Macros:
             self.logger.debug('Field: %s, Aliases: %s' % (field, field_aliases))
             for fa in field_aliases:
                 aliases.append(fa)
-        # aliases = [field_alias.get_aliases(field) for field in macros_fields]
-        # aliases = [alias for sublist in aliases for alias in sublist]
 
         macros_args_pairs = re.finditer(self.macros_args_pairs, self.body)
         pairs = {}
@@ -102,11 +100,18 @@ class Macros:
             else:
                 value = ' OR '.join(['%s=%s' % (token, value) for value in values])
             pairs[token] = value
+        if 'earliest' not in pairs:
+            pairs['earliest'] = '0'
+        if 'latest' not in pairs:
+            pairs['latest'] = str(datetime.now().timestamp())
+        self.logger.debug('Macros tokens: %s.' % pairs)
 
         otl_pattern = self.read()
+        self.logger.debug('Macros %s. Body: %s. Pattern: %s.' % (self.name, self.body, otl_pattern))
         for token in pairs:
             otl_pattern = re.sub(r'\$%s\$' % token, pairs[token], otl_pattern)
-        if 'table' not in otl_pattern.split('\n')[-1] and 'fields' not in otl_pattern.split('\n')[-1]:
+        if aliases:
             table_string = '\n| table _time, %s, %s' % (', '.join(pairs.keys()), ', '.join(aliases))
             otl_pattern = otl_pattern + table_string
+        self.logger.debug('Macros %s. Body: %s. OTL: %s.' % (self.name, self.body, otl_pattern))
         return otl_pattern
