@@ -409,3 +409,12 @@ class TestResolver(unittest.TestCase):
         print('result', result)
         print('target', target)
         self.assertDictEqual(result, target)
+
+    def test_macros_alias(self):
+        from parsers.spl_resolver.fieldalias import FieldAlias
+        target = ['adkuLiquidDebit', 'adkuTorLiquidDebit', 'adkuOilDebit', 'wellopLiquidDebitTM', 'wellopLiquidDebitTm', 'wellopCountedOilDebit', 'wellopIzlivLiquidDebitTm', 'wellopDefaultLiquidDebitTM', 'wellopmassomerLiquidDebit', 'wellopCondensatDebit', 'wellopAverageLiquidDebit', 'wellopOilDebitWithoutCond']
+        fieldAlias = FieldAlias('/home/andrey/SpeedDir/projects/PycharmProjects/ot_simple_rest/macros/names.csv')
+        result = fieldAlias.get_aliases('debit')
+        print('result', result)
+        print('target', target)
+        self.assertListEqual(result, target)
