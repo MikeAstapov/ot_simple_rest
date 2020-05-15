@@ -87,7 +87,7 @@ class Macros:
         otl_pattern = self.read()
         for token in pairs:
             otl_pattern = re.sub(r'\$%s\$' % token, pairs[token], otl_pattern)
-        if 'table' not in otl_pattern.split('\n')[-1] or 'field' not in otl_pattern.split('\n')[-1]:
+        if 'table' not in otl_pattern.split('\n')[-1] and 'field' not in otl_pattern.split('\n')[-1]:
             table_string = '\n| table _time, %s, %s' % (', '.join(pairs.keys()), ', '.join(macros_fields))
             otl_pattern = otl_pattern + table_string
         return otl_pattern
