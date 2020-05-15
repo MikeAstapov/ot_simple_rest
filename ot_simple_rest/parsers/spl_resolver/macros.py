@@ -111,6 +111,8 @@ class Macros:
         for token in pairs:
             otl_pattern = re.sub(r'\$%s\$' % token, pairs[token], otl_pattern)
         if aliases:
+            del pairs['earliest']
+            del pairs['latest']
             table_string = '\n| table _time, %s, %s' % (', '.join(pairs.keys()), ', '.join(aliases))
             otl_pattern = otl_pattern + table_string
         self.logger.debug('Macros %s. Body: %s. OTL: %s.' % (self.name, self.body, otl_pattern))
