@@ -6,6 +6,7 @@ import logging
 import re
 from hashlib import sha256
 from parsers.spl_to_sparksql.splunk_parser import SPLtoSQL
+from parsers.spl_resolver.macros import Macros
 
 __author__ = ["Andrey Starchenkov", "Anton Khromov"]
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -40,13 +41,13 @@ class Resolver:
     otstats_pattern_start = r'\|?\s*otstats ([^|]+)'
     otstats_pattern_middle = r'\[\s*\|\s*otstats ([^|\]]+)'
     otrest_pattern = r'otrest[^|]+url\s*?=\s*?([^\|\] ]+)'
-    filter_pattern = r'\|\s*search ([^\|$]+)'
+    filter_pattern = r'\|\s*search ([^\|]+)'
     otinputlookup_where_pattern = r'otinputlookup([^\|$]+)where\s+([^\|$]+)'
     otfrom_pattern = r'otfrom datamodel:?\s*([^\|$]+)'
     otloadjob_id_pattern = r'otloadjob\s+(\d+\.\d+)'
     otloadjob_spl_pattern = r'otloadjob\s+spl=\"(.+?[^\\])\"(\s+?___token___=\"(.+?[^\\])\")?(\s+?___tail___=\"(.+?[^\\])\")?'
 
-    def __init__(self, indexes, tws, twf, db=None, sid=None, src_ip=None, no_subsearch_commands=None):
+    def __init__(self, indexes, tws, twf, db=None, sid=None, src_ip=None, no_subsearch_commands=None, macros_dir=None):
         """
         Init with default available indexes, time window and cursor to DB for DataModels.
 
@@ -67,6 +68,7 @@ class Resolver:
         self.hidden_rex = {}
         self.hidden_quoted_text = {}
         self.hidden_no_subsearches = {}
+        self.macros_dir = macros_dir
 
     def create_subsearch(self, match_object):
         """
@@ -285,6 +287,13 @@ class Resolver:
                 spl = pattern.sub(self._hide_no_subsearch_command, spl)
         return spl
 
+    def transform_macros(self, match_object):
+        macros_name = match_object.group('macros_name')
+        macros_body = match_object.group('macros_body')
+        macros = Macros(macros_name, macros_body, self.macros_dir)
+        otl = macros.otl.replace('\n', ' ')
+        return otl
+
     def return_no_subsearch_commands(self, spl):
         spl = re.sub(self.no_subsearch_return_pattern, self._return_no_subsearch_command, spl)
         spl = re.sub(self.quoted_return_pattern, self.return_quoted, spl)
@@ -297,8 +306,9 @@ class Resolver:
         :param spl: original SPL.
         :return: dict with search query params.
         """
+        _spl = re.sub(Macros.macros_pattern, self.transform_macros, spl)
 
-        _spl = re.sub(self.otloadjob_spl_pattern, self.create_otloadjob_spl, spl)
+        _spl = re.sub(self.otloadjob_spl_pattern, self.create_otloadjob_spl, _spl)
         _spl = re.sub(self.quoted_hide_pattern, self.hide_quoted, _spl)
         _spl = self.hide_no_subsearch_commands(_spl)
         _spl = (_spl, 1)
