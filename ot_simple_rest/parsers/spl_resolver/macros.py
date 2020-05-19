@@ -13,6 +13,7 @@ class Macros:
     macros_pattern = r'__(?P<macros_name>\S+)__ (?P<macros_body>[^$|]+)'
     macros_args_pairs = r'((?P<token>\S+)=(?P<value>\S+))'
     macros_fields = r'(?<= )([^=]+( |$))'
+    token_pattern = r'(\$.+?\$)'
 
     def __init__(self, name, body, directory):
 
@@ -110,6 +111,11 @@ class Macros:
         self.logger.debug('Macros %s. Body: %s. Pattern: %s.' % (self.name, self.body, otl_pattern))
         for token in pairs:
             otl_pattern = re.sub(r'\$%s\$' % token, pairs[token], otl_pattern)
+
+        unused_tokens = re.findall(self.token_pattern, otl_pattern)
+        for unused_token in unused_tokens:
+            otl_pattern = re.sub(unused_token, '%s=*' % unused_token.replace('$', ''), otl_pattern)
+
         if aliases:
             del pairs['earliest']
             del pairs['latest']
