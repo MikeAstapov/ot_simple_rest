@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] - 2020-05-19
+### Changed
+- Fixed troubles with db connector for jobs handlers.
+
 ## [1.0.4] - 2020-05-07
 ### Changed
 - Fixed using cache\_ttl param from spl query.
