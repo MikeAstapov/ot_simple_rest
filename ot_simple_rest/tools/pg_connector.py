@@ -32,12 +32,9 @@ class PGConnector:
             "readonly": kwargs.get("readonly", None),
             "deferrable": kwargs.get("deferrable", None),
         }
-        count = 0
         while True:
             try:
                 conn = self.pool.getconn()
-                if count == 0:
-                    raise PoolError
             except PoolError:
                 sleep(0.1)
             else:
