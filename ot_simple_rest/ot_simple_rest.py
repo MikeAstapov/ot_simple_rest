@@ -34,7 +34,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 __maintainer__ = "Anton Khromov"
 __email__ = "akhromov@ot.ru"
 __status__ = "Production"
@@ -192,8 +192,15 @@ def main():
     logger.info('Starting server')
 
     # Start application.
-    application.listen(50000)
-    tornado.ioloop.IOLoop.current().start()
+    try:
+        application.listen(50000)
+        tornado.ioloop.IOLoop.current().start()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        tornado.ioloop.IOLoop.current().stop()
+        db_pool.closeall()
+        db_pool_eva.closeall()
 
 
 if __name__ == '__main__':
