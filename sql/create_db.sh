@@ -8,4 +8,4 @@ grant all privileges on database eva to dispatcher;
 grant all privileges on database dispatcher to dispatcher;
 EOF
 
-psql -d eva -U dispatcher -a -f eva.sql
+psql -h localhost -d eva -U dispatcher -a -f eva.sql
