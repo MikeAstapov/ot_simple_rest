@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import logging
 import json
+import uuid
 
 import bcrypt
 
@@ -14,7 +15,7 @@ __author__ = "Anton Khromov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __maintainer__ = "Anton Khromov"
 __email__ = "akhromov@ot.ru"
 __status__ = "Production"
@@ -44,7 +45,7 @@ class AuthLoginHandler(BaseHandler):
         client_token = self.get_cookie('eva_token')
 
         if not client_token:
-            payload = {'user_id': user.id, 'username': user.name,
+            payload = {'user_id': user.id, 'username': user.name, '_uuid': str(uuid.uuid4()),
                        'exp': int((datetime.now() + timedelta(hours=12)).timestamp())}
             token = self.generate_token(payload)
             expired_date = datetime.now() + timedelta(hours=12)
