@@ -201,7 +201,6 @@ class Job:
         It checks for the same query Jobs and returns id for loading results to OT.Simple Splunk app.
         :return:
         """
-        response = {"status": "fail", "error": "No any searches were resolved"}
         cache_ttl = self.resolved_data['cache_ttl']
         tws, twf = self.resolved_data['tws'], self.resolved_data['twf']
         field_extraction = self.resolved_data['field_extraction']
