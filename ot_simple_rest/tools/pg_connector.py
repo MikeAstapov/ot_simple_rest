@@ -3,6 +3,8 @@ from contextlib import contextmanager
 
 import tornado.util
 import psycopg2
+from psycopg2.pool import PoolError
+from asyncio import sleep
 
 __author__ = "Anton Khromov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -18,6 +20,7 @@ class PGConnector:
     """
     Base Postgres connector class with no specific methods
     """
+
     def __init__(self, conn_pool):
         self.pool = conn_pool
         self.logger = logging.getLogger('osr')
@@ -29,7 +32,17 @@ class PGConnector:
             "readonly": kwargs.get("readonly", None),
             "deferrable": kwargs.get("deferrable", None),
         }
-        conn = self.pool.getconn()
+        count = 0
+        while True:
+            try:
+                conn = self.pool.getconn()
+                if count == 0:
+                    raise PoolError
+            except PoolError:
+                sleep(0.1)
+            else:
+                break
+
         try:
             conn.set_session(**options)
             yield conn
@@ -55,7 +68,13 @@ class PGConnector:
 
         if not conn:
             with_transaction = False
-            conn = self.pool.getconn()
+            while True:
+                try:
+                    conn = self.pool.getconn()
+                except PoolError:
+                    sleep(0.1)
+                else:
+                    break
         else:
             with_transaction = True
 
