@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.5] - 2020-05-19
+## [1.0.7] - 2020-05-22
 ### Changed
 - Fixed troubles with pool in db connector for jobs handlers.
 
