@@ -7,6 +7,7 @@ from rest.makejob_tester import MakejobTester
 from rest.getresult_tester import GetresultTester
 from rest.makerolemodel_tester import MakeRoleModelTester
 from rest.eva_tester import EvaTester
+from rest.quizs_tester import QuizsTester
 
 from psycopg2.pool import ThreadedConnectionPool
 
@@ -300,6 +301,74 @@ class TestEva(unittest.TestCase):
 
     def test__get_group_dashs(self):
         self.assertTrue(self.tester.test__get_group_dashs())
+
+
+class TestQuizs(unittest.TestCase):
+    """
+    Test suite for /qapi/quiz(s) OT_REST endpoint.
+    Test cases:
+    - get quiz
+    - get quizs list
+    - create quiz
+    - delete quiz
+    - edit quiz
+    - get quiz questions
+    - fill quiz
+    - get filled quizs
+    """
+    config = ConfigParser()
+    config.add_section('rest_conf')
+    config.set('rest_conf', 'host', 'localhost')
+    config.set('rest_conf', 'port', '50000')
+    config.add_section('eva_db_conf')
+    config.set('eva_db_conf', 'database', 'test_eva')
+    config.set('eva_db_conf', 'user', 'tester')
+    config.set('eva_db_conf', 'password', 'password')
+    config.set('eva_db_conf', 'host', 'localhost')
+
+    eva_pool = ThreadedConnectionPool(2, 4, **dict(config['eva_db_conf']))
+    eva_db = PostgresConnector(eva_pool)
+
+    tester = QuizsTester(dict(config['rest_conf']), eva_db)
+
+    def test__create_quiz(self):
+        self.assertTrue(self.tester.test__create_quiz())
+
+    def test__delete_quiz(self):
+        self.assertTrue(self.tester.test__delete_quiz())
+
+    def test__edit_quiz(self):
+        self.assertTrue(self.tester.test__edit_quiz())
+
+    def test__get_quiz(self):
+        self.assertTrue(self.tester.test__get_quiz())
+
+    def test__get_quizs_list(self):
+        self.assertTrue(self.tester.test__get_quizs_list())
+
+    def test__get_quiz_questions(self):
+        self.assertTrue(self.tester.test__get_quiz_questions())
+
+    def test__fill_quiz(self):
+        self.assertTrue(self.tester.test__fill_quiz())
+
+    def test__get_filled_quizs(self):
+        self.assertTrue(self.tester.test__get_filled_quizs())
+
+    def test__create_catalog(self):
+        self.assertTrue(self.tester.test__create_catalog())
+
+    def test__delete_catalog(self):
+        self.assertTrue(self.tester.test__delete_catalog())
+
+    def test__edit_catalog(self):
+        self.assertTrue(self.tester.test__edit_catalog())
+
+    def test__get_catalog(self):
+        self.assertTrue(self.tester.test__get_catalog())
+
+    def test__get_catalogs_list(self):
+        self.assertTrue(self.tester.test__get_catalogs_list())
 
 
 if __name__ == '__main__':

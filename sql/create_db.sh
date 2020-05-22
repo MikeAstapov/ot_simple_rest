@@ -9,3 +9,4 @@ grant all privileges on database dispatcher to dispatcher;
 EOF
 
 psql -d eva -U dispatcher -a -f eva.sql
+psql -d eva -U dispatcher -a -f eva_quiz.sql
