@@ -98,7 +98,8 @@ class QuizFilledHandler(BaseHandler):
                                                    limit=limit)
         except Exception as err:
             raise tornado.web.HTTPError(409, str(err))
-        self.write({'data': filled_quizs, 'count': self.db.get_filled_quizs_count()})
+        count = self.db.get_filled_quizs_count(quiz_type_id) if quiz_type_id else len(filled_quizs)
+        self.write({'data': filled_quizs, 'count': count})
 
     async def post(self):
         filled_ids = list()

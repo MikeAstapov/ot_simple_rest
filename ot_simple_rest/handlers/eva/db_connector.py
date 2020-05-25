@@ -909,8 +909,8 @@ class PostgresConnector:
                 quizs[quiz_id] = {'id': quiz_id, 'name': quiz_name, 'questions': [question]}
         return list(quizs.values())
 
-    def get_filled_quizs_count(self):
-        count = self.execute_query("SELECT COUNT(id) FROM filled_quiz;")
+    def get_filled_quizs_count(self, quiz_id):
+        count = self.execute_query("SELECT COUNT(id) FROM filled_quiz WHERE quiz_id = %s;", params=(quiz_id,))
         return count[0]
 
     def get_filled_quiz(self, *, offset=0, limit=1, quiz_id=None, current=False):
