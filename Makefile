@@ -145,7 +145,7 @@ clean_nginx:
 	echo Cleaning nginx directory
 	rm -rf nginx
 
-clean: .ot_simple_rest.pid clean_build clean_dist clean_venv clean_nginx clean_pack
+clean: .ot_simple_rest.pid clean_build clean_dist clean_venv clean_nginx clean_pack clean_test
 	#rm -rf /opt/otp/ot_simple_rest/venv venv build start.sh stop.sh ot_simple_rest.conf nginx ot_simple_rest.tar.gz ot_simple_rest.pth /tmp/caches ot_simple_rest-*.tar.gz
 	#if sudo -u postgres psql -l | grep test_eva > /dev/null; then echo "Drop DB..."; tests/rest/drop_db.sh; fi;
 
@@ -157,6 +157,12 @@ test: venv init_db ot_simple_rest.pid ot_simple_rest.conf
 	rm -f ot_simple_rest.pid
 	rm -rf /tmp/caches
 	rm -f ot_simple_rest/ot_simple_rest.conf
+
+clean_test:
+	rm -f ot_simple_rest.pid
+	rm -rf /tmp/caches
+	rm -f ot_simple_rest/ot_simple_rest.conf
+
 
 ot_simple_rest.pid:
 	echo "Starting daemon for testing"
