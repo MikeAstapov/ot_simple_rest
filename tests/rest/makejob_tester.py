@@ -28,7 +28,7 @@ class MakejobTester:
 
         self.request_data = {
             'sid': None,
-            'original_spl': None,
+            'original_otl': None,
             'tws': 0,
             'twf': 0,
             'cache_ttl': 60,
@@ -41,16 +41,16 @@ class MakejobTester:
         self._current_spl = spl_query
 
     def update_job_status(self, status, job_id):
-        query_str = f"""UPDATE splqueries SET status='{status}' WHERE id={job_id};"""
+        query_str = f"""UPDATE OTLQueries SET status='{status}' WHERE id={job_id};"""
         self.db.execute_query(query_str, params=(status, job_id), with_commit=True, with_fetch=False)
 
     @property
-    def original_spl(self):
-        original_spl = re.sub(r"\|\s*ot\s[^|]*\|", "", self._current_spl)
-        original_spl = re.sub(r"\|\s*simple[^\"]*", "", original_spl)
-        original_spl = original_spl.replace("oteval", "eval")
-        original_spl = original_spl.strip()
-        return original_spl
+    def original_otl(self):
+        original_otl = re.sub(r"\|\s*ot\s[^|]*\|", "", self._current_spl)
+        original_otl = re.sub(r"\|\s*simple[^\"]*", "", original_otl)
+        original_otl = original_otl.replace("oteval", "eval")
+        original_otl = original_otl.strip()
+        return original_otl
 
     def get_jobs_from_db(self, limit=None):
         """
@@ -59,8 +59,8 @@ class MakejobTester:
         :param limit:       number of entries
         :return:
         """
-        query_str = f"""SELECT id, creating_date, status FROM splqueries 
-        WHERE original_spl='{self.original_spl}' ORDER BY creating_date DESC;"""
+        query_str = f"""SELECT id, creating_date, status FROM OTLQueries 
+        WHERE original_otl='{self.original_otl}' ORDER BY creating_date DESC;"""
         if limit:
             query_str = query_str.replace(';', f' LIMIT {limit};')
 
@@ -72,10 +72,10 @@ class MakejobTester:
             return self.db.execute_query(query_str, fetchall=True)
 
     def _cleanup(self):
-        del_spl_query = f"""DELETE FROM splqueries WHERE original_spl='{self.original_spl}';"""
-        del_cache_query = f"""DELETE FROM cachesdl WHERE original_spl='{self.original_spl}';"""
-        del_splunksids_query = """DELETE FROM splunksids;"""
-        for query in [del_spl_query, del_cache_query, del_splunksids_query]:
+        del_spl_query = f"""DELETE FROM OTLQueries WHERE original_otl='{self.original_otl}';"""
+        del_cache_query = f"""DELETE FROM cachesdl WHERE original_otl='{self.original_otl}';"""
+        del_GUISIDs_query = """DELETE FROM GUISIDs;"""
+        for query in [del_spl_query, del_cache_query, del_GUISIDs_query]:
             self.db.execute_query(query, with_commit=True, with_fetch=False)
 
     def auth(self):
@@ -86,7 +86,7 @@ class MakejobTester:
 
     def send_request(self):
         data = self.request_data
-        data['original_spl'] = self.original_spl
+        data['original_otl'] = self.original_otl
         data['sid'] = str(uuid.uuid4())
         if not self.cookies:
             self.auth()
@@ -115,15 +115,15 @@ class MakejobTester:
         return job_data
 
     def add_job_with_status(self, status):
-        job_id, _ = self.db.add_job(search=[self.original_spl, self.original_spl], subsearches=[], tws=0, twf=0,
+        job_id, _ = self.db.add_job(search=[self.original_otl, self.original_otl], subsearches=[], tws=0, twf=0,
                                     cache_ttl=60, username='tester', field_extraction=False, preview=False)
         self.update_job_status(status, job_id)
 
     def add_job_with_cache(self, need_expired):
-        job_id, _ = self.db.add_job(search=[self.original_spl, self.original_spl], subsearches=[], tws=0, twf=0,
+        job_id, _ = self.db.add_job(search=[self.original_otl, self.original_otl], subsearches=[], tws=0, twf=0,
                                     cache_ttl=60, username='tester', field_extraction=False, preview=False)
         self.update_job_status('finished', job_id)
-        self.db.add_to_cache(original_spl=self.original_spl, tws=0, twf=0,
+        self.db.add_to_cache(original_otl=self.original_otl, tws=0, twf=0,
                              cache_id=100500, expiring_date=1)
         if need_expired:
             time.sleep(1)

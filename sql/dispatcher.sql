@@ -1,9 +1,9 @@
 CREATE TYPE status_type AS ENUM ('new', 'running', 'failed', 'finished', 'external', 'canceled');
 
-CREATE TABLE SplQueries (
+CREATE TABLE OTLQueries (
     id SERIAL PRIMARY KEY,
-    original_spl TEXT NOT NULL,
-    service_spl TEXT NOT NULL,
+    original_otl TEXT NOT NULL,
+    service_otl TEXT NOT NULL,
     subsearches TEXT[],
     tws INTEGER NOT NULL,
     twf INTEGER NOT NULL,
@@ -19,14 +19,14 @@ CREATE TABLE SplQueries (
 
 CREATE TABLE CachesDL (
     id INTEGER PRIMARY KEY,
-    original_spl TEXT NOT NULL,
+    original_otl TEXT NOT NULL,
     tws INTEGER NOT NULL,
     twf INTEGER NOT NULL,
     field_extraction BOOLEAN DEFAULT false,
     preview BOOLEAN DEFAULT false,
     creating_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expiring_date TIMESTAMPTZ NOT NULL,
-    UNIQUE(original_spl, tws, twf, field_extraction, preview)
+    UNIQUE(original_otl, tws, twf, field_extraction, preview)
 );
 
 CREATE TABLE CachesLock (
@@ -46,7 +46,7 @@ CREATE TABLE DataModels (
     search TEXT
 );
 
-CREATE TABLE SplunkSIDs (
+CREATE TABLE GUISIDs (
     sid TEXT NOT NULL,
     src_ip TEXT NOT NULL,
     spl TEXT NOT NULL,

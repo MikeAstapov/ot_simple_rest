@@ -1,67 +1,67 @@
 import re
 
 
-# Class with actions for parsing SPL expression to SQL
+# Class with actions for parsing OTL expression to SQL
 
 class BaseEvalExpressions:
     def __init__(self, indices_list, fields_list):
         self.indices_list = indices_list
         self.fields_list = fields_list
 
-    def spl_preprocess_request(self, spl):
+    def otl_preprocess_request(self, otl):
         """Transforms all logical expressions to upper case.
         Replaces whitespaces with logical AND.
 
-        :param spl: input SPL string
-        :return: preprocessed SPL string
+        :param otl: input OTL string
+        :return: preprocessed OTL string
 
         """
 
-        spl = self.spl_replace_case(spl)
-        spl = self.spl_replace_ws_with_and(spl)
-        return spl
+        otl = self.otl_replace_case(otl)
+        otl = self.otl_replace_ws_with_and(otl)
+        return otl
 
-    def spl_replace_case(self, spl):
+    def otl_replace_case(self, otl):
         """Transforms all logical expressions to upper case
 
-        :param spl: input SPL string
-        :return: preprocessed SPL string
+        :param otl: input OTL string
+        :return: preprocessed OTL string
 
         """
         operators = ["NOT", "OR", "AND"]
         result = ''
-        spl_list = re.findall(r'(?:[^\s,"]|"(?:\\.|[^"])*")+', spl)
-        for index in range(0, len(spl_list)):
-            if spl_list[index].upper() in operators:
-                result = result + spl_list[index].upper() + ' '
+        otl_list = re.findall(r'(?:[^\s,"]|"(?:\\.|[^"])*")+', otl)
+        for index in range(0, len(otl_list)):
+            if otl_list[index].upper() in operators:
+                result = result + otl_list[index].upper() + ' '
             else:
-                result = result + spl_list[index] + ' '
+                result = result + otl_list[index] + ' '
         return result
 
-    def spl_replace_ws_with_and(self, spl):
+    def otl_replace_ws_with_and(self, otl):
         """ Replaces whitespaces with logical AND
 
-        :param spl: input SPL string
-        :return: preprocessed SPL string
+        :param otl: input OTL string
+        :return: preprocessed OTL string
 
         """
 
         operators = ["NOT", "OR", "AND"]
         result = ''
-        spl_list = re.findall(r'(?:[^\s,"]|"(?:\\.|[^"])*")+', spl)
-        for index in range(0, len(spl_list) - 1):
-            if (spl_list[index][-1:] == ')') and (spl_list[index + 1][:1] == '('):
-                result = result + spl_list[index] + ' AND '
-            elif ((spl_list[index].replace('(', '').replace(')', '').upper() not in operators) and
-                  (spl_list[index + 1].replace('(', '').replace(')', '').upper() not in operators)):
-                result = result + spl_list[index] + ' AND '
+        otl_list = re.findall(r'(?:[^\s,"]|"(?:\\.|[^"])*")+', otl)
+        for index in range(0, len(otl_list) - 1):
+            if (otl_list[index][-1:] == ')') and (otl_list[index + 1][:1] == '('):
+                result = result + otl_list[index] + ' AND '
+            elif ((otl_list[index].replace('(', '').replace(')', '').upper() not in operators) and
+                  (otl_list[index + 1].replace('(', '').replace(')', '').upper() not in operators)):
+                result = result + otl_list[index] + ' AND '
             else:
-                result = result + spl_list[index] + ' '
-        result = result + spl_list[-1]
+                result = result + otl_list[index] + ' '
+        result = result + otl_list[-1]
         return result
 
     def remove_index(self, _context, nodes):
-        """Removes indices from SPL request and save index contents in self.indices_list
+        """Removes indices from OTL request and save index contents in self.indices_list
 
         :param _context: An object used to keep parser context info
         :param nodes: Nodes of the parse tree on this iteration
@@ -78,7 +78,7 @@ class BaseEvalExpressions:
         return
 
     def transform_equal(self, _context, nodes):
-        """Transforms equal expressions from SPL format to SQL format
+        """Transforms equal expressions from OTL format to SQL format
 
         :param _context: An object used to keep parser context info
         :param nodes: Nodes of the parse tree on this iteration
@@ -111,7 +111,7 @@ class BaseEvalExpressions:
         return result
 
     def transform_not_equal(self, _context, nodes):
-        """Transforms not equal expressions from SPL format to SQL format
+        """Transforms not equal expressions from OTL format to SQL format
 
         :param _context: An object used to keep parser context info
         :param nodes: Nodes of the parse tree on this iteration
@@ -144,7 +144,7 @@ class BaseEvalExpressions:
         return result
 
     def transform_and(self, _context, nodes):
-        """Transforms AND expressions from SPL format to SQL format
+        """Transforms AND expressions from OTL format to SQL format
 
         :param _context: An object used to keep parser context info
         :param nodes: Nodes of the parse tree on this iteration
@@ -160,7 +160,7 @@ class BaseEvalExpressions:
             return nodes[0] + " AND " + nodes[2]
 
     def transform_or(self, _context, nodes):
-        """Transforms OR expressions from SPL format to SQL format
+        """Transforms OR expressions from OTL format to SQL format
 
         :param _context: An object used to keep parser context info
         :param nodes: Nodes of the parse tree on this iteration
@@ -176,7 +176,7 @@ class BaseEvalExpressions:
             return nodes[0] + " OR " + nodes[2]
 
     def transform_not(self, _context, nodes):
-        """Transforms NOT expressions from SPL format to SQL format
+        """Transforms NOT expressions from OTL format to SQL format
 
         :param _context: An object used to keep parser context info
         :param nodes: Nodes of the parse tree on this iteration
@@ -190,7 +190,7 @@ class BaseEvalExpressions:
             return "!(" + nodes[1] + ")"
 
     def transform_comparison(self, _context, nodes):
-        """Transforms compare expressions from SPL format to SQL format
+        """Transforms compare expressions from OTL format to SQL format
 
         :param _context: An object used to keep parser context info
         :param nodes: Nodes of the parse tree on this iteration
@@ -206,7 +206,7 @@ class BaseEvalExpressions:
         return nodes[0] + nodes[1] + nodes[2]
 
     def transform_quotes(self, _context, nodes):
-        """Transforms quoted expressions from SPL format to SQL format
+        """Transforms quoted expressions from OTL format to SQL format
 
         :param _context: An object used to keep parser context info
         :param nodes: Nodes of the parse tree on this iteration
@@ -217,7 +217,7 @@ class BaseEvalExpressions:
         return '(_raw rlike \'' + nodes[1] + '\')'
 
     def transform_brackets(self, _context, nodes):
-        """Transforms expressions with brackets from SPL format to SQL format
+        """Transforms expressions with brackets from OTL format to SQL format
 
         :param _context: An object used to keep parser context info
         :param nodes: Nodes of the parse tree on this iteration
@@ -228,7 +228,7 @@ class BaseEvalExpressions:
         return "(" + nodes[1] + ")"
 
     def transform_comma(self, _context, nodes):
-        """Transforms expressions with comma from SPL format to SQL format
+        """Transforms expressions with comma from OTL format to SQL format
 
         :param _context: An object used to keep parser context info
         :param nodes: Nodes of the parse tree on this iteration
@@ -244,7 +244,7 @@ class BaseEvalExpressions:
             return nodes[0] + " AND " + nodes[2]
 
     def return_value(self, _context, nodes):
-        """Transforms value with optional regular expression to SPL format
+        """Transforms value with optional regular expression to OTL format
 
         :param _context: An object used to keep parser context info
         :param nodes: Nodes of the parse tree on this iteration
@@ -265,7 +265,7 @@ class BaseEvalExpressions:
                 return nodes[0] + nodes[1] + nodes[2]
 
     def return_string(self, _context, nodes):
-        """Transforms string to SPL format with optional '_raw like' or '_raw rlike' strings
+        """Transforms string to OTL format with optional '_raw like' or '_raw rlike' strings
 
         :param _context: An object used to keep parser context info
         :param nodes: Nodes of the parse tree on this iteration

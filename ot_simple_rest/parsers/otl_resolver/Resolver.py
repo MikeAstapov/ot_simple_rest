@@ -5,7 +5,7 @@ import json
 import logging
 import re
 from hashlib import sha256
-from parsers.spl_to_sparksql.splunk_parser import SPLtoSQL
+from parsers.otl_to_sparksql.otl_parser import OTLtoSQL
 
 __author__ = ["Andrey Starchenkov", "Anton Khromov"]
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -131,7 +131,7 @@ class Resolver:
 
         query, subsearch = self.hide_subsearch_before_read(query)
         self.logger.debug(f"Whole Query: {match_object.group(0)}. Query: {query}. Indexes: {self.indexes}.")
-        graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
+        graph = OTLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
         return f'| read {json.dumps(graph)}{subsearch}'
 
     def create_otstats_graph(self, match_object):
@@ -146,7 +146,7 @@ class Resolver:
 
         query, subsearch = self.hide_subsearch_before_read(query)
         self.logger.debug(f"Whole Query: {match_object.group(0)}. Query: {query}. Indexes: {self.indexes}.")
-        graph = SPLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
+        graph = OTLtoSQL.parse_read(query, av_indexes=self.indexes, tws=self.tws, twf=self.twf)
         return f'| otstats {json.dumps(graph)}{subsearch}'
 
     @staticmethod
@@ -159,7 +159,7 @@ class Resolver:
         :return: String with replaces of filter part.
         """
         query = match_object.group(1)
-        graph = SPLtoSQL.parse_filter(query)
+        graph = OTLtoSQL.parse_filter(query)
         return f'| filter {json.dumps(graph)}'
 
     @staticmethod
@@ -172,7 +172,7 @@ class Resolver:
         :return: String with replaces of filter part.
         """
         query = match_object.group(2)
-        graph = SPLtoSQL.parse_filter(query)
+        graph = OTLtoSQL.parse_filter(query)
         return f'otinputlookup{match_object.group(1)}where {json.dumps(graph)}'
 
     def create_datamodels(self, match_object):

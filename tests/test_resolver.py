@@ -1,7 +1,7 @@
 import unittest
 
 import logging
-import parsers.spl_resolver.Resolver as Resolver
+import parsers.otl_resolver.Resolver as Resolver
 
 
 class TestResolver(unittest.TestCase):
