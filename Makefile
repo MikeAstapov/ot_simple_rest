@@ -1,7 +1,7 @@
 
 #.SILENT:
 
-COMPONENTS := venv ot_simple_rest.pth tests.pth start.sh stop.sh ot_simple_rest.conf nginx sql
+COMPONENTS := start.sh stop.sh nginx sql dist ot_simple_rest.conf
 
 TESTS_PTH = /tests
 OT_REST_PTH = /ot_simple_rest
@@ -25,54 +25,66 @@ GENERATE_BRANCH = $(shell git name-rev $$(git rev-parse HEAD) | cut -d\  -f2 | s
 SET_VERSION = $(eval VERSION=$(GENERATE_VERSION))
 SET_BRANCH = $(eval BRANCH=$(GENERATE_BRANCH))
 
-pack: build
+pack: make_build
 	$(SET_VERSION)
 	$(SET_BRANCH)
 	rm -f ot_simple_rest-*.tar.gz
 	echo Create archive \"ot_simple_rest-$(VERSION)-$(BRANCH).tar.gz\"
-	cd build; tar czf ../ot_simple_rest-$(VERSION)-$(BRANCH).tar.gz ot_simple_rest nginx sql
+	cd make_build; tar czf ../ot_simple_rest-$(VERSION)-$(BRANCH).tar.gz ot_simple_rest nginx sql
+
+clean_pack:
+	rm -f ot_simple_rest-*.tar.gz
+
 
 ot_simple_rest.tar.gz: build
-	cd build; tar czf ../ot_simple_rest.tar.gz ot_simple_rest nginx sql && rm -rf ../build
+	cd build; tar czf ../ot_simple_rest.tar.gz ot_simple_rest nginx sql && rm -rf ../make_build
 
-build: $(COMPONENTS)
+build: make_build
+
+make_build: $(COMPONENTS)
 	# required section
-	echo Build
-	mkdir build
-	cp -r ot_simple_rest build
-	cp -r venv build/ot_simple_rest
-	cp ot_simple_rest.pth venv/lib/python3.6/site-packages
-	cp tests.pth venv/lib/python3.6/site-packages
-	ln -s /opt/otp/logs/ot_simple_rest build/ot_simple_rest/logs
-	cp start.sh build/ot_simple_rest/start.sh
-	cp stop.sh build/ot_simple_rest/stop.sh
-	cp ot_simple_rest.conf build/ot_simple_rest/ot_simple_rest.conf
-	cp -r nginx build
-	cp -r sql build
+	echo make_build
+	mkdir make_build
+	mkdir make_build/ot_simple_rest/
+	ln -s /opt/otp/logs/ot_simple_rest make_build/ot_simple_rest/logs
+	cp start.sh make_build/ot_simple_rest/start.sh
+	cp stop.sh make_build/ot_simple_rest/stop.sh
+	cp ot_simple_rest/ot_simple_rest.conf.example make_build/ot_simple_rest/ot_simple_rest.conf.example
+	cp ot_simple_rest.conf make_build/ot_simple_rest/ot_simple_rest.conf
+	cp -r nginx make_build
+	cp -r sql make_build
+	cp ./dist/ot_simple_rest make_build/ot_simple_rest/
+	cp *.md make_build/ot_simple_rest/
+
+clean_build:
+	rm -rf make_build
+	rm -f ot_simple_rest.conf
+	rm -rf start.sh
+	rm -rf stop.sh
+
+
+dist: venv
+	./venv/bin/pyinstaller --hidden-import=_cffi_backend -F ot_simple_rest/ot_simple_rest.py
+
+clean_dist:
+	rm -rf build
+	rm -rf dist
+	rm -f ot_simple_rest.spec
 
 venv:
 	echo Create venv
-	mkdir -p /opt/otp/ot_simple_rest
-	python3 -m venv --copies /opt/otp/ot_simple_rest/venv
-	/opt/otp/ot_simple_rest/venv/bin/pip3 install -r requirements.txt
-	cp -r /opt/otp/ot_simple_rest/venv venv
-	#cd ot_simple_rest; python3 -m venv --copies ./python3
-	#cd ot_simple_rest; python3/bin/pip3 install -r ../requirements.txt
+	python3 -m venv ./venv
+	./venv/bin/pip3 install -r requirements.txt
 
-ot_simple_rest.pth:
-	echo Create ot_simple_rest.pth file
-	echo "$(BASE_PTH)$(OT_REST_PTH)" >> $@
-
-tests.pth:
-	echo Create tests.pth file
-	echo "$(BASE_PTH)$(TESTS_PTH)" >> $@
+clean_venv:
+	rm -rf venv
 
 start.sh:
 	echo Create start.sh
 	echo -e "#!/bin/bash\n\
 \n\
-cd /opt/otp/ot_simple_rest/logs\n\
-source /opt/otp/ot_simple_rest/venv/bin/activate && /opt/otp/ot_simple_rest/venv/bin/python3 /opt/otp/ot_simple_rest/ot_simple_rest.py > stdout.log 2> stderr.log &\n\
+cd /opt/otp/ot_simple_rest/\n\
+/opt/otp/ot_simple_rest/ot_simple_rest > logs/stdout.log 2> logs/stderr.log &\
 " > $@
 	chmod +x $@
 
@@ -80,14 +92,14 @@ stop.sh:
 	echo Create stop.sh
 	echo -e "#!/bin/bash\n\
 \n\
-kill \`ps ax | grep \"/opt/otp/ot_simple_rest/venv/bin/python3 /opt/otp/ot_simple_rest/ot_simple_rest.py\" | grep -v grep | awk '{print \$$1}'\`\
+kill \`ps ax | grep \"ot_simple_rest\" | grep -v grep | awk '{print \$$1}'\`\
 " > $@
 	chmod +x $@
 
 ot_simple_rest.conf:
 	echo -e "[general]\n\
 level = DEBUG\n\
-logs_path = ./\n\
+logs_path = ./logs/\n\
 \n\
 [db_conf]\n\
 host = localhost\n\
@@ -133,13 +145,13 @@ clean_nginx:
 	echo Cleaning nginx directory
 	rm -rf nginx
 
-clean: .ot_simple_rest.pid
-	rm -rf /opt/otp/ot_simple_rest/venv venv build start.sh stop.sh ot_simple_rest.conf nginx ot_simple_rest.tar.gz tests.pth ot_simple_rest.pth /tmp/caches ot_simple_rest-*.tar.gz
-	if sudo -u postgres psql -l | grep test_eva > /dev/null; then echo "Drop DB..."; tests/rest/drop_db.sh; fi;
+clean: .ot_simple_rest.pid clean_build clean_dist clean_venv clean_nginx clean_pack
+	#rm -rf /opt/otp/ot_simple_rest/venv venv build start.sh stop.sh ot_simple_rest.conf nginx ot_simple_rest.tar.gz ot_simple_rest.pth /tmp/caches ot_simple_rest-*.tar.gz
+	#if sudo -u postgres psql -l | grep test_eva > /dev/null; then echo "Drop DB..."; tests/rest/drop_db.sh; fi;
 
 test: venv init_db ot_simple_rest.pid
 	echo "Testing..."
-	venv/bin/python tests/test_rest.py || (kill -9 `cat ot_simple_rest.pid` && rm -f ot_simple_rest.pid && exit 2)
+	export PYTHONPATH=./ot_simple_rest/:./tests/; ./venv/bin/python -m unittest || (kill -9 `cat ot_simple_rest.pid` && rm -f ot_simple_rest.pid && exit 2)
 	kill -9 `cat ot_simple_rest.pid`
 	rm -f ot_simple_rest.pid
 	rm -rf /tmp/caches
