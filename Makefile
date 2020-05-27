@@ -149,9 +149,8 @@ clean: .ot_simple_rest.pid clean_build clean_dist clean_venv clean_nginx clean_p
 	#rm -rf /opt/otp/ot_simple_rest/venv venv build start.sh stop.sh ot_simple_rest.conf nginx ot_simple_rest.tar.gz ot_simple_rest.pth /tmp/caches ot_simple_rest-*.tar.gz
 	#if sudo -u postgres psql -l | grep test_eva > /dev/null; then echo "Drop DB..."; tests/rest/drop_db.sh; fi;
 
-test: venv init_db ot_simple_rest.pid ot_simple_rest.conf
+test: venv init_db ot_simple_rest.pid
 	echo "Testing..."
-	cp ot_simple_rest.conf ot_simple_rest/ot_simple_rest.conf
 	export PYTHONPATH=./ot_simple_rest/:./tests/; ./venv/bin/python -m unittest || (kill -9 `cat ot_simple_rest.pid` && rm -f ot_simple_rest.pid && exit 2)
 	kill -9 `cat ot_simple_rest.pid`
 	rm -f ot_simple_rest.pid
@@ -164,8 +163,9 @@ clean_test:
 	rm -f ot_simple_rest/ot_simple_rest.conf
 
 
-ot_simple_rest.pid:
+ot_simple_rest.pid: venv
 	echo "Starting daemon for testing"
+	cp ot_simple_rest/ot_simple_rest.conf.example ot_simple_rest/ot_simple_rest.conf
 	venv/bin/python ot_simple_rest/ot_simple_rest.py & echo $$! > ot_simple_rest.pid
 	sleep 2
 
