@@ -34,9 +34,9 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "1.0.7"
-__maintainer__ = "Anton Khromov"
-__email__ = "akhromov@ot.ru"
+__version__ = "1.1.1"
+__maintainer__ = "Andrey Starchenkov"
+__email__ = "astarchenkov@ot.ru"
 __status__ = "Production"
 
 

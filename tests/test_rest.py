@@ -300,11 +300,3 @@ class TestEva(unittest.TestCase):
 
     def test__get_group_dashs(self):
         self.assertTrue(self.tester.test__get_group_dashs())
-
-
-if __name__ == '__main__':
-    try:
-        unittest.main(verbosity=2)
-    except Exception as err:
-        print(err)
-        exit(1)
