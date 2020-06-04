@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2020-06-04
+### Changed
+- Remove Splunk mentions.
+### Added
+- All indexes access to admin user.
+
 ## [1.1.2] - 2020-05-27
 ### Fixed
 - Make test scenario.
@@ -28,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.4] - 2020-05-07
 ### Changed
-- Fixed using cache\_ttl param from spl query.
+- Fixed using cache\_ttl param from OTL query.
 
 ## [1.0.3] - 2020-05-06
 ### Changed
@@ -117,7 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.12.2] - 2019-10-21
 ### Fixed
-- Now search-command in the middle of SPL will return used fields for pushing down to read command.  
+- Now search-command in the middle of OTL will return used fields for pushing down to read command.  
 
 ## [0.12.1] - 2019-10-16
 ### Added

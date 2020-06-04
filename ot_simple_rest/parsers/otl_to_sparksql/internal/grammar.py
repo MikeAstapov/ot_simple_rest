@@ -1,6 +1,6 @@
-# LALR Grammar string for SPL to SQL Parser
+# LALR Grammar string for OTL to SQL Parser
 
-SPLGrammar = r'''
+OTLGrammar = r'''
                 E: B
                 | NQ {left, 3}
                 | N {left, 3}

@@ -34,14 +34,14 @@ class Timerange:
         return None
 
     @staticmethod
-    def removetime(spl, tws, twf):
+    def removetime(otl, tws, twf):
         _tws = tws
         _twf = twf
         regex = r"(earliest|latest)=([a-zA-Z0-9_*-]+)"
-        for (time_modifier, time) in re.findall(regex, spl):
+        for (time_modifier, time) in re.findall(regex, otl):
             if time_modifier == "earliest":
                 _tws = Timerange.get_timestamp(time)
             if time_modifier == "latest":
                 _twf = Timerange.get_timestamp(time)
-        service_spl = re.sub(regex, "", spl)
-        return service_spl, _tws, _twf
+        service_otl = re.sub(regex, "", otl)
+        return service_otl, _tws, _twf

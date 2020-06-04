@@ -1,43 +1,43 @@
 from parglare import Parser, Grammar
 
-from parsers.spl_to_sparksql.internal import grammar
-from parsers.spl_to_sparksql.internal.timerange import Timerange
-from parsers.spl_to_sparksql.internal.expressions.baseEvalExpression import BaseEvalExpressions
+from parsers.otl_to_sparksql.internal import grammar
+from parsers.otl_to_sparksql.internal.timerange import Timerange
+from parsers.otl_to_sparksql.internal.expressions.baseEvalExpression import BaseEvalExpressions
 
 
-class SPLtoSQL:
+class OTLtoSQL:
     @staticmethod
-    def parse_read(spl, av_indexes, tws, twf):
+    def parse_read(otl, av_indexes, tws, twf):
         """ Function for parsing read request.
         Returns JSON dictionary with index keys and SQL query string
 
         Arguments:
-        spl(str): Input SPL request
+        otl(str): Input OTL request
         av_indexes(list): List of all possible indexes
         tws(int): Time to search from
         twf(int): Time to search to
 
         """
 
-        # Remove time from SPL and save start time and end time values in tws and twf
-        (spl, _tws, _twf) = Timerange.removetime(spl, tws, twf)
+        # Remove time from OTL and save start time and end time values in tws and twf
+        (otl, _tws, _twf) = Timerange.removetime(otl, tws, twf)
         indices_list = []
         fields_list = []
 
         # Create BaseEvalExpressions class instance
         expressions = BaseEvalExpressions(indices_list, fields_list)
 
-        # Preprocess SPL string
-        spl = expressions.spl_preprocess_request(spl)
+        # Preprocess OTL string
+        otl = expressions.otl_preprocess_request(otl)
 
-        # Create parglare grammar from SPLGrammar string
-        lalr_grammar = Grammar.from_string(grammar.SPLGrammar)
+        # Create parglare grammar from OTLGrammar string
+        lalr_grammar = Grammar.from_string(grammar.OTLGrammar)
 
         # Create parglare parser with lalr_grammar
         # ARGS: Build tree
         # No debug logging
         # Select action in BaseEvalExpressions class for tree node
-        # according to expression symbol in SPLGrammar in grammar.py
+        # according to expression symbol in OTLGrammar in grammar.py
         lalr_parser = Parser(lalr_grammar, debug=False, build_tree=True,
                              actions={'I': expressions.remove_index,
                                       'Q': expressions.transform_equal,
@@ -53,7 +53,7 @@ class SPLtoSQL:
                                       })
 
         # Build tree
-        tree = lalr_parser.parse(spl)
+        tree = lalr_parser.parse(otl)
 
         # Transform tree to query string
         query_string = lalr_parser.call_actions(tree)
@@ -61,7 +61,7 @@ class SPLtoSQL:
         if query_string is None:
             query_string = ''
 
-        # Save indices to indices_list from SPL string
+        # Save indices to indices_list from OTL string
         indices_list = expressions.indices_list
 
         map_with_time = {}
@@ -85,12 +85,12 @@ class SPLtoSQL:
         return map_with_time
 
     @staticmethod
-    def parse_filter(spl):
+    def parse_filter(otl):
         """ Function for parsing filter request.
         Returns JSON dictionary with SQL query string
 
         Arguments:
-        spl(str): Input SPL request
+        otl(str): Input OTL request
 
         """
         indices_list = []
@@ -99,17 +99,17 @@ class SPLtoSQL:
         # Create BaseEvalExpressions class instance
         expressions = BaseEvalExpressions(indices_list, fields_list)
 
-        # Preprocess SPL string
-        spl = expressions.spl_preprocess_request(spl)
+        # Preprocess OTL string
+        otl = expressions.otl_preprocess_request(otl)
 
-        # Create parglare grammar from SPLGrammar string
-        lalr_grammar = Grammar.from_string(grammar.SPLGrammar)
+        # Create parglare grammar from OTLGrammar string
+        lalr_grammar = Grammar.from_string(grammar.OTLGrammar)
 
         # Create parglare parser with lalr_grammar
         # ARGS: Build tree
         # No debug logging
         # Select action in BaseEvalExpressions class for tree node
-        # according to expression symbol in SPLGrammar in grammar.py
+        # according to expression symbol in OTLGrammar in grammar.py
         lalr_parser = Parser(lalr_grammar, debug=False, build_tree=True,
                              actions={'I': expressions.remove_index,
                                       'Q': expressions.transform_equal,
@@ -125,7 +125,7 @@ class SPLtoSQL:
                                       })
 
         # Build tree
-        tree = lalr_parser.parse(spl)
+        tree = lalr_parser.parse(otl)
 
         # Transform tree to query string
         query_string = lalr_parser.call_actions(tree)

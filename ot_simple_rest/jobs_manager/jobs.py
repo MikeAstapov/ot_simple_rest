@@ -5,7 +5,7 @@ import json
 import asyncio
 
 from utils import backlasher
-from parsers.spl_resolver.Resolver import Resolver
+from parsers.otl_resolver.Resolver import Resolver
 
 __author__ = "Anton Khromov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -78,12 +78,12 @@ class Job:
         # TODO: Implement in a future release
         return True
 
-    def check_cache(self, cache_ttl, original_spl, tws, twf, field_extraction, preview):
+    def check_cache(self, cache_ttl, original_otl, tws, twf, field_extraction, preview):
         """
         It checks if the same query Job is already finished and it's cache is ready to be downloaded. This way it will
         return it's id for OT.Simple Splunk app JobLoader to download it's cache.
-        :param original_spl: Original SPL query.
-        :type original_spl: String.
+        :param original_otl: Original SPL query.
+        :type original_otl: String.
         :param cache_ttl: Time To Life of cache.
         :param tws: Time Window Start.
         :type tws: Integer.
@@ -98,18 +98,18 @@ class Job:
         cache_id = creating_date = None
         self.logger.debug(f'cache_ttl: {cache_ttl}', extra={'hid': self.handler_id})
         if cache_ttl:
-            cache_id, creating_date = self.db.check_cache(original_spl=original_spl, tws=tws, twf=twf,
+            cache_id, creating_date = self.db.check_cache(original_otl=original_otl, tws=tws, twf=twf,
                                                           field_extraction=field_extraction, preview=preview)
 
         self.logger.debug(f'cache_id: {cache_id}, creating_date: {creating_date}', extra={'hid': self.handler_id})
         return cache_id, creating_date
 
-    def check_running(self, original_spl, tws, twf, field_extraction, preview):
+    def check_running(self, original_otl, tws, twf, field_extraction, preview):
         """
         It checks if the same query Job is already running. This way it will return id of running job and will not
         register a new one.
-        :param original_spl: Original SPL query.
-        :type original_spl: String.
+        :param original_otl: Original SPL query.
+        :type original_otl: String.
         :param tws: Time Window Start.
         :type tws: Integer.
         :param twf: Time Window Finish.
@@ -120,7 +120,7 @@ class Job:
         :type preview: Boolean.
         :return: Job's id and date of creating.
         """
-        job_id, creating_date = self.db.check_running(original_spl=original_spl, tws=tws, twf=twf,
+        job_id, creating_date = self.db.check_running(original_otl=original_otl, tws=tws, twf=twf,
                                                       field_extraction=field_extraction, preview=preview)
 
         self.logger.debug(f'job_id: {job_id}, creating_date: {creating_date}', extra={'hid': self.handler_id})
@@ -129,15 +129,15 @@ class Job:
     def get_request_params(self):
         request = self.request.arguments
         # Remove OT.Simple Splunk app service data from SPL query.
-        original_spl = request["original_spl"][0].decode()
-        cache_ttl = re.findall(r"\|\s*ot[^|]*ttl\s*=\s*(\d+)", original_spl)
+        original_otl = request["original_otl"][0].decode()
+        cache_ttl = re.findall(r"\|\s*ot[^|]*ttl\s*=\s*(\d+)", original_otl)
         cache_ttl = int(cache_ttl[0]) if cache_ttl else int(request['cache_ttl'][0])
-        field_extraction = re.findall(r"\|\s*ot[^|]*field_extraction\s*=\s*(\S+)", original_spl)
-        preview = re.findall(r"\|\s*ot[^|]*preview\s*=\s*(\S+)", original_spl)
-        original_spl = re.sub(r"\|\s*ot\s[^|]*\|", "", original_spl)
-        original_spl = re.sub(r"\|\s*simple[^\"]*", "", original_spl)
-        original_spl = original_spl.replace("oteval", "eval")
-        original_spl = original_spl.strip()
+        field_extraction = re.findall(r"\|\s*ot[^|]*field_extraction\s*=\s*(\S+)", original_otl)
+        preview = re.findall(r"\|\s*ot[^|]*preview\s*=\s*(\S+)", original_otl)
+        original_otl = re.sub(r"\|\s*ot\s[^|]*\|", "", original_otl)
+        original_otl = re.sub(r"\|\s*simple[^\"]*", "", original_otl)
+        original_otl = original_otl.replace("oteval", "eval")
+        original_otl = original_otl.strip()
 
         # Get Field Extraction mode.
         field_extraction = field_extraction[0] if field_extraction else False
@@ -152,7 +152,7 @@ class Job:
         # Update time window to discrete value.
         tws, twf = backlasher.discretize(tws, twf, cache_ttl)
 
-        return {'original_spl': original_spl, 'field_extraction': field_extraction,
+        return {'original_otl': original_otl, 'field_extraction': field_extraction,
                 'preview': preview, 'tws': tws, 'twf': twf, 'cache_ttl': cache_ttl}
 
     def resolve(self):
@@ -166,7 +166,7 @@ class Job:
         # Get params from request.
         params = self.get_request_params()
         cache_ttl = params['cache_ttl']
-        original_spl = params['original_spl']
+        original_otl = params['original_otl']
         tws, twf = params['tws'], params['twf']
         field_extraction = params['field_extraction']
         preview = params['preview']
@@ -179,7 +179,7 @@ class Job:
 
         resolver = Resolver(self.indexes, tws, twf, self.db, sid, self.request.remote_ip,
                             self.resolver_conf.get('no_subsearch_commands'))
-        resolved_spl = resolver.resolve(original_spl)
+        resolved_spl = resolver.resolve(original_otl)
         self.logger.debug(f"Resolved_spl: {resolved_spl}", extra={'hid': self.handler_id})
 
         # Make searches queue based on subsearches of main query.
@@ -194,7 +194,7 @@ class Job:
         self.logger.debug(f"Searches: {searches}", extra={'hid': self.handler_id})
         self.resolved_data = {'searches': searches, 'tws': tws, 'twf': twf, 'cache_ttl': cache_ttl,
                               'field_extraction': field_extraction, 'username': username, 'preview': preview,
-                              'resolved_spl': resolved_spl, 'original_spl': original_spl, 'sid': sid}
+                              'resolved_spl': resolved_spl, 'original_otl': original_otl, 'sid': sid}
 
     async def start_make(self):
         """
@@ -206,7 +206,7 @@ class Job:
         field_extraction = self.resolved_data['field_extraction']
         preview = self.resolved_data['preview']
         resolved_spl = self.resolved_data['resolved_spl']
-        original_spl = self.resolved_data['original_spl']
+        original_otl = self.resolved_data['original_otl']
         username = self.resolved_data['username']
         sid = self.resolved_data['sid']
 
@@ -244,7 +244,7 @@ class Job:
                     # Add SID to DB if search is not subsearch.
                     if self.search == self.resolved_data['searches'][-1]:
                         self.db.add_sid(sid=sid, remote_ip=self.request.remote_ip,
-                                        original_spl=original_spl)
+                                        original_otl=original_otl)
 
                 # Return id of new Job.
                 response = {"_time": creating_date, "status": "success", "job_id": job_id}
@@ -276,16 +276,16 @@ class Job:
             return
 
         params = self.get_request_params()
-        original_spl = params['original_spl']
+        original_otl = params['original_otl']
         tws, twf = params['tws'], params['twf']
         field_extraction = params['field_extraction']
         preview = params['preview']
 
         self.logger.debug(f"Discrete time window: [{tws},{twf}].", extra={'hid': self.handler_id})
 
-        # Step 2. Get Job's status based on (original_spl, tws, twf) parameters.
+        # Step 2. Get Job's status based on (original_otl, tws, twf) parameters.
 
-        job_status_data = self.db.check_job_status(original_spl=original_spl, tws=tws, twf=twf,
+        job_status_data = self.db.check_job_status(original_otl=original_otl, tws=tws, twf=twf,
                                                    field_extraction=field_extraction, preview=preview)
         self.logger.info(job_status_data, extra={'hid': self.handler_id})
 

@@ -27,7 +27,7 @@ class MakeJob(BaseHandler):
     3. Get service OTL form of query from original SPL.
     4. Check for Role Model Access to requested indexes.
     5. Make searches queue based on subsearches of main query.
-    6. Check if the same (original_spl, tws, twf) query Job is already calculated and has ready cache.
+    6. Check if the same (original_otl, tws, twf) query Job is already calculated and has ready cache.
     7. Check if the same query Job is already be running.
     8. Register new Job in Dispatcher DB.
     """
@@ -80,14 +80,14 @@ class MakeJob(BaseHandler):
             self.logger.debug(f'Error_msg: {error_msg}', extra={'hid': self.handler_id})
             self.finish(error_msg)
 
-    def get_original_spl(self):
+    def get_original_otl(self):
         request = self.request.arguments
-        original_spl = request["original_spl"][0].decode()
-        original_spl = re.sub(r"\|\s*ot\s[^|]*\|", "", original_spl)
-        original_spl = re.sub(r"\|\s*simple[^\"]*", "", original_spl)
-        original_spl = original_spl.replace("oteval", "eval")
-        original_spl = original_spl.strip()
-        return original_spl
+        original_otl = request["original_otl"][0].decode()
+        original_otl = re.sub(r"\|\s*ot\s[^|]*\|", "", original_otl)
+        original_otl = re.sub(r"\|\s*simple[^\"]*", "", original_otl)
+        original_otl = original_otl.replace("oteval", "eval")
+        original_otl = original_otl.strip()
+        return original_otl
 
     def user_has_right(self, indexes):
         """
@@ -128,8 +128,8 @@ class MakeJob(BaseHandler):
 
         :return:
         """
-        original_spl = self.get_original_spl()
-        indexes = re.findall(r"index\s?=\s?([\"\']?_?\w+[_\w+]*[\"\']?)", original_spl)
+        original_otl = self.get_original_otl()
+        indexes = re.findall(r"index\s?=\s?([\"\']?_?\w+[_\w+]*[\"\']?)", original_otl)
         access_flag, indexes = self.user_has_right(indexes)
         if not access_flag:
             return self.write({"status": "fail", "error": "User has no access to index"})

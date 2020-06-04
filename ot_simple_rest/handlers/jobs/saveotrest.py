@@ -68,13 +68,13 @@ class SaveOtRest(tornado.web.RequestHandler):
         # TODO
         return True
 
-    def check_cache(self, cache_ttl, original_spl, tws, twf, field_extraction, preview):
+    def check_cache(self, cache_ttl, original_otl, tws, twf, field_extraction, preview):
         """
         It checks if the same query Job is already finished and it's cache is ready to be downloaded. This way it will
         return it's id for OT.Simple Splunk app JobLoader to download it's cache.
 
-        :param original_spl: Original SPL query.
-        :type original_spl: String.
+        :param original_otl: Original SPL query.
+        :type original_otl: String.
         :param cache_ttl: Time To Life of cache.
         :param tws: Time Window Start.
         :type tws: Integer.
@@ -89,7 +89,7 @@ class SaveOtRest(tornado.web.RequestHandler):
         cache_id = creating_date = None
         self.logger.debug(f'cache_ttl: {cache_ttl}')
         if cache_ttl:
-            cache_id, creating_date = self.db.check_cache(original_spl=original_spl, tws=tws, twf=twf,
+            cache_id, creating_date = self.db.check_cache(original_otl=original_otl, tws=tws, twf=twf,
                                                           field_extraction=field_extraction, preview=preview)
         self.logger.debug(f'cache_id: {cache_id}, creating_date: {creating_date}')
         return cache_id, creating_date
@@ -100,32 +100,32 @@ class SaveOtRest(tornado.web.RequestHandler):
         :return:
         """
         request = self.request.body_arguments
-        original_spl = request['original_spl'][0].decode()
+        original_otl = request['original_otl'][0].decode()
         cache_ttl = request['cache_ttl'][0].decode()
 
-        self.logger.debug('Original SPL: %s.' % original_spl)
+        self.logger.debug('Original SPL: %s.' % original_otl)
 
         if self.validate():
             # Check for cache.
-            cache_id, creating_date = self.check_cache(cache_ttl, original_spl, 0, 0, False, False)
+            cache_id, creating_date = self.check_cache(cache_ttl, original_otl, 0, 0, False, False)
 
             if cache_id is None:
 
-                sha_spl = 'otrest%s' % original_spl.split('otrest')[1]
+                sha_spl = 'otrest%s' % original_otl.split('otrest')[1]
                 data = request['data'][0].decode()
                 self.logger.debug('Data: %s.' % data)
-                service_spl = '| otrest subsearch=subsearch_%s' % sha256(sha_spl.encode()).hexdigest()
+                service_otl = '| otrest subsearch=subsearch_%s' % sha256(sha_spl.encode()).hexdigest()
 
                 # Registers new Job.
-                cache_id, creating_date = self.db.add_external_job(original_spl=original_spl,
-                                                                   service_spl=service_spl,
+                cache_id, creating_date = self.db.add_external_job(original_otl=original_otl,
+                                                                   service_otl=service_otl,
                                                                    tws=0, twf=0, cache_ttl=cache_ttl,
                                                                    username='_ot_simple_rest',
                                                                    status='external')
                 # Writes data to RAM cache.
                 CacheWriter(data, cache_id, self.mem_conf).write()
                 # Registers cache in Dispatcher's DB.
-                self.db.add_to_cache(original_spl=original_spl, tws=0, twf=0,
+                self.db.add_to_cache(original_otl=original_otl, tws=0, twf=0,
                                      cache_id=cache_id, expiring_date=60)
 
                 response = {"_time": creating_date, "status": "success", "job_id": cache_id}
