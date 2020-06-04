@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2020-06-04
+### Changed
+- Remove Splunk mentions.
+### Added
+- All indexes access to admin user.
+
 ## [1.1.2] - 2020-05-27
 ### Fixed
 - Make test scenario.
