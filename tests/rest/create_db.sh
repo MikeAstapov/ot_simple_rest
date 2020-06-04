@@ -15,6 +15,6 @@ grant all privileges on database test_eva to tester;
 EOF
 
 export PGPASSWORD='password'
-psql -h localhost -d test_dispatcher -U tester -a -f tests/rest/dispatcher.sql
-psql -h localhost -d test_eva -U tester -a -f tests/rest/eva.sql
+psql -d test_dispatcher -U tester -a -f tests/rest/dispatcher.sql
+psql -d test_eva -U tester -a -f tests/rest/eva.sql
 
