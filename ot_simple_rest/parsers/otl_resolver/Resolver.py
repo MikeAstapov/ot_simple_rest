@@ -6,6 +6,7 @@ import logging
 import re
 from hashlib import sha256
 from parsers.otl_to_sparksql.otl_parser import OTLtoSQL
+from parsers.otl_resolver.macros import Macros
 
 __author__ = ["Andrey Starchenkov", "Anton Khromov"]
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -19,7 +20,7 @@ __status__ = "Production"
 
 class Resolver:
     """
-    Gets service SPL string from original one. Transforms next commands:
+    Gets service OTL string from original one. Transforms next commands:
 
     1. search -> | read "{__fts_json__}"
     2. | otrest endpoint=/any/path/to/api/ -> | otrest subsearch=subsearch_id
@@ -40,13 +41,13 @@ class Resolver:
     otstats_pattern_start = r'\|?\s*otstats ([^|]+)'
     otstats_pattern_middle = r'\[\s*\|\s*otstats ([^|\]]+)'
     otrest_pattern = r'otrest[^|]+url\s*?=\s*?([^\|\] ]+)'
-    filter_pattern = r'\|\s*search ([^\|$]+)'
+    filter_pattern = r'\|\s*search ([^\|]+)'
     otinputlookup_where_pattern = r'otinputlookup([^\|$]+)where\s+([^\|$]+)'
     otfrom_pattern = r'otfrom datamodel:?\s*([^\|$]+)'
     otloadjob_id_pattern = r'otloadjob\s+(\d+\.\d+)'
-    otloadjob_spl_pattern = r'otloadjob\s+spl=\"(.+?[^\\])\"(\s+?___token___=\"(.+?[^\\])\")?(\s+?___tail___=\"(.+?[^\\])\")?'
+    otloadjob_otl_pattern = r'otloadjob\s+otl=\"(.+?[^\\])\"(\s+?___token___=\"(.+?[^\\])\")?(\s+?___tail___=\"(.+?[^\\])\")?'
 
-    def __init__(self, indexes, tws, twf, db=None, sid=None, src_ip=None, no_subsearch_commands=None):
+    def __init__(self, indexes, tws, twf, db=None, sid=None, src_ip=None, no_subsearch_commands=None, macros_dir=None):
         """
         Init with default available indexes, time window and cursor to DB for DataModels.
 
@@ -67,13 +68,14 @@ class Resolver:
         self.hidden_rex = {}
         self.hidden_quoted_text = {}
         self.hidden_no_subsearches = {}
+        self.macros_dir = macros_dir
 
     def create_subsearch(self, match_object):
         """
-        Finds subsearches and transforms original SPL with subsearch id.
+        Finds subsearches and transforms original OTL with subsearch id.
         any_command [subsearch] -> any_command subsearch=subsearch_id
 
-        :param match_object: Re match object with original SPL.
+        :param match_object: Re match object with original OTL.
         :return: String with replaces of subsearches.
         """
         subsearch_query = match_object.group(1)
@@ -99,7 +101,7 @@ class Resolver:
         Finds "| otrest endpoint=/any/path/to/api/" command and transforms it to service form.
         | otrest endpoint=/any/path/to/api/-> | otrest subsearch=subsearch_id
 
-        :param match_object: Re match object with original SPL.
+        :param match_object: Re match object with original OTL.
         :return: String with replaces of subsearches.
         """
         otrest_sha256 = sha256(match_object.group(0).strip().encode('utf-8')).hexdigest()
@@ -124,7 +126,7 @@ class Resolver:
         Finds "search __fts_query__" and transforms it to service form.
         search -> | read "{__fts_json__}"
 
-        :param match_object: Re match object with original SPL.
+        :param match_object: Re match object with original OTL.
         :return: String with replaces of FTS part.
         """
         query = match_object.group(1)
@@ -139,7 +141,7 @@ class Resolver:
         Finds "otstats __fts_query__" and transforms it to service form.
         search -> | otstats "{__fts_json__}"
 
-        :param match_object: Re match object with original SPL.
+        :param match_object: Re match object with original OTL.
         :return: String with replaces of FTS part.
         """
         query = match_object.group(1)
@@ -155,7 +157,7 @@ class Resolver:
         Finds "| search __filter_query__" and transforms it to service form.
         | search -> | filter "{__filter_json__}"
 
-        :param match_object: Re match object with original SPL.
+        :param match_object: Re match object with original OTL.
         :return: String with replaces of filter part.
         """
         query = match_object.group(1)
@@ -168,7 +170,7 @@ class Resolver:
         Finds "| search __filter_query__" and transforms it to service form.
         | search -> | filter "{__filter_json__}"
 
-        :param match_object: Re match object with original SPL.
+        :param match_object: Re match object with original OTL.
         :return: String with replaces of filter part.
         """
         query = match_object.group(2)
@@ -179,7 +181,7 @@ class Resolver:
         """
         Transforms "| otfrom datamodel __NAME__" to "| search (index=__INDEX__ source=__SOURCE__)" or something like.
 
-        :param match_object: Re match object with original SPL.
+        :param match_object: Re match object with original OTL.
         :return: String with replaces of datamodel part.
         """
         datamodel_name = match_object.group(1)
@@ -194,35 +196,35 @@ class Resolver:
         """
         Transforms "| otloadjob __SID__" to "| otloadjob subsearch="subsearch___sha256__" ".
 
-        :param match_object: Re match object with original SPL.
+        :param match_object: Re match object with original OTL.
         :return: String with replaces of datamodel part.
         """
         sid = match_object.group(1)
-        fetch = self.db.get_spl(sid, self.src_ip)
+        fetch = self.db.get_otl(sid, self.src_ip)
         if fetch:
-            spl = fetch[0]
-            otloadjob_sha256 = sha256(spl.strip().encode('utf-8')).hexdigest()
+            otl = fetch[0]
+            otloadjob_sha256 = sha256(otl.strip().encode('utf-8')).hexdigest()
             otloadjob_service = f'| otloadjob subsearch=subsearch_{otloadjob_sha256}'
-            self.subsearches[f'subsearch_{otloadjob_sha256}'] = (spl, otloadjob_service)
+            self.subsearches[f'subsearch_{otloadjob_sha256}'] = (otl, otloadjob_service)
             return otloadjob_service
         else:
             raise Exception('Job sid is not found.')
 
-    def create_otloadjob_spl(self, match_object):
+    def create_otloadjob_otl(self, match_object):
         """
-        Transforms '| otloadjob spl="__SPL__" ___token___="__TOKEN__" ___tail___="__SPL__"' to '| otloadjob subsearch="subsearch___sha256__"'.
+        Transforms '| otloadjob otl="__OTL__" ___token___="__TOKEN__" ___tail___="__OTL__"' to '| otloadjob subsearch="subsearch___sha256__"'.
 
-        :param match_object: Re match object with original SPL.
+        :param match_object: Re match object with original OTL.
         :return: String with replaces of datamodel part.
         """
-        spl = match_object.group(1)
+        otl = match_object.group(1)
         token = match_object.group(3)
         tail = match_object.group(5)
-        self.logger.debug(f'SPL: {spl}.')
+        self.logger.debug(f'OTL: {otl}.')
         self.logger.debug(f'Token: {token}.')
         self.logger.debug(f'Tail: {tail}.')
 
-        spl = spl.replace('\\"', '"')
+        otl = otl.replace('\\"', '"')
         if token is None:
             token = ''
         else:
@@ -232,18 +234,18 @@ class Resolver:
         else:
             tail = tail.replace('\\"', '"')
 
-        self.logger.debug(f'Unescaped SPL: {spl}.')
+        self.logger.debug(f'Unescaped OTL: {otl}.')
         self.logger.debug(f'Unescaped Token: {token}.')
         self.logger.debug(f'Unescaped Tail: {tail}.')
 
-        spl = spl + token + tail
-        spl = spl.strip()
-        self.logger.debug(f'Concatenated SPL for subsearch: {spl}.')
+        otl = otl + token + tail
+        otl = otl.strip()
+        self.logger.debug(f'Concatenated OTL for subsearch: {otl}.')
 
-        otloadjob_sha256 = sha256(spl.strip().encode('utf-8')).hexdigest()
+        otloadjob_sha256 = sha256(otl.strip().encode('utf-8')).hexdigest()
         otloadjob_service = f'otloadjob subsearch=subsearch_{otloadjob_sha256}'
-        _otloadjob_service = self.resolve(spl)
-        self.subsearches[f'subsearch_{otloadjob_sha256}'] = (spl, _otloadjob_service['search'][1])
+        _otloadjob_service = self.resolve(otl)
+        self.subsearches[f'subsearch_{otloadjob_sha256}'] = (otl, _otloadjob_service['search'][1])
         return otloadjob_service
 
     def hide_quoted(self, match_object):
@@ -275,48 +277,56 @@ class Resolver:
             self.hidden_no_subsearches[hidden_text_sha256]
         )
 
-    def hide_no_subsearch_commands(self, spl):
+    def hide_no_subsearch_commands(self, otl):
         if self.no_subsearch_commands is not None:
             commands = self.no_subsearch_commands.split(',')
             raw_str = r'\|\s+{command}[^\[]+(\[.+\])'
             patterns = [re.compile(raw_str.format(command=command)) for command in commands]
             self.logger.debug(f'Patterns: {patterns}.')
             for pattern in patterns:
-                spl = pattern.sub(self._hide_no_subsearch_command, spl)
-        return spl
+                otl = pattern.sub(self._hide_no_subsearch_command, otl)
+        return otl
 
-    def return_no_subsearch_commands(self, spl):
-        spl = re.sub(self.no_subsearch_return_pattern, self._return_no_subsearch_command, spl)
-        spl = re.sub(self.quoted_return_pattern, self.return_quoted, spl)
-        return spl
+    def transform_macros(self, match_object):
+        macros_name = match_object.group('macros_name')
+        macros_body = match_object.group('macros_body')
+        macros = Macros(macros_name, macros_body, self.macros_dir)
+        otl = macros.otl.replace('\n', ' ')
+        return otl
 
-    def resolve(self, spl):
+    def return_no_subsearch_commands(self, otl):
+        otl = re.sub(self.no_subsearch_return_pattern, self._return_no_subsearch_command, otl)
+        otl = re.sub(self.quoted_return_pattern, self.return_quoted, otl)
+        return otl
+
+    def resolve(self, otl):
         """
-        Finds and replaces service patterns of original SPL.
+        Finds and replaces service patterns of original OTL.
 
-        :param spl: original SPL.
+        :param otl: original OTL.
         :return: dict with search query params.
         """
+        _otl = re.sub(Macros.macros_pattern, self.transform_macros, otl)
 
-        _spl = re.sub(self.otloadjob_spl_pattern, self.create_otloadjob_spl, spl)
-        _spl = re.sub(self.quoted_hide_pattern, self.hide_quoted, _spl)
-        _spl = self.hide_no_subsearch_commands(_spl)
-        _spl = (_spl, 1)
-        while _spl[1]:
-            _spl = re.subn(self.subsearch_pattern, self.create_subsearch, _spl[0])
+        _otl = re.sub(self.otloadjob_otl_pattern, self.create_otloadjob_otl, _otl)
+        _otl = re.sub(self.quoted_hide_pattern, self.hide_quoted, _otl)
+        _otl = self.hide_no_subsearch_commands(_otl)
+        _otl = (_otl, 1)
+        while _otl[1]:
+            _otl = re.subn(self.subsearch_pattern, self.create_subsearch, _otl[0])
 
-        _spl = re.sub(self.quoted_return_pattern, self.return_quoted, _spl[0])
-        _spl = self.return_no_subsearch_commands(_spl)
+        _otl = re.sub(self.quoted_return_pattern, self.return_quoted, _otl[0])
+        _otl = self.return_no_subsearch_commands(_otl)
 
-        _spl = re.sub(self.otfrom_pattern, self.create_datamodels, _spl)
+        _otl = re.sub(self.otfrom_pattern, self.create_datamodels, _otl)
 
-        _spl = re.sub(self.read_pattern_middle, self.create_read_graph, _spl, flags=re.I)
-        _spl = re.sub(self.read_pattern_start, self.create_read_graph, _spl, flags=re.I)
-        _spl = re.sub(self.otstats_pattern_middle, self.create_otstats_graph, _spl, flags=re.I)
-        _spl = re.sub(self.otstats_pattern_start, self.create_otstats_graph, _spl, flags=re.I)
+        _otl = re.sub(self.read_pattern_middle, self.create_read_graph, _otl, flags=re.I)
+        _otl = re.sub(self.read_pattern_start, self.create_read_graph, _otl, flags=re.I)
+        _otl = re.sub(self.otstats_pattern_middle, self.create_otstats_graph, _otl, flags=re.I)
+        _otl = re.sub(self.otstats_pattern_start, self.create_otstats_graph, _otl, flags=re.I)
 
-        _spl = re.sub(self.otrest_pattern, self.create_otrest, _spl)
-        _spl = re.sub(self.filter_pattern, self.create_filter_graph, _spl, flags=re.I)
-        _spl = re.sub(self.otinputlookup_where_pattern, self.create_inputlookup_filter, _spl)
-        _spl = re.sub(self.otloadjob_id_pattern, self.create_otloadjob_id, _spl)
-        return {'search': (spl, _spl), 'subsearches': self.subsearches}
+        _otl = re.sub(self.otrest_pattern, self.create_otrest, _otl)
+        _otl = re.sub(self.filter_pattern, self.create_filter_graph, _otl, flags=re.I)
+        _otl = re.sub(self.otinputlookup_where_pattern, self.create_inputlookup_filter, _otl)
+        _otl = re.sub(self.otloadjob_id_pattern, self.create_otloadjob_id, _otl)
+        return {'search': (otl, _otl), 'subsearches': self.subsearches}

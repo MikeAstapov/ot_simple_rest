@@ -49,7 +49,7 @@ CREATE TABLE DataModels (
 CREATE TABLE GUISIDs (
     sid TEXT NOT NULL,
     src_ip TEXT NOT NULL,
-    spl TEXT NOT NULL,
+    otl TEXT NOT NULL,
     UNIQUE(sid, src_ip)
 );
 

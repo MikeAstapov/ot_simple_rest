@@ -3,7 +3,7 @@ import logging
 import os.path
 from datetime import datetime
 
-from parsers.spl_resolver.fieldalias import FieldAlias
+from parsers.otl_resolver.fieldalias import FieldAlias
 
 
 class Macros:
@@ -114,8 +114,7 @@ class Macros:
 
         unused_tokens = re.findall(self.token_pattern, otl_pattern)
         for unused_token in unused_tokens:
-            otl_pattern = re.sub(unused_token, '%s=*' % unused_token.replace('$', ''), otl_pattern)
-
+            otl_pattern = re.sub(re.escape(unused_token), '%s=*' % unused_token.replace('$', ''), otl_pattern)
         if aliases:
             del pairs['earliest']
             del pairs['latest']

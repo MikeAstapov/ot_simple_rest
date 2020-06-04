@@ -1,0 +1,27 @@
+| readFile format=parquet path=omds_well_adku_v2
+| search $wellNum$
+| search _time>=$earliest$ AND _time<$latest$
+| ``` Джойним номер куста и ID станции управления по ID скважины ```
+| join type=inner ID [
+  | readFile format=parquet path=oms_v5
+  | fields IDObj, geoNum, Description, IDPad, IDWell
+  | eval geoPad = if(Description="Pad", geoNum, null)
+  | eval idKS = if(Description="controlStation", IDObj, null)
+  | eventstats min(geoPad) as padNum by IDPad
+  | eventstats min(idKS) as IDKs by IDWell
+  | search Description="Well" AND ($padNum$)
+  | rename IDObj as ID
+  | fields ID, padNum, IDKs ]
+| ``` Джойним данные из ШТР по ID скважины ```
+| join _time, ID type=outer [
+  | readFile format=parquet path=omds_well_wellop_v15
+  | search _time>=$earliest$ AND _time<$latest$
+  | table _time, ID, wellop* ]
+| fields _time, ID, adku*, wellop*
+| ``` Джойним данные со станции управления по ID скважины ```
+| join  _time, IDKs type=outer [
+  | readFile format=parquet path=omds_ks_v3
+  | search _time>=$earliest$ AND _time<$latest$
+  | rename ID as IDKs
+  | table _time, IDKs, ks* ]
+| sort _time
