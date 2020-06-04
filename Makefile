@@ -126,6 +126,7 @@ tracker_max_interval = 60\n\
 \n\
 [resolver]\n\
 no_subsearch_commands = foreach,appendpipe\n\
+macros_dir = /opt/otp/ot_simple_rest/macros/\n\
 \n\
 [static]\n\
 use_nginx = True\n\
