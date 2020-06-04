@@ -8,7 +8,7 @@ class TestResolver(unittest.TestCase):
 
     def setUp(self) -> None:
         self.maxDiff = None
-        self.resolver = Resolver.Resolver(['main', 'main1', 'main2'], 0, 0, no_subsearch_commands='foreach,appendpipe', macros_dir='macros/')
+        self.resolver = Resolver.Resolver(['main', 'main1', 'main2'], 0, 0, no_subsearch_commands='foreach,appendpipe', macros_dir='./tests/macros/')
         logging.basicConfig(
             level='DEBUG',
             format="%(asctime)s %(levelname)-s PID=%(process)d %(module)s:%(lineno)d \
@@ -413,7 +413,7 @@ class TestResolver(unittest.TestCase):
     def test_macros_alias_all_args(self):
         from parsers.otl_resolver.fieldalias import FieldAlias
         target = ['adkuLiquidDebit', 'adkuTorLiquidDebit', 'adkuOilDebit', 'wellopLiquidDebitTM', 'wellopLiquidDebitTm', 'wellopCountedOilDebit', 'wellopIzlivLiquidDebitTm', 'wellopDefaultLiquidDebitTM', 'wellopmassomerLiquidDebit', 'wellopCondensatDebit', 'wellopAverageLiquidDebit', 'wellopOilDebitWithoutCond']
-        fieldAlias = FieldAlias('macros/names.csv')
+        fieldAlias = FieldAlias('tests/macros/names.csv')
         result = fieldAlias.get_aliases('debit')
         print('result', result)
         print('target', target)
