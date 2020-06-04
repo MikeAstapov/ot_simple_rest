@@ -55,6 +55,7 @@ make_build: $(COMPONENTS)
 	cp -r sql make_build
 	cp ./dist/ot_simple_rest make_build/ot_simple_rest/
 	cp *.md make_build/ot_simple_rest/
+	cp -r docs/macros make_build/ot_simple_rest/
 
 clean_build:
 	rm -rf make_build
@@ -125,6 +126,7 @@ tracker_max_interval = 60\n\
 \n\
 [resolver]\n\
 no_subsearch_commands = foreach,appendpipe\n\
+macros_dir = /opt/otp/ot_simple_rest/macros/\n\
 \n\
 [static]\n\
 use_nginx = True\n\

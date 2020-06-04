@@ -6,7 +6,7 @@ __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
 __version__ = "0.0.4"
-__maintainer__ = "Anton Khromov"
+__maintainer__ = "Andrey Starchenkov"
 __email__ = "akhromov@ot.ru"
 __status__ = "Production"
 
@@ -89,8 +89,8 @@ class PostgresConnector(PGConnector):
         query_str = "SELECT search FROM DataModels WHERE name = %s;"
         return self.execute_query(query_str, params=(datamodel_name,), fetchall=True)
 
-    def get_spl(self, sid, src_ip):
-        query_str = "SELECT spl FROM GUISIDs WHERE sid=%s AND src_ip=%s;"
+    def get_otl(self, sid, src_ip):
+        query_str = "SELECT otl FROM GUISIDs WHERE sid=%s AND src_ip=%s;"
         return self.execute_query(query_str, params=(sid, src_ip,), fetchall=True)
 
     def check_dispatcher_status(self):

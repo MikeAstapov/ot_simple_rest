@@ -1,0 +1,183 @@
+Metric,Description,Type
+adkuLiquidDebit,Дебит жидкости,3
+adkuWellStatus,ТС Скважины,3
+adkuTorLiquidDebit,ТОР. Дебит жидкости,3
+adkuGazConsumption,Расход газа,3
+adkuOilDebit,Дебит нефти,3
+adkuLiquidConsumption,Расход жидкости,3
+adkuWellParam,Параметр скв.нефт.,3
+adkuEnginePower,Мощность двигателя,3
+adkuAverageT,Средняя температура,3
+adkuBufferP,Давление буферное,3
+adkuEngineCurrent,Ток двигателя,3
+adkuDynamicH,Динамич.уровень,3
+adkuInputT,Температура на пр.насоса,3
+adkuPedOilT,Давление масла ПЭД,3
+adkuAverageP,Среднее давление,3
+adkuLinearP,Давление линейное,3
+adkuUstP,Давление на устье,3
+adkuWaterConsumption,Расход воды,3
+adkuInputP,Давление на пр.насоса,3
+adkuZatrubP,Давление затрубное,3
+adkucontrolStation,Станция управления,3
+Metric,Description,Type
+ksADKUTIGBT5,Температура IGBT5,158
+ksADKUVoltageBA,Напряжение BA(СА),158
+ksADKUTzaboi,Температура в забое,158
+ksADKUVoltageAC,Напряжение AC(АВ),158
+ksADKUDisbalance,Разболансировка,158
+ksADKUOutCurU,Вых.ток ПЧ фазы U,158
+ksADKUDiffCurrent,Ток Id,158
+ksADKUCurrentC,Ток фазы C,158
+ksADKUCurrentB,Ток фазы B,158
+ksADKULoading,Загрузка,158
+ksADKUTIGBT6,Температура IGBT6,158
+ksADKUAnalog1,Аналоговый 1,158
+ksADKUCurrentA,Ток фазы А,158
+ksADKUVoltageB,Фазное напряжение Ub,158
+ksADKUConsumptPower,Потребляемая мощность,158
+ksADKUFullPower,Полная мощность,158
+ksADKUOutCurW,Вых.ток ПЧ фазы W,158
+ksADKUDiffVoltage,Напряжение Ud,158
+ksADKUSupplyVoltage,Напряжения питания,158
+ksADKUTIGBT4,Температура IGBT4,158
+ksADKUTIGBT3,Температура IGBT3,158
+ksADKURotorVelocity,Скорость вращен.ротора,158
+ksADKUVoltageCA,Напряжение CA,158
+ksADKUVoltageC,Фазное напряжение Uc,158
+ksADKUCurrentDisbalance,Дисбаланс токов,158
+ksADKUPowerCoeff,Коэффициент мощности,158
+ksADKUResistance,Сопротивление изоляции,158
+ksADKUVoltageDisbalance,Дисбаланс напряжений,158
+ksADKUPChVoltage,Напряжение ПЧ,158
+ksADKUKSParam,Параметр станц.упр.,158
+ksADKUVoltageCB,Напряжение CB(ВС),158
+ksADKUVoltageAB,Напряжение AB,158
+ksADKUAnalog2,Аналоговый 2,158
+ksADKUOutputVoltage,Выходное напряжение,158
+ksADKUVoltageA,Фазное напряжение Ua,158
+ksADKUTIGBT,Температура IGBT,158
+ksADKUActivePower,Активная мощность,158
+ksADKUConstDir,Напр.звена пост.,158
+ksADKUEnergyConsumption,Расход электроэнергии,158
+ksADKUPumpFullness,Заполнен.насоса,158
+ksADKUOutCurV,Вых.ток ПЧ фазы V,158
+ksADKUComment,Комментарий,158
+ksADKUPzaboi,Давление в забое,158
+ksADKUksStatus,ТС Станции управления,158
+ksADKUTIGBT2,Температура IGBT2,158
+ksADKUVoltageBC,Напряжение BC,158
+ksADKUEngineFreq,Частота вращен.двигателя,158
+ksADKUCurrentА,Ток фазы А,158
+ksADKUEngineT,Температура двигателя,158
+ksADKUPeriod,Период качания,158
+ksADKUConverterT,Температура преобраз.,158
+ksADKUTMPNVoltage,Напряжение ТМПН,158
+ksADKUTurboFreq,Частота турб.вращения,158
+Metric,Description,Type
+gzuADKUTcollector,Температура в коллекторе,2
+gzuADKUWater,Обводненность нефти,2
+gzuADKUInputLiquidP,Давление жидк.на входе,2
+gzuADKUBP2OutputP,БП2.Давление на выходе,2
+gzuADKUTizmCam,Т в измерительной камере,2
+gzuADKUTair,Температура воздуха,2
+gzuADKUPperepadFilter,Перепад Р на фильтре,2
+gzuADKUGZUParam,Параметр ГЗУ,2
+gzuADKUhydrostatP1,Гидростат. давление  1,2
+gzuADKUTseparator,Температура в сепараторе,2
+gzuADKUPizbytSep,Избыт.давление в сепар.,2
+gzuADKUPerepadP,Перепад давления,2
+gzuADKUhydrostatP0,Гидростат. давление  0,2
+gzuADKUGZUStatus,ТС ГЗУ,2
+gzuADKUPseparator,Давление в сепараторе,2
+gzuADKUhydrostatP2,Гидростат. давление  2,2
+gzuADKUPdiffer,Дифференц.давление,2
+gzuADKUBP1OutputP,БП1.Давление на выходе,2
+gzuADKUPizbyt,Избытоное давление,2
+gzuADKUPcollector,Давление в коллекторе,2
+Metric,Description,Type
+wellopCountedOil,Добыча нефти расчетная,3
+wellopEnergyConsumpt,Удельный расход электроэнергии,3
+wellopCurrentDbTm,"Дисбаланс тока (ТМ), %",3
+wellopLiquidDensityTm,Плотность жидкости (ТМ ),3
+wellopPumpCurrentPower,Сила тока ЭЦН,3
+wellopIsolationResistance,Сопротивление изоляции,3
+wellopLiquidDebitTM,Дебит жидкости (ТМ),3
+wellopPumpInputP,Давление на приеме насоса,3
+wellopVoltageBCTm,Напряжение BC (ТМ),3
+wellopPzaboyFromPinput,Давление забойное от Pпр,3
+wellopPumpFreq,Частота вращения ЭЦН,3
+wellopVolumeWater,Обводненность объемная,3
+wellopLiquidDebitTm,Дебит жидкости (ТМ),3
+wellopTMSStatus,Состояние ТМС,3
+wellopCountedGasFactor,Газовый фактор рабочий (расч.),3
+wellopWaterTM,Обводненность (ТМ),3
+wellopLinearP,Давление в линии,3
+wellopCountedOilDebit,Дебит нефти расчетный,3
+wellopProductCoeff,Коэффициент продуктивности,3
+wellopPumpCurrentFreq,Частота тока ЭЦН,3
+wellopGzuP,Давление на ГЗУ,3
+wellopIzlivLiquidDebitTm,Дебит жидкости ТМ с учетом излива,3
+wellopCurrentBTm,Ток фазы В (ТМ),3
+wellopLinearPTm,Давление линейное (ТМ),3
+wellopCountedHdyn,Динамический уровень расчетный,3
+wellopPzaboyFromHdin,Давление забойное от Hд,3
+wellopCountedGas,Добыча попутного газа (расч.),3
+wellopEngineLoadingTm,Загузка ПЭД (ТМ),3
+wellopKsEnergyTm,Электроэнергия со СУ (ТМ),3
+wellopResponceTM,Приемистость ТМ,3
+wellopPadBgP,Давление на БГ куста,3
+wellopEngineLoading,Загрузка ПЭД,3
+wellopVoltageDbTm,"Дисбаланс напряжения (ТМ), %",3
+wellopDefaultLiquidDebitTM,Дебит жидкости исходный по ТМ,3
+wellopOisOperationTime,Время работы ОИС,3
+wellopUKIStatus,Состояние УКИ,3
+wellopHdin,Динамический уровень,3
+wellopKVCh,КВЧ,3
+wellopKnsBgP,Давление на БГ КНС,3
+wellopHstatic,Статический уровень жидкости,3
+wellopPstat,Статическое давление,3
+wellopWaterHAL,Обводненность (ХАЛ),3
+wellopEngineTTm,Температура двигателя ЭЦН (ТМ),3
+wellopPumpInputT,Температура на приёме насоса,3
+wellopPzatrIfHstat,Затрубное давление при статическом уровне,3
+wellopmassomerLiquidDebit,Дебит жидкости среднесуточный (масса),3
+wellopLiquidTTm,Температура жидкости (ТМ),3
+wellopPkuEnergyTm,Электроэнергия со счетчика (ТМ),3
+wellopVoltageACTm,Напряжение CA (ТМ),3
+wellopIsolationResistanceTm,Сопротивление изоляции (ТМ),3
+wellopPbuffer,Давление буферное,3
+wellopPbuff,Давление буферное,3
+wellopEngineT,Температура ПЭД,3
+wellopPumpCurrent,Сила тока ЭЦН,3
+wellopHdynamic,Динамический уровень,3
+wellopCurrentATm,Ток фазы A (ТМ),3
+wellopPumpCurrentTm,Сила тока ЭЦН (ТМ),3
+wellopCondensatDebit,Дебит кондесата,3
+wellopReactVPP,Реагирующая ВПП,3
+wellopPlastRaspredPart,% распределения по пластам,3
+wellopCDNGCountedPzaboy,"Давление забойное, рассчитанное в ЦДНГ",3
+wellopPowerCoeffTm,Коэффициент мощности (ТМ),3
+wellopTechnAverageResponse,"Приемистость среднесуточная, технологическая",3
+wellopVoltageABTm,Напряжение AB (ТМ),3
+wellopPumpCurrentFreqTm,Частота тока ЭЦН (ТМ),3
+wellopEngineLoadingTM,Загузка ПЭД (ТМ),3
+wellopCurrentCTm,Ток фазы C (ТМ),3
+wellopControllerEnergyConsumpt,Удельный расход электроэнергии с контроллера,3
+wellopActivePowerTm,"Активная мощность (ТМ), Вт",3
+wellopAggGas,Добыча попутного газа накопленная,3
+wellopDstutz,Диаметр штуцера,3
+wellopAverageLiquidDebit,Дебит жидкости среднесуточный,3
+wellopDefaultResponseTM,Приемистость исходная по ТМ,3
+wellopPumpInputPTm,Давление на входе ЭЦН (ТМ),3
+wellopWactCountedEnergy,Электроэнергия расчетная от W акт,3
+wellopAggOil,Добыча нефти накопленная,3
+wellopPzatrub,Затрубное давление,3
+wellopDshtutz,Диаметр штуцера,3
+wellopOilDebitWithoutCond,Дебит нефти (без конденсата),3
+wellopEngineInputPTm,Давление на входе ЭЦН (ТМ),3
+wellopMode,Режим работы,3
+wellopUstavka,Уставка защиты от срыва подачи,3
+wellopOperationTimeTm,Время работы (ТМ),3
+wellopPumpFreqTm,Частота тока ЭЦН (ТМ),3
+wellopOilDensityTm,Плотность нефти (ТМ ),3

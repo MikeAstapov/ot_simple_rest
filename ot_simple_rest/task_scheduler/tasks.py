@@ -10,7 +10,7 @@ __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = []
 __license__ = ""
 __version__ = "0.0.1"
-__maintainer__ = "Anton Khromov"
+__maintainer__ = "Andrey Starchenkov"
 __email__ = "akhromov@ot.ru"
 __status__ = "Production"
 
