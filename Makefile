@@ -55,6 +55,7 @@ make_build: $(COMPONENTS)
 	cp -r sql make_build
 	cp ./dist/ot_simple_rest make_build/ot_simple_rest/
 	cp *.md make_build/ot_simple_rest/
+	cp -r docs/macros make_build/ot_simple_rest/
 
 clean_build:
 	rm -rf make_build
