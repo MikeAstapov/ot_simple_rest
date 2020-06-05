@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.2] - 2020-06-05
+### Added
+- Split script for create and drop DB.
+### Fixed
+- Fix eva.sql script for add permission on default group
+
 ## [1.3.1] - 2020-06-04
 ### Fixed
 - Connection target db host for tests.

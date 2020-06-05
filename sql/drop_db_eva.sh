@@ -2,5 +2,4 @@
 
 sudo -u postgres psql << EOF
 drop database eva;
-drop database dispatcher;
 EOF
