@@ -74,7 +74,7 @@ class PGConnector:
                     break
         else:
             with_transaction = True
-
+        self.logger.debug('Connection: %s' % conn)
         cur = conn.cursor()
 
         try:
