@@ -20,7 +20,7 @@ __status__ = "Production"
 
 class SaveOtRest(tornado.web.RequestHandler):
     """
-    Saves results of OT.Simple Splunk app's otrest command to separate cache file as a result of normal search query.
+    Saves results of OT.Simple OTP app's otrest command to separate cache file as a result of normal search query.
     """
 
     logger = logging.getLogger('osr')
@@ -71,9 +71,9 @@ class SaveOtRest(tornado.web.RequestHandler):
     def check_cache(self, cache_ttl, original_otl, tws, twf, field_extraction, preview):
         """
         It checks if the same query Job is already finished and it's cache is ready to be downloaded. This way it will
-        return it's id for OT.Simple Splunk app JobLoader to download it's cache.
+        return it's id for OT.Simple OTP app JobLoader to download it's cache.
 
-        :param original_otl: Original SPL query.
+        :param original_otl: Original OTP query.
         :type original_otl: String.
         :param cache_ttl: Time To Life of cache.
         :param tws: Time Window Start.
@@ -103,7 +103,7 @@ class SaveOtRest(tornado.web.RequestHandler):
         original_otl = request['original_otl'][0].decode()
         cache_ttl = request['cache_ttl'][0].decode()
 
-        self.logger.debug('Original SPL: %s.' % original_otl)
+        self.logger.debug('Original OTP: %s.' % original_otl)
 
         if self.validate():
             # Check for cache.
@@ -111,10 +111,10 @@ class SaveOtRest(tornado.web.RequestHandler):
 
             if cache_id is None:
 
-                sha_spl = 'otrest%s' % original_otl.split('otrest')[1]
+                sha_otl = 'otrest%s' % original_otl.split('otrest')[1]
                 data = request['data'][0].decode()
                 self.logger.debug('Data: %s.' % data)
-                service_otl = '| otrest subsearch=subsearch_%s' % sha256(sha_spl.encode()).hexdigest()
+                service_otl = '| otrest subsearch=subsearch_%s' % sha256(sha_otl.encode()).hexdigest()
 
                 # Registers new Job.
                 cache_id, creating_date = self.db.add_external_job(original_otl=original_otl,

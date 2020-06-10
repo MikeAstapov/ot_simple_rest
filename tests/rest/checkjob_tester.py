@@ -21,7 +21,7 @@ class CheckjobTester:
         self.db = db
         self.config = config
 
-        self._current_spl = None
+        self._current_otl = None
 
         self.request_data = {
             'sid': None,
@@ -34,8 +34,8 @@ class CheckjobTester:
             'preview': False
         }
 
-    def set_query(self, spl_query):
-        self._current_spl = spl_query
+    def set_query(self, otl_query):
+        self._current_otl = otl_query
 
     def tick_dispatcher(self):
         query_str = f"""INSERT INTO Ticks (applicationId) VALUES('test_app') 
@@ -63,7 +63,7 @@ class CheckjobTester:
 
     def add_job_with_cache(self):
         self.tick_dispatcher()
-        job_id, _ = self.db.add_job(search=[self.original_otl, self._current_spl], subsearches=[], tws=0,
+        job_id, _ = self.db.add_job(search=[self.original_otl, self._current_otl], subsearches=[], tws=0,
                                     twf=0, cache_ttl=60, username='tester', field_extraction=False, preview=False)
         self.db.add_to_cache(original_otl=self.original_otl, tws=0, twf=0, cache_id=job_id, expiring_date=1)
         return job_id
@@ -76,7 +76,7 @@ class CheckjobTester:
 
     @property
     def original_otl(self):
-        original_otl = re.sub(r"\|\s*ot\s[^|]*\|", "", self._current_spl)
+        original_otl = re.sub(r"\|\s*ot\s[^|]*\|", "", self._current_otl)
         original_otl = re.sub(r"\|\s*simple[^\"]*", "", original_otl)
         original_otl = original_otl.replace("oteval", "eval")
         original_otl = original_otl.strip()
@@ -84,7 +84,7 @@ class CheckjobTester:
 
     def send_request(self):
         data = self.request_data
-        data['original_otl'] = self._current_spl
+        data['original_otl'] = self._current_otl
         data['sid'] = str(uuid.uuid4())
         resp = requests.get(f'http://{self.config["host"]}:{self.config["port"]}/api/checkjob', params=data)
         resp.raise_for_status()
@@ -92,9 +92,9 @@ class CheckjobTester:
 
     def _cleanup(self):
         del_ticks_query = f"""DELETE FROM Ticks WHERE applicationId='test_app';"""
-        del_spl_query = f"""DELETE FROM OTLQueries WHERE original_otl='{self.original_otl}';"""
+        del_otl_query = f"""DELETE FROM OTLQueries WHERE original_otl='{self.original_otl}';"""
         del_cache_query = f"""DELETE FROM cachesdl WHERE original_otl='{self.original_otl}';"""
-        for query in [del_cache_query, del_ticks_query, del_spl_query]:
+        for query in [del_cache_query, del_ticks_query, del_otl_query]:
             self.db.execute_query(query, with_commit=True, with_fetch=False)
 
     def test__no_job(self):

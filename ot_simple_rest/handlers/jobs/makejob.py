@@ -19,12 +19,12 @@ __status__ = "Production"
 
 class MakeJob(BaseHandler):
     """
-    This handler is the beginning of a long way of each SPL/OTL search query in OT.Simple Platform.
+    This handler is the beginning of a long way of each OTP/OTL search query in OT.Simple Platform.
     The algorithm of search query's becoming to Dispatcher's Job is next:
 
-    1. Remove OT.Simple Splunk app service data from SPL query.
+    1. Remove OT.Simple OTP app service data from OTP query.
     2. Get Role Model information about query and user.
-    3. Get service OTL form of query from original SPL.
+    3. Get service OTL form of query from original OTP.
     4. Check for Role Model Access to requested indexes.
     5. Make searches queue based on subsearches of main query.
     6. Check if the same (original_otl, tws, twf) query Job is already calculated and has ready cache.
@@ -93,7 +93,7 @@ class MakeJob(BaseHandler):
         """
         It checks Role Model if user has access to requested indexes.
 
-        :param indexes: Requested indexes parsed from SPL query.
+        :param indexes: Requested indexes parsed from OTP query.
         :type indexes: List.
         :return: Boolean access flag and resolved indexes.
         """

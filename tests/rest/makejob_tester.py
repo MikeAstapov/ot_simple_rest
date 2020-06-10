@@ -23,7 +23,7 @@ class MakejobTester:
         self.db = db
         self.config = config
 
-        self._current_spl = None
+        self._current_otl = None
         self.cookies = None
 
         self.request_data = {
@@ -37,8 +37,8 @@ class MakejobTester:
             'preview': False
         }
 
-    def set_query(self, spl_query):
-        self._current_spl = spl_query
+    def set_query(self, otl_query):
+        self._current_otl = otl_query
 
     def update_job_status(self, status, job_id):
         query_str = f"""UPDATE OTLQueries SET status='{status}' WHERE id={job_id};"""
@@ -46,7 +46,7 @@ class MakejobTester:
 
     @property
     def original_otl(self):
-        original_otl = re.sub(r"\|\s*ot\s[^|]*\|", "", self._current_spl)
+        original_otl = re.sub(r"\|\s*ot\s[^|]*\|", "", self._current_otl)
         original_otl = re.sub(r"\|\s*simple[^\"]*", "", original_otl)
         original_otl = original_otl.replace("oteval", "eval")
         original_otl = original_otl.strip()
@@ -72,10 +72,10 @@ class MakejobTester:
             return self.db.execute_query(query_str, fetchall=True)
 
     def _cleanup(self):
-        del_spl_query = f"""DELETE FROM OTLQueries WHERE original_otl='{self.original_otl}';"""
+        del_otl_query = f"""DELETE FROM OTLQueries WHERE original_otl='{self.original_otl}';"""
         del_cache_query = f"""DELETE FROM cachesdl WHERE original_otl='{self.original_otl}';"""
         del_GUISIDs_query = """DELETE FROM GUISIDs;"""
-        for query in [del_spl_query, del_cache_query, del_GUISIDs_query]:
+        for query in [del_otl_query, del_cache_query, del_GUISIDs_query]:
             self.db.execute_query(query, with_commit=True, with_fetch=False)
 
     def auth(self):
