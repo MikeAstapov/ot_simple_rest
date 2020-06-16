@@ -16,12 +16,12 @@ __status__ = "Production"
 
 class CheckJob(tornado.web.RequestHandler):
     """
-    This handler helps OT.Simple Splunk app JobLoader to check Job's status and then (optionally)
+    This handler helps OT.Simple OTP app JobLoader to check Job's status and then (optionally)
     to download results from ramcache.
 
-    1. Remove OT.Simple Splunk app service data from SPL query.
+    1. Remove OT.Simple OTP app service data from OTP query.
     2. Get Job's status based on (original_otl, tws, twf) parameters.
-    3. Check Job's status and return it to OT.Simple Splunk app if it is not still ready.
+    3. Check Job's status and return it to OT.Simple OTP app if it is not still ready.
     4. Load results of Job from cache for transcending.
     5. Return Job's status or results.
     """

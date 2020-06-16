@@ -32,12 +32,12 @@ class TestCheckJob(unittest.TestCase):
     config.set('db_conf', 'password', 'password')
     config.set('db_conf', 'host', 'localhost')
 
-    spl = '| ot ttl=60 | makeresults count=10 | simple'
+    otl = '| ot ttl=60 | makeresults count=10 | simple'
     pool = ThreadedConnectionPool(2, 4, **dict(config['db_conf']))
     db = PostgresConnector(pool)
 
     tester = CheckjobTester(db, dict(config['rest_conf']))
-    tester.set_query(spl)
+    tester.set_query(otl)
 
     def test__no_job(self):
         self.assertTrue(self.tester.test__no_job())
@@ -83,12 +83,12 @@ class TestMakeJob(unittest.TestCase):
     config.set('db_conf', 'password', 'password')
     config.set('db_conf', 'host', 'localhost')
 
-    spl = '| ot ttl=60 | makeresults count=10 | simple'
+    otl = '| ot ttl=60 | makeresults count=10 | simple'
     pool = ThreadedConnectionPool(2, 4, **dict(config['db_conf']))
     db = PostgresConnector(pool)
 
     tester = MakejobTester(db, dict(config['rest_conf']))
-    tester.set_query(spl)
+    tester.set_query(otl)
 
     def test__no_job(self):
         self.assertTrue(self.tester.test__no_job())

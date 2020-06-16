@@ -18,7 +18,7 @@ __status__ = "Production"
 
 class MakeDataModels(tornado.web.RequestHandler):
     """
-    This handler saves Role Model gotten from Splunk's API to OT.Simple Dispatcher's one.
+    This handler saves Role Model gotten from OTP's API to OT.Simple Dispatcher's one.
     """
 
     logger = logging.getLogger('osr')

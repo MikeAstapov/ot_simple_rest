@@ -81,8 +81,8 @@ class Job:
     def check_cache(self, cache_ttl, original_otl, tws, twf, field_extraction, preview):
         """
         It checks if the same query Job is already finished and it's cache is ready to be downloaded. This way it will
-        return it's id for OT.Simple Splunk app JobLoader to download it's cache.
-        :param original_otl: Original SPL query.
+        return it's id for OT.Simple OTP app JobLoader to download it's cache.
+        :param original_otl: Original OTP query.
         :type original_otl: String.
         :param cache_ttl: Time To Life of cache.
         :param tws: Time Window Start.
@@ -108,7 +108,7 @@ class Job:
         """
         It checks if the same query Job is already running. This way it will return id of running job and will not
         register a new one.
-        :param original_otl: Original SPL query.
+        :param original_otl: Original OTP query.
         :type original_otl: String.
         :param tws: Time Window Start.
         :type tws: Integer.
@@ -128,7 +128,7 @@ class Job:
 
     def get_request_params(self):
         request = self.request.arguments
-        # Remove OT.Simple Splunk app service data from SPL query.
+        # Remove OT.Simple OTP app service data from OTP query.
         original_otl = request["original_otl"][0].decode()
         cache_ttl = re.findall(r"\|\s*ot[^|]*ttl\s*=\s*(\d+)", original_otl)
         cache_ttl = int(cache_ttl[0]) if cache_ttl else int(request['cache_ttl'][0])
@@ -178,34 +178,34 @@ class Job:
         sid = request['sid'][0].decode()
 
         resolver = Resolver(self.indexes, tws, twf, self.db, sid, self.request.remote_ip,
-                            self.resolver_conf.get('no_subsearch_commands'))
-        resolved_spl = resolver.resolve(original_otl)
-        self.logger.debug(f"Resolved_spl: {resolved_spl}", extra={'hid': self.handler_id})
+                            self.resolver_conf.get('no_subsearch_commands'), macros_dir=self.resolver_conf.get('macros_dir'))
+        resolved_otl = resolver.resolve(original_otl)
+        self.logger.debug(f"Resolved_otl: {resolved_otl}", extra={'hid': self.handler_id})
 
         # Make searches queue based on subsearches of main query.
         searches = []
-        for search in resolved_spl['subsearches'].values():
+        for search in resolved_otl['subsearches'].values():
             if ('otrest' or 'otloadjob') in search[0]:
                 continue
             searches.append(search)
 
         # Append main search query to the end.
-        searches.append(resolved_spl['search'])
+        searches.append(resolved_otl['search'])
         self.logger.debug(f"Searches: {searches}", extra={'hid': self.handler_id})
         self.resolved_data = {'searches': searches, 'tws': tws, 'twf': twf, 'cache_ttl': cache_ttl,
                               'field_extraction': field_extraction, 'username': username, 'preview': preview,
-                              'resolved_spl': resolved_spl, 'original_otl': original_otl, 'sid': sid}
+                              'resolved_otl': resolved_otl, 'original_otl': original_otl, 'sid': sid}
 
     async def start_make(self):
         """
-        It checks for the same query Jobs and returns id for loading results to OT.Simple Splunk app.
+        It checks for the same query Jobs and returns id for loading results to OT.Simple OTP app.
         :return:
         """
         cache_ttl = self.resolved_data['cache_ttl']
         tws, twf = self.resolved_data['tws'], self.resolved_data['twf']
         field_extraction = self.resolved_data['field_extraction']
         preview = self.resolved_data['preview']
-        resolved_spl = self.resolved_data['resolved_spl']
+        resolved_otl = self.resolved_data['resolved_otl']
         original_otl = self.resolved_data['original_otl']
         username = self.resolved_data['username']
         sid = self.resolved_data['sid']
@@ -230,7 +230,7 @@ class Job:
                     if 'subsearch=' in self.search[1]:
                         _subsearches = re.findall(r'subsearch=([\w\d]+)', self.search[1])
                         for each in _subsearches:
-                            subsearches.append(resolved_spl['subsearches'][each][0])
+                            subsearches.append(resolved_otl['subsearches'][each][0])
 
                     # Register new Job in Dispatcher DB.
                     self.logger.debug(f'Search: {self.search[1]}. Subsearches: {subsearches}.',
@@ -254,7 +254,7 @@ class Job:
                 response = {"status": "fail", "error": "Validation failed"}
 
         else:
-            # Return id of the same already calculated Job with ready cache. Ot.Simple Splunk app JobLoader will
+            # Return id of the same already calculated Job with ready cache. Ot.Simple OTP app JobLoader will
             # request it to download.
             response = {"_time": creating_date, "status": "success", "job_id": cache_id}
 
@@ -292,7 +292,7 @@ class Job:
         # Check if such Job presents.
         if job_status_data:
             cid, status, expiring_date, msg = job_status_data
-            # Step 3. Check Job's status and return it to OT.Simple Splunk app if it is not still ready.
+            # Step 3. Check Job's status and return it to OT.Simple OTP app if it is not still ready.
             if status == 'finished' and expiring_date:
                 if with_load:
                     # Step 4. Load results of Job from cache for transcending.

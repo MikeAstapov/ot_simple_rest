@@ -31,7 +31,7 @@ class DbTasksSchduler:
 
     def delete_tokens(self, token_ids):
         token_ids = tuple(token_ids)
-        self.db_conn.execute_query("""DELETE FROM session WHERE id IN %s;""", (token_ids,),
+        self.db_conn.execute_query("""DELETE FROM session WHERE id IN %s;""" % (token_ids,),
                                    with_commit=True, with_fetch=False)
 
     async def scheduler(self):

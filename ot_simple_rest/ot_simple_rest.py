@@ -101,7 +101,7 @@ def set_logger(loglevel, logfile, logger_name):
 def main():
     """
     Main function with config and starter code. It starts TORNADO server with custom handlers which register, check and
-    load Job's results from ramcache to OT.Simple Splunk app.
+    load Job's results from ramcache to OT.Simple OTP app.
     :return:
     """
 

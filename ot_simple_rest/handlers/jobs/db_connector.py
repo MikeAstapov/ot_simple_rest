@@ -61,7 +61,7 @@ class PostgresConnector(PGConnector):
         return job_id, creating_date
 
     def add_sid(self, *, sid, remote_ip, original_otl):
-        query_str = "INSERT INTO GUISIDs (sid, src_ip, spl) VALUES (%s, %s, %s);"
+        query_str = "INSERT INTO GUISIDs (sid, src_ip, otl) VALUES (%s, %s, %s);"
         stm_tuple = (sid, remote_ip, original_otl)
         self.logger.info(query_str % stm_tuple)
         self.execute_query(query_str, params=stm_tuple, with_commit=True, with_fetch=False)
