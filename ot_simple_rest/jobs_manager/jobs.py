@@ -178,7 +178,7 @@ class Job:
         sid = request['sid'][0].decode()
 
         resolver = Resolver(self.indexes, tws, twf, self.db, sid, self.request.remote_ip,
-                            self.resolver_conf.get('no_subsearch_commands'))
+                            self.resolver_conf.get('no_subsearch_commands'), macros_dir=self.resolver_conf.get('macros_dir'))
         resolved_otl = resolver.resolve(original_otl)
         self.logger.debug(f"Resolved_otl: {resolved_otl}", extra={'hid': self.handler_id})
 
