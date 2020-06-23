@@ -883,10 +883,10 @@ class PostgresConnector:
                     self.save_cascade(question=q, quiz_id=quiz_id, sid=sid, conn=conn)
                 else:
                     self.execute_query(
-                        "INSERT INTO question (text, type, is_sign, description, label, sid, quiz_id) "
-                        "VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id;",
+                        "INSERT INTO question (text, type, is_sign, description, label, sid, quiz_id, catalog_id) "
+                        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;",
                         conn=conn, params=(q['text'], q['type'], q.get('is_sign', False),
-                                           q.get('description'), q.get('label'), sid, quiz_id))
+                                           q.get('description'), q.get('label'), sid, quiz_id, q['catalog_id']))
         return quiz_id
 
     def get_quiz_questions(self, quiz_ids):
