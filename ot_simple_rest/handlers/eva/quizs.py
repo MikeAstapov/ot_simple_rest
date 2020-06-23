@@ -169,7 +169,7 @@ class FilledQuizExportHandler(BaseHandler):
         filename = f'{quiz_name}_{filled}.xlsx'
         filepath = os.path.join(self.static_conf['static_path'], 'xlsx', filename)
         if os.path.exists(filepath):
-            return self.write(f'/xlsx/{filename}')
+            return self.write(f'/static/xlsx/{filename}')
 
         wb = Workbook()
         ws = wb.active
@@ -187,7 +187,7 @@ class FilledQuizExportHandler(BaseHandler):
                 c.value = v
 
         wb.save(filepath)
-        self.write(f'/xlsx/{filename}')
+        self.write(f'/static/xlsx/{filename}')
 
 
 class QuizExportJsonHandler(BaseHandler):

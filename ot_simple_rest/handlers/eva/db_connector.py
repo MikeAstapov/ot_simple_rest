@@ -955,7 +955,7 @@ class PostgresConnector:
                 'left join multianswer on multianswer.id=filled_quiz.id and multianswer.sid=question.sid '
                 'left join cataloganswer on cataloganswer.id=filled_quiz.id and cataloganswer.sid=question.sid '
                 'left join dateanswer on dateanswer.id=filled_quiz.id and dateanswer.sid=question.sid '
-                'where filled_quiz.id = %s order by question.sid;',
+                'where filled_quiz.quiz_id = %s order by question.sid;',
                 params=(quiz.id,), fetchall=True, as_obj=True
             )
 
