@@ -239,7 +239,7 @@ class QuizExportJsonHandler(BaseHandler):
 
                 archive.add(filepath, filename)
             archive.close()
-        self.write(f'storage/{_dirname}/{archive_name}')
+        self.write(f'static/storage/{_dirname}/{archive_name}')
 
 
 class QuizImportJsonHandler(BaseHandler):
