@@ -893,7 +893,7 @@ class PostgresConnector:
         questions_data = self.execute_query(
             "select question.id as id, sid, text, description, type, is_sign, catalog_id, "
             "label, quiz.name as quiz_name, quiz.id as qid from question inner join quiz on quiz_id=quiz.id "
-            "where question.quiz_id in %s;", params=(tuple(quiz_ids),), fetchall=True,
+            "where question.quiz_id in %s order by sid;", params=(tuple(quiz_ids),), fetchall=True,
             as_obj=True)
 
         for question in questions_data:
@@ -919,6 +919,7 @@ class PostgresConnector:
             f_quizs = self.execute_query(
                 "SELECT quiz_id as id, filler, fill_date FROM filled_quiz WHERE id = %s limit %s offset %s;",
                 params=(quiz_id, limit, offset), fetchall=True, as_obj=True)
+            answer_id = quiz_id
             quiz_id = f_quizs[0].id if f_quizs else None
             quiz_name = self.execute_query("SELECT name FROM quiz WHERE id = %s;", params=(quiz_id,), as_obj=True)
         # Get filled quizs for current base quiz
@@ -955,7 +956,7 @@ class PostgresConnector:
                 'left join multianswer on multianswer.id=filled_quiz.id and multianswer.sid=question.sid '
                 'left join cataloganswer on cataloganswer.id=filled_quiz.id and cataloganswer.sid=question.sid '
                 'left join dateanswer on dateanswer.id=filled_quiz.id and dateanswer.sid=question.sid '
-                'where filled_quiz.quiz_id = %s order by question.sid;',
+                'where filled_quiz.id = %s '+('AND filled_quiz.quiz_id = %s'%answer_id if current else '')+' order by question.sid;',
                 params=(quiz.id,), fetchall=True, as_obj=True
             )
 
