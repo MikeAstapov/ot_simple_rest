@@ -33,6 +33,7 @@ pycparser  2.20
 PyJWT  1.7.1  
 six  1.12.0  
 tornado  6.0.2  
+openpyxl 3.0.3
 
 ## Contributing
 
