@@ -94,8 +94,9 @@ class QuizsTester:
             self.send_request(method='POST', endpoint='/qapi/quiz/create', data=data)
             quiz_from_db = self.db.execute_query("SELECT id FROM quiz;", as_obj=True)
             edited_data = {'id': quiz_from_db.id, 'name': 'edited_quiz', 'questions': [
-                {'type': 'bool', 'sid': 1, 'text': 'question_1', 'is_sign': True,
-                 'label': 'sign_question'}]}
+                {'type': 'bool', 'sid': 1, 'text': 'question_1', 'is_sign': True, 'description': None,
+                 'catalog_id': None, 'label': 'sign_question'}]}
+
             self.send_request(method='PUT', endpoint=f'/qapi/quiz/edit', data=edited_data)
             edited_quiz = self.db.execute_query("SELECT id, name FROM quiz;", as_obj=True)
             questions = self.db.execute_query("SELECT type, text, is_sign, label FROM question "
