@@ -131,6 +131,7 @@ macros_dir = /opt/otp/ot_simple_rest/macros/\n\
 [static]\n\
 use_nginx = True\n\
 base_url = cache/{}\n\
+static_path = /opt/otp/static/\n\
 \n\
 [user]\n\
 check_index_access = False\n\
