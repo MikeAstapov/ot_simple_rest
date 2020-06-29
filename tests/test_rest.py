@@ -192,10 +192,11 @@ class TestEva(unittest.TestCase):
     config.set('eva_db_conf', 'user', 'tester')
     config.set('eva_db_conf', 'password', 'password')
     config.set('eva_db_conf', 'host', 'localhost')
+    config.set('static', 'static_path', '/opt/otp/static/')
 
     eva_pool = ThreadedConnectionPool(2, 4, **dict(config['eva_db_conf']))
     eva_db = PostgresConnector(eva_pool)
-    tester = EvaTester(dict(config['rest_conf']), eva_db)
+    tester = EvaTester(dict(config), eva_db)
 
     def test__auth(self):
         self.assertTrue(self.tester.test__auth())
@@ -301,6 +302,18 @@ class TestEva(unittest.TestCase):
 
     def test__get_group_dashs(self):
         self.assertTrue(self.tester.test__get_group_dashs())
+
+    def test__import_dash_single(self):
+        self.assertTrue(self.tester.test__import_dash_single())
+
+    def test__import_dash_multi(self):
+        self.assertTrue(self.tester.test__import_dash_multi())
+
+    def test__export_dash_single(self):
+        self.assertTrue(self.tester.test__export_dash_single())
+
+    def test__export_dash_multi(self):
+        self.assertTrue(self.tester.test__export_dash_multi())
 
 
 class TestQuizs(unittest.TestCase):
