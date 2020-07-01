@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.4.0] - 2020-06-16
 ### Added
 - Quizs features
+- Import export dashboards
 
 ## [1.3.3] - 2020-06-16
 ### Fixed
