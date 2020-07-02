@@ -192,6 +192,7 @@ class TestEva(unittest.TestCase):
     config.set('eva_db_conf', 'user', 'tester')
     config.set('eva_db_conf', 'password', 'password')
     config.set('eva_db_conf', 'host', 'localhost')
+    config.add_section('static')
     config.set('static', 'static_path', '/opt/otp/static/')
 
     eva_pool = ThreadedConnectionPool(2, 4, **dict(config['eva_db_conf']))
