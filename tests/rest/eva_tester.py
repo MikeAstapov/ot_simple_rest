@@ -1,5 +1,6 @@
 import requests
 import tarfile
+import json
 
 
 class EvaTester:
@@ -572,7 +573,7 @@ class EvaTester:
                b'\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x58\x8D\x33\xEA\x19\x22\x55\x00\x28\x00\x00'
 
         data_body = [{'name': 'test_dash_imp1', 'body': '{"store":{"qqq":"ddd1"}}'},
-                {'name': 'test_dash_imp2', 'body': '{"store":{"qqq":"ddd2"}}'}]
+                     {'name': 'test_dash_imp2', 'body': '{"store":{"qqq":"ddd2"}}'}]
 
         try:
             data_for_group = {'name': 'test_imp_group', 'color': '#332211'}
@@ -595,3 +596,149 @@ class EvaTester:
             self._cleanup()
         return True
 
+    def test__import_dash_group_single(self):
+        data_binary = b'\x1F\x8B\x08\x08\xCB\xDF\xFD\x5E\x02\xFF\x32\x30\x32\x30\x30\x37\x30\x32\x31\x36\x32\x33' \
+                      b'\x32\x33\x2E\x65\x76\x61\x2E\x67\x72\x6F\x75\x70\x00\xED\xD4\x3D\x0B\xC2\x30\x10\x80\xE1' \
+                      b'\xFC\x94\x10\x57\xA1\x4D\x5B\x5B\x70\x73\xB0\x9B\x9B\x9B\x88\x14\x53\x6A\x41\x5B\xE8\x07' \
+                      b'\x08\xE2\x7F\x37\xA9\x5B\x07\x9D\x5A\x11\xDE\x67\xB9\xDC\xE5\x32\x1C\x07\x09\x3C\x63\x8C' \
+                      b'\x98\x96\x6F\xC5\x51\x34\x44\x6B\x1C\x87\xB3\x0E\xE3\x24\x09\x57\x49\xA2\x43\xE1\x6B\xED' \
+                      b'\xDA\xA5\x2F\x66\xD0\xB7\x5D\xD6\x48\x29\x9A\xBA\xEE\x3E\xF5\x7D\xBB\x1F\x0F\xF7\x27\x02' \
+                      b'\xEF\xB4\xDB\xEE\x37\x3F\xDD\xBF\x0E\xA3\xD1\xFE\x03\xFB\x80\xFD\xCF\xE1\xA1\x4A\xA3\xD6' \
+                      b'\x32\x58\x4A\x55\x65\xB7\xDC\x1E\x55\x51\x14\xCA\xA6\xE7\xFA\x5A\x37\x2E\x5F\xA4\xA9\x9B' \
+                      b'\x28\x4D\x5D\xB5\x6F\xF3\xA6\xB5\xD5\xC3\xD1\x26\x26\x6B\x2F\x43\xA2\xEC\x27\xA2\x5C\xA5' \
+                      b'\xAC\x4C\x7E\xCF\xDF\x0D\x4F\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x60\x52' \
+                      b'\x2F\xAF\xFB\x7D\xAD\x00\x28\x00\x00'
+        try:
+            imported_dash = self.send_request_file(method='POST', endpoint=f'/api/group/import',
+                                                   files={"body": (
+                                                       "20200702144029.eva.group", data_binary, "text/x-ms-group")},
+                                                   retcontent='json')
+            if imported_dash['status'] != 'success':
+                return False
+
+            group_from_db = self.db.execute_query(
+                'SELECT count(*) FROM "group" WHERE name LIKE \'ggg\%\' and color=\'#FF0000FF\';', as_obj=True)
+            dash_from_db = self.db.execute_query('SELECT count(*) FROM dash WHERE name LIKE \'ddd%\';', as_obj=True)
+
+            if group_from_db['count'] != 1 or dash_from_db['count'] != 1:
+                return False
+        finally:
+            self._cleanup()
+        return True
+
+    def test__import_dash_group_multi(self):
+        data_binary = b'\x1F\x8B\x08\x08\x19\xE8\xFD\x5E\x02\xFF\x32\x30\x32\x30\x30\x37\x30\x32\x31\x36\x35\x38' \
+                      b'\x34\x39\x2E\x65\x76\x61\x2E\x67\x72\x6F\x75\x70\x00\xED\xD5\x4F\x4B\xC3\x30\x18\xC7\xF1' \
+                      b'\xBC\x94\x10\xAF\x42\xF3\xAF\x09\x78\x13\x66\x6F\xDE\xBC\x89\x48\x31\xA5\x0E\xE6\x0A\xED' \
+                      b'\x06\x83\xE1\x7B\x37\xAD\x27\x7B\x50\x14\xD6\x4D\xF8\x7E\x2E\xC9\x93\xE6\x12\x7E\xF4\x79' \
+                      b'\x6C\x91\x52\x12\xA7\xA5\xB3\xE0\xFD\xB4\x66\xF3\x75\xDA\x1B\x17\x62\x74\xC1\x6B\x67\x84' \
+                      b'\x36\x26\x38\x27\xA4\x16\x0B\xD8\x0F\xBB\xBA\x97\x52\xF4\x5D\xB7\xFB\xEE\xDE\x4F\xDF\xE7' \
+                      b'\x8F\xFB\x27\x6C\xF1\x7C\x7F\xF7\x70\x7B\xD6\xFC\x8D\xF3\xF3\xFC\x63\x2C\xC9\x7F\x09\x47' \
+                      b'\xB5\x4E\xEA\x46\xDA\x6B\xA9\xB6\xF5\x5B\x93\xB7\xAA\x6D\x5B\x95\xCB\x97\x6E\xD3\xF5\x63' \
+                      b'\x7D\x55\x55\xE3\x8B\xAA\x6A\x3C\xDD\x0F\x4D\x3F\xE4\xD3\xC7\xA7\x5C\xA4\x7A\x78\x9D\x0A' \
+                      b'\x95\x9B\x88\x1A\x4F\xD6\xDB\xD4\x1C\x9A\xCF\x0B\xEF\x02\x17\xAF\x2C\x56\x27\x1F\x00\x7F' \
+                      b'\xE8\xFF\xD1\x5B\xFE\xFF\x65\xF2\xBF\x84\xFE\x1F\x66\xF9\x5B\xAD\xC9\x7F\xC9\xFE\x5F\x7E' \
+                      b'\xED\xFF\xBF\x1F\x00\x2B\x26\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x9C\xD5\x07\x21' \
+                      b'\x42\x6A\xF0\x00\x28\x00\x00'
+        try:
+            imported_dash = self.send_request_file(method='POST', endpoint=f'/api/group/import',
+                                                   files={"body": (
+                                                       "20200702144030.eva.group", data_binary, "text/x-ms-group")},
+                                                   retcontent='json')
+            if imported_dash['status'] != 'success':
+                return False
+
+            group_from_db = self.db.execute_query(
+                'SELECT count(*) FROM "group" WHERE name LIKE \'ggg\%\' and color=\'#FF0000FF\';', as_obj=True)
+            dash_from_db = self.db.execute_query('SELECT count(*) FROM dash WHERE name LIKE \'ddd%\';', as_obj=True)
+
+            if group_from_db['count'] != 2 or dash_from_db['count'] != 2:
+                return False
+        finally:
+            self._cleanup()
+        return True
+
+    def test__export_dash_group_single(self):
+        data_for_create = [
+            {'group': {'name': 'test_group', 'color': '#332211'},
+             'dash': {'name': 'test_dash', "groups": ["test_group"], "body": "test_group"}}
+        ]
+        try:
+            for new_item in data_for_create:
+                self.send_request(method='POST', endpoint='/api/group', data=new_item['group'])
+                self.send_request(method='POST', endpoint='/api/dash', data=new_item['dash'])
+
+            group_from_db = self.db.execute_query('SELECT * FROM "group";', as_obj=True)
+            # dash_from_db = self.db.execute_query('SELECT * FROM dash;', as_obj=True)
+            # grouplink_from_db = self.db.execute_query('SELECT * FROM "dash_group";', as_obj=True)
+
+            exported_dash_file = self.send_request(method='GET', endpoint=f'/api/group/export?ids={group_from_db.id}',
+                                                   retcontent='text')
+            with tarfile.open(name="%s%s" % (self.config['static']['static_path'], exported_dash_file),
+                              mode='r:gz') as tar:
+                for f in tar.getmembers():
+                    try:
+                        f_data = tar.extractfile(f)
+                        f_name_with_id = f.name
+                        f_name = f_name_with_id.split('/', 1)[-1]
+                        f_body = f_data.read().decode()
+                    except Exception as err:
+                        return False
+
+                    if f_name == "_META":
+                        f_body_json = json.loads(f_body)
+                        cmp_data = list(filter(lambda x: x['group']['name'] == f_body_json['name'], data_for_create))[0]
+                        if f_body_json['name'] != cmp_data['group']['name'] \
+                                or f_body_json['color'] != cmp_data['group']['color']:
+                            return False
+                    else:
+                        cmp_data = list(filter(lambda x: x['dash']['name'] == f_name, data_for_create))[0]
+                        if f_body != cmp_data['dash']['body']:
+                            return False
+        finally:
+            self._cleanup()
+        return True
+
+    def test__export_dash_group_multi(self):
+        data_for_create = [
+            {'group': {'name': 'test_group1', 'color': '#332211'},
+             'dash': {'name': 'test_dash1', "groups": ["test_group1"], "body": "body_test_group1"}},
+            {'group': {'name': 'test_group2', 'color': '#332211'},
+             'dash': {'name': 'test_dash2', "groups": ["test_group2"], "body": "body_test_group2"}}
+        ]
+        try:
+            for new_item in data_for_create:
+                self.send_request(method='POST', endpoint='/api/group', data=new_item['group'])
+                self.send_request(method='POST', endpoint='/api/dash', data=new_item['dash'])
+
+            group_from_db = self.db.execute_query('SELECT * FROM "group";', as_obj=True, fetchall=True)
+            # dash_from_db = self.db.execute_query('SELECT * FROM dash;', as_obj=True)
+            # grouplink_from_db = self.db.execute_query('SELECT * FROM "dash_group";', as_obj=True)
+
+            exported_dash_file = self.send_request(method='GET', endpoint='/api/group/export?ids={}'.format(
+                ','.join(list(map(lambda x: str(x['id']), group_from_db)))),
+                                                   retcontent='text')
+            with tarfile.open(name="%s%s" % (self.config['static']['static_path'], exported_dash_file),
+                              mode='r:gz') as tar:
+                for f in tar.getmembers():
+                    try:
+                        f_data = tar.extractfile(f)
+                        f_name_with_id = f.name
+                        f_name = f_name_with_id.split('/', 1)[-1]
+                        f_body = f_data.read().decode()
+                    except Exception as err:
+                        return False
+
+                    if f_name == "_META":
+                        f_body_json = json.loads(f_body)
+                        cmp_data = list(filter(lambda x: x['group']['name'] == f_body_json['name'], data_for_create))[0]
+                        if f_body_json['name'] != cmp_data['group']['name'] \
+                                or f_body_json['color'] != cmp_data['group']['color']:
+                            return False
+                    else:
+                        cmp_data = list(filter(lambda x: x['dash']['name'] == f_name, data_for_create))[0]
+                        if f_body != cmp_data['dash']['body']:
+                            return False
+        finally:
+            self._cleanup()
+        return True
