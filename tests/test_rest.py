@@ -319,8 +319,6 @@ class TestEva(unittest.TestCase):
     def test__import_dash_group_single(self):
         self.assertTrue(self.tester.test__import_dash_group_single())
 
-    #FIXME !!! import multi group not work
-    @unittest.skip("import multi group not work")
     def test__import_dash_group_multi(self):
         self.assertTrue(self.tester.test__import_dash_group_multi())
 
