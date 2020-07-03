@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quizs features
 - Import export dashboards
 - Import export dashboard groups
+- User setting endpoint (/api/user/setting), method GET and PUT
 
 ## [1.3.3] - 2020-06-16
 ### Fixed
