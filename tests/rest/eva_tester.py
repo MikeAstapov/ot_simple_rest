@@ -617,7 +617,7 @@ class EvaTester:
                 return False
 
             group_from_db = self.db.execute_query(
-                'SELECT count(*) FROM "group" WHERE name LIKE \'ggg\%\' and color=\'#FF0000FF\';', as_obj=True)
+                'SELECT count(*) FROM "group" WHERE name LIKE \'ggg%\' and color=\'#FF0000FF\';', as_obj=True)
             dash_from_db = self.db.execute_query('SELECT count(*) FROM dash WHERE name LIKE \'ddd%\';', as_obj=True)
 
             if group_from_db['count'] != 1 or dash_from_db['count'] != 1:
@@ -649,8 +649,8 @@ class EvaTester:
                 return False
 
             group_from_db = self.db.execute_query(
-                'SELECT count(*) FROM "group" WHERE name LIKE \'ggg\%\' and color=\'#FF0000FF\';', as_obj=True)
-            dash_from_db = self.db.execute_query('SELECT count(*) FROM dash WHERE name LIKE \'ddd%\';', as_obj=True)
+                'SELECT count(*) FROM "group" WHERE name LIKE \'ggg%\' and color=\'#FF0000FF\';', as_obj=True)
+            dash_from_db = self.db.execute_query('SELECT count(*) FROM dash WHERE name LIKE \'%ddd%\';', as_obj=True)
 
             if group_from_db['count'] != 2 or dash_from_db['count'] != 2:
                 return False
