@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2020-06-16
+### Added
+- Quizs features
+- Import export dashboards
+- Import export dashboard groups
+- User setting endpoint (/api/user/setting), method GET and PUT
+
 ## [1.3.3] - 2020-06-16
 ### Fixed
 - Macros dir in Resolver init.
@@ -142,7 +149,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.12.2] - 2019-10-21
 ### Fixed
-- Now search-command in the middle of OTL will return used fields for pushing down to read command.  
+- Now search-command in the middle of SPL will return used fields for pushing down to read command.  
 
 ## [0.12.1] - 2019-10-16
 ### Added

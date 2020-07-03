@@ -1,3 +1,6 @@
+
+import logging
+
 import json
 
 import jwt
@@ -26,6 +29,7 @@ class BaseHandler(tornado.web.RequestHandler):
         :param db_conn_pool: Postgres DB connection pool object.
         :return:
         """
+        self.logger = logging.getLogger('osr_hid')
         self.db = PostgresConnector(db_conn_pool)
         self.permissions = None
         self.data = None

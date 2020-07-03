@@ -467,3 +467,27 @@ class GroupDashboardsHandler(BaseHandler):
 
         group_dashs = self.db.get_dashs_data(group_id=group_id)
         self.write({'data': group_dashs})
+
+
+class UserSettingHandler(BaseHandler):
+    async def get(self):
+        self.logger.debug("User = '%s'" % self.current_user)
+        user_setting = self.db.get_user_setting(self.current_user)
+        self.logger.debug("Returned user setting jjjj= '%s'" % user_setting)
+        self.write(user_setting)
+
+    async def put(self):
+        new_setting = self.data.get("setting", None)
+        if not new_setting:
+            raise tornado.web.HTTPError(400, "param 'setting' is needed")
+
+        self.logger.debug("User = '%s', with setting = '%s'" % (self.current_user, new_setting))
+        try:
+            status = self.db.update_user_setting(self.current_user, new_setting)
+            if status:
+                self.write('{"status": "success"}')
+            else:
+                raise tornado.web.HTTPError(409, str("Update error"))
+        except Exception as err:
+            raise tornado.web.HTTPError(409, str(err))
+            self.write('{"status": "error"}')

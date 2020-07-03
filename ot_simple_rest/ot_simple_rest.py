@@ -13,10 +13,13 @@ from psycopg2.pool import ThreadedConnectionPool
 
 from handlers.eva.auth import AuthLoginHandler
 from handlers.eva.logs import LogsHandler
-from handlers.eva.dashs import DashboardHandler, DashboardsHandler, SvgLoadHandler
+from handlers.eva.dashs import DashboardHandler, DashboardsHandler, SvgLoadHandler, DashExportHandler, \
+    DashImportHandler, GroupExportHandler, GroupImportHandler
+from handlers.eva.quizs import QuizsHandler, QuizHandler, QuizQuestionsHandler, QuizFilledHandler, \
+    FilledQuizExportHandler, QuizExportJsonHandler, QuizImportJsonHandler, CatalogsListHandler, CatalogHandler
 from handlers.eva.role_model import UserHandler, UsersHandler, RoleHandler, RolesHandler, \
     PermissionsHandler, PermissionHandler, GroupsHandler, GroupHandler, UserPermissionsHandler, \
-    IndexesHandler, IndexHandler, UserGroupsHandler, UserDashboardsHandler, GroupDashboardsHandler
+    IndexesHandler, IndexHandler, UserGroupsHandler, UserDashboardsHandler, GroupDashboardsHandler, UserSettingHandler
 
 from handlers.jobs.makejob import MakeJob
 from handlers.jobs.loadjob import LoadJob
@@ -34,7 +37,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "1.3.3"
+__version__ = "1.4.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Production"
@@ -167,9 +170,12 @@ def main():
         (r'/api/user/dashs', UserDashboardsHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/user/users', UsersHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/user/indexes', IndexesHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/user/setting', UserSettingHandler, {"db_conn_pool": db_pool_eva}),
 
         (r'/api/groups', GroupsHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/group', GroupHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/group/export', GroupExportHandler, {"db_conn_pool": db_pool_eva, "static_conf": static_conf}),
+        (r'/api/group/import', GroupImportHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/group/dashs', GroupDashboardsHandler, {"db_conn_pool": db_pool_eva}),
 
         (r'/api/roles', RolesHandler, {"db_conn_pool": db_pool_eva}),
@@ -183,8 +189,30 @@ def main():
 
         (r'/api/dashs', DashboardsHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/dash', DashboardHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/dash/export', DashExportHandler, {"db_conn_pool": db_pool_eva, "static_conf": static_conf}),
+        (r'/api/dash/import', DashImportHandler, {"db_conn_pool": db_pool_eva}),
 
-        (r'/api/load/svg', SvgLoadHandler, {"db_conn_pool": db_pool_eva, "static_conf": static_conf})
+        (r'/api/load/svg', SvgLoadHandler, {"db_conn_pool": db_pool_eva, "static_conf": static_conf}),
+
+        (r'/qapi/quizs', QuizsHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/quiz', QuizHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/quiz/create', QuizHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/quiz/edit', QuizHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/quiz/delete', QuizHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/quiz/filled', QuizFilledHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/quiz/export', QuizExportJsonHandler, {"db_conn_pool": db_pool_eva,
+                                                       "static_conf": static_conf}),
+        (r'/qapi/quiz/import', QuizImportJsonHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/quiz/filled/save', QuizFilledHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/quiz/filled/export', FilledQuizExportHandler, {"db_conn_pool": db_pool_eva,
+                                                                "static_conf": static_conf}),
+        (r'/qapi/quiz/questions', QuizQuestionsHandler, {"db_conn_pool": db_pool_eva}),
+
+        (r'/qapi/catalogs', CatalogsListHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/catalog', CatalogHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/catalog/create', CatalogHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/catalog/edit', CatalogHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/qapi/catalog/delete', CatalogHandler, {"db_conn_pool": db_pool_eva}),
     ],
         login_url=r'/api/auth/login'
     )
