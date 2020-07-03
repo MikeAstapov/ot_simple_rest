@@ -161,6 +161,24 @@ class PostgresConnector(PGConnector):
                            with_commit=True, with_fetch=False)
         return user_id
 
+    def get_user_setting(self, user_id):
+        user_data = self.execute_query('SELECT id, setting FROM "user_settings" WHERE id = %s;',
+                                       params=(user_id,), as_obj=True)
+        if user_data:
+            return user_data
+        else:
+            return {'id': user_id, 'setting': ''}
+
+    def update_user_setting(self, user_id, setting):
+        with self.transaction('update_user_setting') as conn:
+            self.logger.debug(('DELETE FROM "user_settings" WHERE id = %s;' % user_id))
+            self.execute_query('DELETE FROM "user_settings" WHERE id = %s;', conn=conn, params=(user_id,),
+                               with_fetch=False, with_commit=True)
+            self.logger.debug('INSERT INTO "user_settings" (id, setting) VALUES (%s, %s);' % (user_id, str(setting)))
+            self.execute_query('INSERT INTO "user_settings" (id, setting) VALUES (%s, %s);', conn=conn,
+                               params=(user_id, str(setting)), with_fetch=False, with_commit=True)
+        return user_id
+
     # __ROLES__ #####################################################################
 
     def check_role_exists(self, role_name):
@@ -875,7 +893,8 @@ class PostgresConnector(PGConnector):
         _questions = self.execute_query("SELECT id, sid, type, text, is_sign, label FROM question "
                                         "WHERE quiz_id = %s ORDER BY sid;", as_obj=True,
                                         params=(quiz_id,), fetchall=True)
-        self.logger.debug("SELECT id, sid, type, text, is_sign, label FROM question WHERE quiz_id = %s ORDER BY sid;" % quiz_id)
+        self.logger.debug(
+            "SELECT id, sid, type, text, is_sign, label FROM question WHERE quiz_id = %s ORDER BY sid;" % quiz_id)
 
         for quiz in f_quizs:
             questions = deepcopy(_questions)
@@ -895,17 +914,17 @@ class PostgresConnector(PGConnector):
                 params=(quiz.id,), fetchall=True, as_obj=True
             )
             self.logger.debug('select filled_quiz.id as filled_quiz_id, question.type, question.sid as sid, '
-                'coalesce(textanswer.value, cascadeanswer.value, multianswer.value::text, '
-                'cataloganswer.value, dateanswer.value::text) as value, '
-                'coalesce (textanswer.description, cascadeanswer.description, multianswer.description, '
-                'cataloganswer.description, dateanswer.description) as description from filled_quiz '
-                'join question on question.quiz_id=filled_quiz.quiz_id '
-                'left join textanswer on textanswer.id=filled_quiz.id and textanswer.sid=question.sid '
-                'left join cascadeanswer on cascadeanswer.id=filled_quiz.id and cascadeanswer.sid=question.sid '
-                'left join multianswer on multianswer.id=filled_quiz.id and multianswer.sid=question.sid '
-                'left join cataloganswer on cataloganswer.id=filled_quiz.id and cataloganswer.sid=question.sid '
-                'left join dateanswer on dateanswer.id=filled_quiz.id and dateanswer.sid=question.sid '
-                'where filled_quiz.id = %s order by question.sid;'%quiz.id)
+                              'coalesce(textanswer.value, cascadeanswer.value, multianswer.value::text, '
+                              'cataloganswer.value, dateanswer.value::text) as value, '
+                              'coalesce (textanswer.description, cascadeanswer.description, multianswer.description, '
+                              'cataloganswer.description, dateanswer.description) as description from filled_quiz '
+                              'join question on question.quiz_id=filled_quiz.quiz_id '
+                              'left join textanswer on textanswer.id=filled_quiz.id and textanswer.sid=question.sid '
+                              'left join cascadeanswer on cascadeanswer.id=filled_quiz.id and cascadeanswer.sid=question.sid '
+                              'left join multianswer on multianswer.id=filled_quiz.id and multianswer.sid=question.sid '
+                              'left join cataloganswer on cataloganswer.id=filled_quiz.id and cataloganswer.sid=question.sid '
+                              'left join dateanswer on dateanswer.id=filled_quiz.id and dateanswer.sid=question.sid '
+                              'where filled_quiz.id = %s order by question.sid;' % quiz.id)
 
             for q, a in zip(questions, answers):
                 q['answer'] = a
@@ -977,4 +996,3 @@ class PostgresConnector(PGConnector):
         self.execute_query("DELETE FROM catalog WHERE id = %s;",
                            params=(catalog_id,), with_commit=True, with_fetch=False)
         return catalog_id
-

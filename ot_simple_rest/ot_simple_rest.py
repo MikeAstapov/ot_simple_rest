@@ -170,7 +170,7 @@ def main():
         (r'/api/user/dashs', UserDashboardsHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/user/users', UsersHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/user/indexes', IndexesHandler, {"db_conn_pool": db_pool_eva}),
-        (r'/api/user/settings', UserSettingHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/user/setting', UserSettingHandler, {"db_conn_pool": db_pool_eva}),
 
         (r'/api/groups', GroupsHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/group', GroupHandler, {"db_conn_pool": db_pool_eva}),

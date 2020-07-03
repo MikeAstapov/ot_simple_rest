@@ -4,6 +4,11 @@ CREATE TABLE "user" (
     password VARCHAR(512) NOT NULL
 );
 
+CREATE TABLE user_settings (
+    id INTEGER PRIMARY KEY,
+    setting TEXT
+);
+
 CREATE TABLE role (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE

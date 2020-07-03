@@ -27,9 +27,10 @@ class EvaTester:
         del_session_query = "DELETE FROM session;"
         del_index_query = "DELETE FROM index;"
         del_dash_query = "DELETE FROM dash;"
+        del_user_settings_query = "DELETE FROM user_settings;"
 
         for query in [del_user_query, del_role_query, del_permission_query,
-                      del_group_query, del_session_query, del_index_query, del_dash_query]:
+                      del_group_query, del_session_query, del_index_query, del_dash_query, del_user_settings_query]:
             self.db.execute_query(query, with_commit=True, with_fetch=False)
 
     def auth(self):
@@ -142,6 +143,30 @@ class EvaTester:
             self._cleanup()
         return users_from_api['data'][0]['name'] == data[0]['name'] and \
                users_from_api['data'][1]['name'] == data[1]['name']
+
+    def test__get_user_setting(self):
+        try:
+            data = {'id': 1, 'setting': 'test_setting'}
+            self.db.execute_query('INSERT INTO "user_settings" (id, setting) VALUES (%s, %s);',
+                                  params=(data['id'], data['setting']), with_fetch=False, with_commit=True)
+            ddd = self.db.execute_query('SELECT * FROM "user_settings";', as_obj=True, fetchall=True)
+            print(ddd)
+            ret_data = self.send_request(method='GET', endpoint='/api/user/setting')
+            print(ret_data)
+        finally:
+            self._cleanup()
+        return data['setting'] == ret_data['setting']
+
+    def test__put_user_setting(self):
+        try:
+            data = {'id': 1, 'setting': 'test_setting'}
+            self.send_request(method='PUT', endpoint='/api/user/setting', data=data)
+            user_data = self.db.execute_query('SELECT id,setting FROM user_settings WHERE id=%s;',
+                                              params=(data['id'],), as_obj=True)
+            print(user_data)
+        finally:
+            self._cleanup()
+        return data['setting'] == user_data['setting']
 
     def test__create_role(self):
         try:

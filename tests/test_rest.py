@@ -217,6 +217,12 @@ class TestEva(unittest.TestCase):
     def test__get_users_list(self):
         self.assertTrue(self.tester.test__get_users_list())
 
+    def test__get_user_setting(self):
+        self.assertTrue(self.tester.test__get_user_setting())
+
+    def test__put_user_setting(self):
+        self.assertTrue(self.tester.test__put_user_setting())
+
     def test__create_role(self):
         self.assertTrue(self.tester.test__create_role())
 
@@ -395,4 +401,3 @@ class TestQuizs(unittest.TestCase):
 
     def test__get_catalogs_list(self):
         self.assertTrue(self.tester.test__get_catalogs_list())
-
