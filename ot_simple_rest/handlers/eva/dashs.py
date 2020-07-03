@@ -301,6 +301,9 @@ class GroupImportHandler(BaseHandler):
     Or you can put your own 'eva.group' file with dirs named group_id
     with inner dashs json files.
     """
+    def initialize(self, db_conn_pool):
+        super().initialize(db_conn_pool)
+        self.logger = logging.getLogger('osr')
 
     async def prepare(self):
         client_token = self.get_cookie('eva_token')

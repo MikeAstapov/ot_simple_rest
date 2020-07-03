@@ -192,6 +192,7 @@ class TestEva(unittest.TestCase):
     config.set('eva_db_conf', 'user', 'tester')
     config.set('eva_db_conf', 'password', 'password')
     config.set('eva_db_conf', 'host', 'localhost')
+    config.add_section('static')
     config.set('static', 'static_path', '/opt/otp/static/')
 
     eva_pool = ThreadedConnectionPool(2, 4, **dict(config['eva_db_conf']))
@@ -314,6 +315,18 @@ class TestEva(unittest.TestCase):
 
     def test__export_dash_multi(self):
         self.assertTrue(self.tester.test__export_dash_multi())
+
+    def test__import_dash_group_single(self):
+        self.assertTrue(self.tester.test__import_dash_group_single())
+
+    def test__import_dash_group_multi(self):
+        self.assertTrue(self.tester.test__import_dash_group_multi())
+
+    def test__export_dash_group_single(self):
+        self.assertTrue(self.tester.test__export_dash_group_single())
+
+    def test__export_dash_group_multi(self):
+        self.assertTrue(self.tester.test__export_dash_group_multi())
 
 
 class TestQuizs(unittest.TestCase):
