@@ -19,7 +19,7 @@ from handlers.eva.quizs import QuizsHandler, QuizHandler, QuizQuestionsHandler, 
     FilledQuizExportHandler, QuizExportJsonHandler, QuizImportJsonHandler, CatalogsListHandler, CatalogHandler
 from handlers.eva.role_model import UserHandler, UsersHandler, RoleHandler, RolesHandler, \
     PermissionsHandler, PermissionHandler, GroupsHandler, GroupHandler, UserPermissionsHandler, \
-    IndexesHandler, IndexHandler, UserGroupsHandler, UserDashboardsHandler, GroupDashboardsHandler
+    IndexesHandler, IndexHandler, UserGroupsHandler, UserDashboardsHandler, GroupDashboardsHandler, UserSettingHandler
 
 from handlers.jobs.makejob import MakeJob
 from handlers.jobs.loadjob import LoadJob
@@ -170,6 +170,7 @@ def main():
         (r'/api/user/dashs', UserDashboardsHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/user/users', UsersHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/user/indexes', IndexesHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/user/settings', UserSettingHandler, {"db_conn_pool": db_pool_eva}),
 
         (r'/api/groups', GroupsHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/group', GroupHandler, {"db_conn_pool": db_pool_eva}),

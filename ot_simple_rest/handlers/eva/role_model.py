@@ -467,3 +467,46 @@ class GroupDashboardsHandler(BaseHandler):
 
         group_dashs = self.db.get_dashs_data(group_id=group_id)
         self.write({'data': group_dashs})
+
+
+class UserSettingHandler(BaseHandler):
+    async def get(self):
+        self.logger("User = '%s'" % self.current_user)
+        self.logger("perm = '%s'" % self.permissions)
+        # if 'read_users' in self.permissions or 'admin_all' in self.permissions:
+        #     user_data = self.db.get_user_data(user_id=target_user_id)
+        #     all_roles = self.db.get_roles_data(names_only=True)
+        #     all_groups = self.db.get_groups_data(names_only=True)
+        #     user_data = {'data': user_data, 'roles': all_roles, 'groups': all_groups}
+        # elif int(target_user_id) == self.current_user:
+        #     user_data = self.db.get_user_data(user_id=target_user_id)
+        #     user_data = {'data': user_data}
+        # else:
+        #     raise tornado.web.HTTPError(403, "no permission for read users")
+        # self.write(user_data)
+
+    async def put(self):
+        self.logger("User = '%s'" % self.current_user)
+        self.logger("perm = '%s'" % self.permissions)
+        # if 'create_users' in self.permissions or 'admin_all' in self.permissions:
+        #     password = self.data.get("password", None)
+        #     username = self.data.get("name", None)
+        #     if None in [password, username]:
+        #         raise tornado.web.HTTPError(400, "params 'name' and 'password' is required")
+        #
+        #     hashed_password = await tornado.ioloop.IOLoop.current().run_in_executor(
+        #         None,
+        #         bcrypt.hashpw,
+        #         tornado.escape.utf8(password),
+        #         bcrypt.gensalt(),
+        #     )
+        #     try:
+        #         user_id = self.db.add_user(name=username,
+        #                                    password=tornado.escape.to_unicode(hashed_password),
+        #                                    roles=self.data.get('roles', None),
+        #                                    groups=self.data.get('groups', None))
+        #         self.write({'id': user_id})
+        #     except Exception as err:
+        #         raise tornado.web.HTTPError(409, str(err))
+        # else:
+        #     raise tornado.web.HTTPError(403, "no permission for create roles")
