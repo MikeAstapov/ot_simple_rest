@@ -129,7 +129,7 @@ class JobsManager:
         while self._enable:
             if not self.jobs_queue.empty():
                 job = await self.jobs_queue.get()
-                logging.debug('Got a job from queue')
+                logger.debug('Got a job from queue')
                 loop.create_task(job.start_make())
             else:
                 await asyncio.sleep(0.05)
