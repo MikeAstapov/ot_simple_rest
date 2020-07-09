@@ -17,8 +17,7 @@ class PostgresConnector(PGConnector):
 
     def check_cache(self, *, original_otl, tws, twf, field_extraction, preview):
         cache_id = creating_date = None
-        query_str = "SELECT id, extract(epoch from creating_date) FROM cachesdl WHERE expiring_date >= " \
-                    "CURRENT_TIMESTAMP AND original_otl=%s AND tws=%s AND twf=%s AND field_extraction=%s AND preview=%s;"
+        query_str = "SELECT id, extract(epoch from creating_date) FROM cachesdl WHERE original_otl=%s AND tws=%s AND twf=%s AND field_extraction=%s AND preview=%s;"
         stm_tuple = (original_otl, tws, twf, field_extraction, preview)
         self.logger.info(query_str % stm_tuple)
 
