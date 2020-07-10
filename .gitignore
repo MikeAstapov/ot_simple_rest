@@ -49,5 +49,5 @@ stop.sh
 ot_simple_rest-*.tar.gz
 ot_simple_rest.pth
 tests.pth
-ot_simple_rest.conf
+ot_simple_rest/ot_simple_rest.conf
 nginx/

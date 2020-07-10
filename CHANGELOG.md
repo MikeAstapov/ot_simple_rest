@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2020-07-10
+### Fixed
+- Logging in module with job's queue
+### Changed
+- Jobs with status "NEW" are processed as running ones
+- Expired caches can be used if are locked
+
+
 ## [1.4.0] - 2020-06-16
 ### Added
 - Quizs features

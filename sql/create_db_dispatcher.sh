@@ -5,4 +5,4 @@ create database dispatcher;
 grant all privileges on database dispatcher to dispatcher;
 EOF
 
-psql -d dispatcher -U dispatcher -a -f dispatcher.sql
+psql -h localhost -d dispatcher -U dispatcher -a -f dispatcher.sql
