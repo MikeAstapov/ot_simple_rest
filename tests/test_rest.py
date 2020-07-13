@@ -106,6 +106,9 @@ class TestMakeJob(unittest.TestCase):
     def test__finished_expired(self):
         self.assertTrue(self.tester.test__finished_expired())
 
+    def test__finished_expired_locked(self):
+        self.assertTrue(self.tester.test__finished_expired_locked())
+
     def test__failed(self):
         self.assertTrue(self.tester.test__failed())
 

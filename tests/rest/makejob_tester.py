@@ -128,6 +128,11 @@ class MakejobTester:
         if need_expired:
             time.sleep(1)
 
+    def add_job_without_cache(self):
+        job_id, _ = self.db.add_job(search=[self.original_otl, self.original_otl], subsearches=[], tws=0, twf=0,
+                                    cache_ttl=60, username='tester', field_extraction=False, preview=False)
+        self.update_job_status('finished', job_id)
+
     def test__no_job(self):
         try:
             job_data = self.send_and_validate(need_new_job=True)
@@ -138,7 +143,7 @@ class MakejobTester:
     def test__new(self):
         try:
             self.add_job_with_status('new')
-            job_data = self.send_and_validate(need_new_job=True)
+            job_data = self.send_and_validate(need_new_job=False)
         finally:
             self._cleanup()
         return job_data['status'] == 'new'
@@ -161,11 +166,19 @@ class MakejobTester:
 
     def test__finished_expired(self):
         try:
-            self.add_job_with_cache(need_expired=True)
+            self.add_job_without_cache()
             job_data = self.send_and_validate(need_new_job=True)
         finally:
             self._cleanup()
         return job_data['status'] == 'new'
+
+    def test__finished_expired_locked(self):
+        try:
+            self.add_job_with_cache(need_expired=True)
+            job_data = self.send_and_validate(need_new_job=False)
+        finally:
+            self._cleanup()
+        return job_data['status'] == 'finished'
 
     def test__failed(self):
         try:
