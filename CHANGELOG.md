@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2020-07-13
+### Fixed
+- Broken tests
+- List of jobs instead of one raw when checking if one has already been running
+
 ## [1.5.0] - 2020-07-10
 ### Fixed
 - Logging in module with job's queue
