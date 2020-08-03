@@ -65,7 +65,7 @@ clean_build:
 
 
 dist: venv
-	./venv/bin/pyinstaller --hidden-import=_cffi_backend -F ot_simple_rest/ot_simple_rest.py
+	./venv/bin/pyinstaller --runtime-tmpdir ./tmp --hidden-import=_cffi_backend -F ot_simple_rest/ot_simple_rest.py
 
 clean_dist:
 	rm -rf build
@@ -85,6 +85,8 @@ start.sh:
 	echo -e "#!/bin/bash\n\
 \n\
 cd /opt/otp/ot_simple_rest/\n\
+mkdir -p tmp\n\
+rm -rf tmp/*\n\
 /opt/otp/ot_simple_rest/ot_simple_rest > logs/stdout.log 2> logs/stderr.log &\
 " > $@
 	chmod +x $@
