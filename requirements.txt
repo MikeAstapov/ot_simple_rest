@@ -10,3 +10,6 @@ tornado==6.0.2
 openpyxl==3.0.3
 requests==2.23.0
 pyinstaller==3.6
+python-docx==0.8.10
+preview-generator==0.14
+

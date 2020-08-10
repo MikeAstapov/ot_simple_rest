@@ -14,12 +14,13 @@ from psycopg2.pool import ThreadedConnectionPool
 from handlers.eva.auth import AuthLoginHandler
 from handlers.eva.logs import LogsHandler
 from handlers.eva.dashs import DashboardHandler, DashboardsHandler, SvgLoadHandler, DashExportHandler, \
-    DashImportHandler, GroupExportHandler, GroupImportHandler
+    DashImportHandler, GroupExportHandler, GroupImportHandler, DashByNameHandler
 from handlers.eva.quizs import QuizsHandler, QuizHandler, QuizQuestionsHandler, QuizFilledHandler, \
     FilledQuizExportHandler, QuizExportJsonHandler, QuizImportJsonHandler, CatalogsListHandler, CatalogHandler
 from handlers.eva.role_model import UserHandler, UsersHandler, RoleHandler, RolesHandler, \
     PermissionsHandler, PermissionHandler, GroupsHandler, GroupHandler, UserPermissionsHandler, \
     IndexesHandler, IndexHandler, UserGroupsHandler, UserDashboardsHandler, GroupDashboardsHandler, UserSettingHandler
+from handlers.eva.papers import PaperLoadHandler, PapersHandler, PaperHandler
 
 from handlers.jobs.makejob import MakeJob
 from handlers.jobs.loadjob import LoadJob
@@ -191,6 +192,8 @@ def main():
         (r'/api/dash', DashboardHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/dash/export', DashExportHandler, {"db_conn_pool": db_pool_eva, "static_conf": static_conf}),
         (r'/api/dash/import', DashImportHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/dashByName', DashByNameHandler, {"db_conn_pool": db_pool_eva}),
+        
 
         (r'/api/load/svg', SvgLoadHandler, {"db_conn_pool": db_pool_eva, "static_conf": static_conf}),
 
@@ -213,6 +216,10 @@ def main():
         (r'/qapi/catalog/create', CatalogHandler, {"db_conn_pool": db_pool_eva}),
         (r'/qapi/catalog/edit', CatalogHandler, {"db_conn_pool": db_pool_eva}),
         (r'/qapi/catalog/delete', CatalogHandler, {"db_conn_pool": db_pool_eva}),
+
+        (r'/api/eva/reports/load', PaperLoadHandler, {"db_conn_pool": db_pool_eva,"static_conf": static_conf}),
+        (r'/api/eva/reports/getAll', PapersHandler, {"db_conn_pool": db_pool_eva,"static_conf": static_conf}),
+        (r'/api/eva/reports/get', PaperHandler, {"db_conn_pool": db_pool_eva,"static_conf": static_conf,"mem_conf": mem_conf}),
     ],
         login_url=r'/api/auth/login'
     )

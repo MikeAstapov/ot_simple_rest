@@ -13,8 +13,11 @@ Also you need gcc and python3-devel.
 
 ### Installing
 
-Install postgresql-devel lib.
-Install Python3 and virtual environment from requirements.txt.
+Install postgresql-devel lib.  
+Install Python3 and virtual environment from requirements.txt.  
+Install libreoffice.  
+Install ImageMagick-devel.  
+Install poppler-utils.  
 
 ## Deployment
 
@@ -34,6 +37,8 @@ PyJWT  1.7.1
 six  1.12.0  
 tornado  6.0.2  
 openpyxl 3.0.3
+python-docx 0.8.10
+preview-generator 0.14
 
 ## Contributing
 
