@@ -684,7 +684,7 @@ class PostgresConnector(PGConnector):
     def get_dash_data_by_name(self, dash_name, dash_group):
         # dash_data = self.execute_query("SELECT id, name, body, idgroup, round(extract(epoch from modified)) as modified "
         #                                "FROM dash WHERE name = %s AND idgroup = %s;", params=(dash_name, dash_group), as_obj=True)
-        dash_data = self.execute_query("SELECT id, name, body, idgroup, round(extract(epoch from modified)) as modified "
+        dash_data = self.execute_query("SELECT id, name, body, round(extract(epoch from modified)) as modified "
                                        "FROM dash WHERE name = %s LIMIT 1;", params=(dash_name,), as_obj=True)
         if not dash_data:
             raise ValueError(f'Dash with name={dash_name} is not exists')

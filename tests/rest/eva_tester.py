@@ -450,7 +450,7 @@ class EvaTester:
         data = {'name': 'test_dash'}
         try:
             self.send_request(method='POST', endpoint='/api/dash', data=data)
-            dash_from_db = self.db.execute_query('SELECT id FROM dash WHERE name=%s;',
+            dash_from_db = self.db.execute_query('SELECT id, name FROM dash WHERE name=%s;',
                                                  params=(data['name'],), as_obj=True)
             dash_from_api = self.send_request(method='GET', endpoint=f'/api/dashByName?name={dash_from_db.name}')
         finally:
