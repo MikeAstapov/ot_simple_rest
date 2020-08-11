@@ -643,11 +643,16 @@ class PostgresConnector(PGConnector):
 
     def get_dashs_data(self, *, group_id=None, names_only=False):
         if group_id:
-            dashs = self.execute_query("SELECT id, name, body, idgroup, round(extract(epoch from modified)) as modified "
+            # dashs = self.execute_query("SELECT id, name, body, idgroup, round(extract(epoch from modified)) as modified "
+            #                            "FROM dash WHERE id IN (SELECT dash_id FROM dash_group WHERE group_id = %s);",
+            #                            params=(group_id,), fetchall=True, as_obj=True)
+            dashs = self.execute_query("SELECT id, name, body, round(extract(epoch from modified)) as modified "
                                        "FROM dash WHERE id IN (SELECT dash_id FROM dash_group WHERE group_id = %s);",
                                        params=(group_id,), fetchall=True, as_obj=True)
         else:
-            dashs = self.execute_query("SELECT id, name, body, idgroup, round(extract(epoch from modified)) as modified "
+            # dashs = self.execute_query("SELECT id, name, body, idgroup, round(extract(epoch from modified)) as modified "
+            #                            "FROM dash;", fetchall=True, as_obj=True)
+            dashs = self.execute_query("SELECT id, name, body, round(extract(epoch from modified)) as modified "
                                        "FROM dash;", fetchall=True, as_obj=True)
 
         if names_only:
@@ -662,7 +667,9 @@ class PostgresConnector(PGConnector):
         return dashs
 
     def get_dash_data(self, dash_id):
-        dash_data = self.execute_query("SELECT id, name, body, idgroup, round(extract(epoch from modified)) as modified "
+        # dash_data = self.execute_query("SELECT id, name, body, idgroup, round(extract(epoch from modified)) as modified "
+        #                                "FROM dash WHERE id = %s;", params=(dash_id,), as_obj=True)
+        dash_data = self.execute_query("SELECT id, name, body, round(extract(epoch from modified)) as modified "
                                        "FROM dash WHERE id = %s;", params=(dash_id,), as_obj=True)
         if not dash_data:
             raise ValueError(f'Dash with id={dash_id} is not exists')
@@ -680,15 +687,19 @@ class PostgresConnector(PGConnector):
                                        "FROM dash WHERE name = %s AND idgroup = %s;", params=(dash_name,dash_idgroup), as_obj=True)
         return dash_data
 
-    def add_dash(self, *, name, body, idgroup, groups=None):
+    # def add_dash(self, *, name, body, idgroup, groups=None):
+    def add_dash(self, *, name, body, groups=None):
         dash_id = self.check_dash_exists(dash_name=name)
         if dash_id:
             raise QueryError(f'dash with name={name} is already exists')
 
         with self.transaction('add_dashboard_data') as conn:
-            dash = self.execute_query("INSERT INTO dash (name, body, idgroup) VALUES (%s, %s, %s) "
+            # dash = self.execute_query("INSERT INTO dash (name, body, idgroup) VALUES (%s, %s, %s) "
+            #                           "RETURNING id, round(extract(epoch from modified)) as modified;",
+            #                           conn=conn, params=(name, body, idgroup), as_obj=True)
+            dash = self.execute_query("INSERT INTO dash (name, body) VALUES (%s, %s) "
                                       "RETURNING id, round(extract(epoch from modified)) as modified;",
-                                      conn=conn, params=(name, body, idgroup), as_obj=True)
+                                      conn=conn, params=(name, body,), as_obj=True)
             if isinstance(groups, list):
                 for group in groups:
                     self.execute_query('INSERT INTO dash_group (group_id, dash_id) '
@@ -696,7 +707,8 @@ class PostgresConnector(PGConnector):
                                        conn=conn, params=(group, dash.id,), with_fetch=False)
         return dash.id, dash.modified
 
-    def update_dash(self, *, dash_id, name, body, idgroup, groups=None):
+    # def update_dash(self, *, dash_id, name, body, idgroup, groups=None):
+    def update_dash(self, *, dash_id, name, body, groups=None):
         dash_name = self.execute_query("SELECT name FROM dash WHERE id = %s;", params=(dash_id,))
         if not dash_name:
             raise QueryError(f'dash with id={dash_id} is not exists')
@@ -712,9 +724,9 @@ class PostgresConnector(PGConnector):
                 self.execute_query("UPDATE dash SET body = %s WHERE id = %s;",
                                    conn=conn, params=(body, dash_id), with_fetch=False)
             
-            if idgroup or idgroup == 0:
-                self.execute_query("UPDATE dash SET idgroup = %s WHERE id = %s;",
-                                   conn=conn, params=(idgroup, dash_id), with_fetch=False)
+            # if idgroup or idgroup == 0:
+            #     self.execute_query("UPDATE dash SET idgroup = %s WHERE id = %s;",
+            #                        conn=conn, params=(idgroup, dash_id), with_fetch=False)
 
         if isinstance(groups, list):
             current_groups = self.execute_query('SELECT name FROM "group" WHERE id IN '
