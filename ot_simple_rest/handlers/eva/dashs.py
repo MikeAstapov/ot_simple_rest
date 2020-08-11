@@ -58,13 +58,13 @@ class DashboardHandler(BaseHandler):
         dash_name = self.data.get('name', None)
         dash_body = self.data.get('body', "")
         dash_groups = self.data.get('groups', None)
-        dash_idgroup = self.data.get('idgroup', None)
+        # dash_idgroup = self.data.get('idgroup', None)
         if not dash_name:
             raise tornado.web.HTTPError(400, "params 'name' is needed")
         try:
             _id, modified = self.db.add_dash(name=dash_name,
                                              body=dash_body,
-                                             idgroup=dash_idgroup,
+                                             # idgroup=dash_idgroup,
                                              groups=dash_groups)
         except Exception as err:
             raise tornado.web.HTTPError(409, str(err))
@@ -79,7 +79,7 @@ class DashboardHandler(BaseHandler):
             name, modified = self.db.update_dash(dash_id=dash_id,
                                                  name=self.data.get('name', None),
                                                  body=self.data.get('body', None),
-                                                 idgroup=self.data.get('idgroup', None),
+                                                 # idgroup=self.data.get('idgroup', None),
                                                  groups=self.data.get('groups', None))
         except Exception as err:
             raise tornado.web.HTTPError(409, str(err))
