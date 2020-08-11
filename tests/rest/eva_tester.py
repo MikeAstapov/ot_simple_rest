@@ -452,7 +452,7 @@ class EvaTester:
             self.send_request(method='POST', endpoint='/api/dash', data=data)
             dash_from_db = self.db.execute_query('SELECT id, name FROM dash WHERE name=%s;',
                                                  params=(data['name'],), as_obj=True)
-            dash_from_api = self.send_request(method='GET', endpoint=f'/api/dashByName?name={dash_from_db.name}')
+            dash_from_api = self.send_request(method='GET', endpoint=f'/api/dashByName?name={dash_from_db.name}&idgroup=0')
         finally:
             self._cleanup()
         return dash_from_api['data']['name'] == data['name']
