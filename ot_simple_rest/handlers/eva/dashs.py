@@ -102,7 +102,8 @@ class DashByNameHandler(BaseHandler):
         if not dash_idgroup:
             raise tornado.web.HTTPError(400, "param 'idgroup' is needed")
         try:
-            dash = self.db.get_dash_data_by_name(dash_name=dash_name, dash_idgroup=dash_idgroup)
+            dash_name = dash_name.replace('"', '')
+            dash = self.db.get_dash_data_by_name(dash_name=dash_name, dash_group=dash_idgroup)
         except Exception as err:
             raise tornado.web.HTTPError(409, str(err))
         self.write({'data': dash})

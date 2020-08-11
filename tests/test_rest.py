@@ -298,6 +298,9 @@ class TestEva(unittest.TestCase):
     def test__get_dash(self):
         self.assertTrue(self.tester.test__get_dash())
 
+    def test__get_dash_by_name(self):
+        self.assertTrue(self.tester.test__get_dash_by_name())
+
     def test__get_dashs_list(self):
         self.assertTrue(self.tester.test__get_dashs_list())
 
