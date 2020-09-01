@@ -90,6 +90,24 @@ class DashboardHandler(BaseHandler):
         self.write({'id': dash_id})
 
 
+class DashByNameHandler(BaseHandler):
+    async def get(self):
+        dash_name = self.get_argument('name', None)
+        dash_idgroup = self.get_argument('idgroup', None)
+        if not dash_name:
+            raise tornado.web.HTTPError(400, "param 'name' is needed")
+        if not dash_idgroup:
+            raise tornado.web.HTTPError(400, "param 'idgroup' is needed")
+        try:
+            dash_name = dash_name.replace('"', '')
+            #FIXME need remove double quote replacement
+
+            dash = self.db.get_dash_data_by_name(dash_name=dash_name, dash_group=dash_idgroup)
+        except Exception as err:
+            raise tornado.web.HTTPError(409, str(err))
+        self.write({'data': dash})
+
+
 class SvgLoadHandler(BaseHandler):
     def initialize(self, **kwargs):
         super().initialize(kwargs['db_conn_pool'])

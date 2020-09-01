@@ -674,6 +674,19 @@ class PostgresConnector(PGConnector):
         dash_data['groups'] = groups
         return dash_data
 
+    def get_dash_data_by_name(self, dash_name, dash_group):
+        dash_data = self.execute_query("SELECT id, name, body, round(extract(epoch from modified)) as modified "
+                                       "FROM dash WHERE name = %s LIMIT 1;", params=(dash_name,), as_obj=True)
+        if not dash_data:
+            raise ValueError(f'Dash with name={dash_name} is not exists')
+
+        groups = self.execute_query('SELECT name FROM "group" WHERE id IN '
+                                    '(SELECT group_id FROM dash_group WHERE dash_id = %s);',
+                                    params=(dash_data['id'],), fetchall=True)
+        groups = flat_to_list(groups)
+        dash_data['groups'] = groups
+        return dash_data
+
     def add_dash(self, *, name, body, groups=None):
         dash_id = self.check_dash_exists(dash_name=name)
         if dash_id:
