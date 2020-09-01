@@ -8,21 +8,27 @@ Only config ramcache, db and we are ready to go.
 
 ### Prerequisites
 
-You need postgresql-devel library for psycopg2 lib.
-Also you need gcc and python3-devel. 
+You need:
+* postgresql-devel library for psycopg2 lib.
+* also you need gcc and python3-devel. 
+* Install postgresql-devel lib.  
+* Install Python3 and virtual environment from requirements.txt.  
+* Install libreoffice.  
+* Install ImageMagick-devel.  
+* Install poppler-utils.  
+* Install ExifTool.  
+
+For Centos:
+
+```yum install python3 postgresql-server postgresql-devel ImageMagick-devel perl-Image-ExifTool.noarch libreoffice poppler-utils```
 
 ### Installing
 
-Install postgresql-devel lib.  
-Install Python3 and virtual environment from requirements.txt.  
-Install libreoffice.  
-Install ImageMagick-devel.  
-Install poppler-utils.  
+Unpack tar archive to destination directory.
 
 ## Deployment
 
-source ./venv/bin/activate  
-./venv/bin/python3 ot_simple_rest.py
+```./start.sh```
 
 ## Built with
 

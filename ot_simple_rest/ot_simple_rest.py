@@ -38,7 +38,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "1.5.2"
+__version__ = "1.6.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Production"
@@ -133,6 +133,7 @@ def main():
 
     logger = set_logger(config['general'].get('level', 'INFO'),
                         os.path.join(base_logs_dir, 'otsimplerest.log'), 'osr')
+    logger.info('Version: %s' % __version__)
     logger.info('DB configuration: %s' % db_conf)
     logger.info('MEM configuration: %s' % mem_conf)
 

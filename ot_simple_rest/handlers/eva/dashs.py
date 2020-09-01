@@ -100,6 +100,8 @@ class DashByNameHandler(BaseHandler):
             raise tornado.web.HTTPError(400, "param 'idgroup' is needed")
         try:
             dash_name = dash_name.replace('"', '')
+            #FIXME need remove double quote replacement
+
             dash = self.db.get_dash_data_by_name(dash_name=dash_name, dash_group=dash_idgroup)
         except Exception as err:
             raise tornado.web.HTTPError(409, str(err))
