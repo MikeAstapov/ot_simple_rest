@@ -8,11 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.6.0] - 2020-09-01
 ### Added
-- Add reports
+- Reports
+- Endpoint "/api/dashByName"
 
 ## [1.5.2] - 2020-08-03
 ### Fixed
-- Fixed installer missing tmp directory 
+- Installer missing tmp directory 
 
 ## [1.5.1] - 2020-07-13
 ### Fixed
