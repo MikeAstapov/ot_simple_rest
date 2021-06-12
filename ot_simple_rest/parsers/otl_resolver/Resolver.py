@@ -46,6 +46,8 @@ class Resolver:
     otfrom_pattern = r'otfrom datamodel:?\s*([^\|$]+)'
     otloadjob_id_pattern = r'otloadjob\s+(\d+\.\d+)'
     otloadjob_otl_pattern = r'otloadjob\s+otl=\"(.+?[^\\])\"(\s+?___token___=\"(.+?[^\\])\")?(\s+?___tail___=\"(.+?[^\\])\")?'
+    scala_inline_pattern = r'scala\s+<#(.*?)#>'
+    spark_inline_pattern = r'spark\s+<#(.*?)#>'
 
     def __init__(self, indexes, tws, twf, db=None, sid=None, src_ip=None, no_subsearch_commands=None, macros_dir=None):
         """
@@ -299,6 +301,12 @@ class Resolver:
         otl = re.sub(self.quoted_return_pattern, self.return_quoted, otl)
         return otl
 
+    def scala_inline_transformer(self, match_object):
+        return f"scala {json.dumps(match_object.group(1))}"
+
+    def spark_inline_transformer(self, match_object):
+        return f"spark {json.dumps(match_object.group(1))}"
+
     def resolve(self, otl):
         """
         Finds and replaces service patterns of original OTL.
@@ -329,4 +337,6 @@ class Resolver:
         _otl = re.sub(self.filter_pattern, self.create_filter_graph, _otl, flags=re.I)
         _otl = re.sub(self.otinputlookup_where_pattern, self.create_inputlookup_filter, _otl)
         _otl = re.sub(self.otloadjob_id_pattern, self.create_otloadjob_id, _otl)
+        _otl = re.sub(self.scala_inline_pattern, self.scala_inline_transformer, _otl)
+        _otl = re.sub(self.spark_inline_pattern, self.spark_inline_transformer, _otl)
         return {'search': (otl, _otl), 'subsearches': self.subsearches}
