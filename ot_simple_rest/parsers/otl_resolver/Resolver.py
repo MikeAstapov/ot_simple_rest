@@ -7,6 +7,8 @@ import re
 from hashlib import sha256
 from parsers.otl_to_sparksql.otl_parser import OTLtoSQL
 from parsers.otl_resolver.macros import Macros
+from base64 import urlsafe_b64decode
+import regex as pcre
 
 __author__ = ["Andrey Starchenkov", "Anton Khromov"]
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -16,6 +18,8 @@ __version__ = "0.3.20"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "akhromov@ot.ru"
 __status__ = "Production"
+
+pcre.DEFAULT_VERSION = pcre.VERSION1
 
 
 class Resolver:
@@ -32,7 +36,7 @@ class Resolver:
     logger = logging.getLogger('osr')
 
     # Patterns for transformation.
-    quoted_hide_pattern = r'"(.*?)"'
+    quoted_hide_pattern = pcre.compile(r'(?<!\\)(?<q>[\'"])((?:(?!(?<!\\)\g<q>).)*)(?<!\\)\g<q>')
     quoted_return_pattern = r'_quoted_text_(\w+)'
     no_subsearch_return_pattern = r'_hidden_text_(\w+)'
     subsearch_pattern = r'.+\[(.+?)\]'
@@ -85,7 +89,8 @@ class Resolver:
         subsearch_query_service = re.sub(self.read_pattern_middle, self.create_read_graph, subsearch_query)
         subsearch_query_service = re.sub(self.read_pattern_start, self.create_read_graph, subsearch_query_service)
 
-        subsearch_query_service = re.sub(self.otstats_pattern_middle, self.create_otstats_graph, subsearch_query_service)
+        subsearch_query_service = re.sub(self.otstats_pattern_middle, self.create_otstats_graph,
+                                         subsearch_query_service)
         subsearch_query_service = re.sub(self.otstats_pattern_start, self.create_otstats_graph, subsearch_query_service)
 
         subsearch_query_service = re.sub(self.filter_pattern, self.create_filter_graph, subsearch_query_service)
@@ -252,7 +257,7 @@ class Resolver:
 
     def hide_quoted(self, match_object):
 
-        quoted_text = match_object.group(1)
+        quoted_text = match_object.group(2)
         quoted_text_sha256 = sha256(quoted_text.encode('utf-8')).hexdigest()
         self.hidden_quoted_text[quoted_text_sha256] = quoted_text
 
@@ -317,7 +322,7 @@ class Resolver:
         _otl = re.sub(Macros.macros_pattern, self.transform_macros, otl)
 
         _otl = re.sub(self.otloadjob_otl_pattern, self.create_otloadjob_otl, _otl)
-        _otl = re.sub(self.quoted_hide_pattern, self.hide_quoted, _otl)
+        _otl = pcre.sub(self.quoted_hide_pattern, self.hide_quoted, _otl)
         _otl = self.hide_no_subsearch_commands(_otl)
         _otl = (_otl, 1)
         while _otl[1]:
