@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.7.0] - 2021-07-02
+## [1.7.1] - 2021-07-13
 ### Added
 - SSI dispatcher plugin support (b64 decoding)
 
