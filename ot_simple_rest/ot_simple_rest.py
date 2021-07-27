@@ -22,6 +22,8 @@ from handlers.eva.role_model import UserHandler, UsersHandler, RoleHandler, Role
     IndexesHandler, IndexHandler, UserGroupsHandler, UserDashboardsHandler, GroupDashboardsHandler, UserSettingHandler
 from handlers.eva.papers import PaperLoadHandler, PapersHandler, PaperHandler
 
+from handlers.eva.theme import ThemeListHandler, ThemeGetHandler, ThemeHandler
+
 from handlers.jobs.makejob import MakeJob
 from handlers.jobs.loadjob import LoadJob
 from handlers.jobs.checkjob import CheckJob
@@ -221,6 +223,11 @@ def main():
         (r'/api/eva/reports/load', PaperLoadHandler, {"db_conn_pool": db_pool_eva,"static_conf": static_conf}),
         (r'/api/eva/reports/getAll', PapersHandler, {"db_conn_pool": db_pool_eva,"static_conf": static_conf}),
         (r'/api/eva/reports/get', PaperHandler, {"db_conn_pool": db_pool_eva,"static_conf": static_conf,"mem_conf": mem_conf}),
+
+        (r'/api/themes', ThemeListHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/theme', ThemeGetHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/theme/create', ThemeHandler, {"db_conn_pool": db_pool_eva}),
+        (r'/api/theme/delete', ThemeHandler, {"db_conn_pool": db_pool_eva}),
     ],
         login_url=r'/api/auth/login'
     )

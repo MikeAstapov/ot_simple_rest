@@ -75,6 +75,11 @@ CREATE TABLE role_permission (
     CONSTRAINT role_permission_id UNIQUE(permission_id, role_id)
 );
 
+CREATE TABLE theme (
+    name VARCHAR (256) PRIMARY KEY,
+    content TEXT
+);
+
 
 INSERT INTO "user" (name, password) VALUES ('admin', '$2b$12$ODxOO2wd6vRy2wT4euCJxeKPwU7.GW7HvTrcFmCQgTFbMQOfj851e');
 INSERT INTO permission (name) VALUES ('admin_all');

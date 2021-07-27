@@ -185,6 +185,13 @@ class TestEva(unittest.TestCase):
     - get indexes list
     - create/get/delete/edit dash
     - get dashs list
+
+    Test suite for /api/theme(s) OT_REST endpoint.
+    Test cases:
+    - get theme
+    - get themes list
+    - create theme
+    - delete theme
     """
     config = ConfigParser()
     config.add_section('rest_conf')
@@ -339,6 +346,18 @@ class TestEva(unittest.TestCase):
 
     def test__export_dash_group_multi(self):
         self.assertTrue(self.tester.test__export_dash_group_multi())
+
+    def test__create_theme(self):
+        self.assertTrue(self.tester.test__create_theme())
+
+    def test__delete_theme(self):
+        self.assertTrue(self.tester.test__delete_theme())
+
+    def test__get_theme(self):
+        self.assertTrue(self.tester.test__get_theme())
+
+    def test__get_themes_list(self):
+        self.assertTrue(self.tester.test__get_themes_list())
 
 
 class TestQuizs(unittest.TestCase):

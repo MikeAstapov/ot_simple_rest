@@ -28,9 +28,11 @@ class EvaTester:
         del_index_query = "DELETE FROM index;"
         del_dash_query = "DELETE FROM dash;"
         del_user_settings_query = "DELETE FROM user_settings;"
+        del_theme_query = "DELETE FROM theme;"
 
         for query in [del_user_query, del_role_query, del_permission_query,
-                      del_group_query, del_session_query, del_index_query, del_dash_query, del_user_settings_query]:
+                      del_group_query, del_session_query, del_index_query, del_dash_query, del_user_settings_query,
+                      del_theme_query]:
             self.db.execute_query(query, with_commit=True, with_fetch=False)
 
     def auth(self):
@@ -778,3 +780,49 @@ class EvaTester:
         finally:
             self._cleanup()
         return True
+
+    def test__create_theme(self):
+        data = {'themeName': 'test_theme', "colors": {"a":"red", "b":"green"}}
+        try:
+            self.send_request(method='POST', endpoint='/api/theme/create', data=data)
+            theme_data = self.db.execute_query('SELECT name FROM theme WHERE name=%s;',
+                                              params=(data['themeName'],), as_obj=True)
+        finally:
+            self._cleanup()
+        return theme_data is not None
+
+    def test__delete_theme(self):
+        data = {'themeName': 'test_theme', "colors": {"a":"red", "b":"green"}}
+        try:
+            self.send_request(method='POST', endpoint='/api/theme/create', data=data)
+            theme_before = self.db.execute_query('SELECT name FROM theme WHERE name=%s;',
+                                              params=(data['themeName'],), as_obj=True)
+            self.send_request(method='DELETE', endpoint='/api/theme/delete', data={"themeName":theme_before["name"]})
+            theme_after = self.db.execute_query('SELECT name FROM theme;', as_obj=True, fetchall=True)
+        finally:
+            self._cleanup()
+        return theme_after == []
+
+    def test__get_theme(self):
+        data = {'themeName': 'test_theme', "colors": {"a": "red", "b": "green"}}
+        try:
+            self.send_request(method='POST', endpoint='/api/theme/create', data=data)
+            theme_from_db = self.db.execute_query('SELECT name FROM theme WHERE name=%s;',
+                                              params=(data['themeName'],), as_obj=True)
+            theme_from_api = self.send_request(method='GET', endpoint=f'/api/theme?themeName={theme_from_db.name}')
+        finally:
+            self._cleanup()
+        return theme_from_api['name'] == data['themeName']
+
+    def test__get_themes_list(self):
+        data = [{'themeName': 'test_theme1'}, {'themeName': 'test_theme2'}]
+        try:
+            for d in data:
+                self.send_request(method='POST', endpoint='/api/theme/create', data=d)
+            themes_from_api = self.send_request(method='GET', endpoint='/api/themes')
+        finally:
+            self._cleanup()
+        print(themes_from_api)
+        return themes_from_api[0]['name'] == data[0]['themeName'] and \
+               themes_from_api[1]['name'] == data[1]['themeName']
+
