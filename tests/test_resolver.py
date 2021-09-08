@@ -426,3 +426,19 @@ class TestResolver(unittest.TestCase):
         print('result', result)
         print('target', target)
         self.assertDictEqual(result, target)
+
+    def test_inline_parsing(self):
+        otl = """makeresults count=10 | scala <#\n_df\n#>"""
+        target = {'search': ('makeresults count=10 | scala <#\n_df\n#>', 'makeresults count=10 | scala "Cl9kZgo="'), 'subsearches': {}}
+        result = self.resolver.resolve(otl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
+
+    def test_inline_parsing_plus(self):
+        otl = """makeresults count=10 | spark <#\nSELECT * FROM <dbname>\n#>"""
+        target = {'search': ('makeresults count=10 | spark <#\nSELECT * FROM <dbname>\n#>', 'makeresults count=10 | spark "ClNFTEVDVCAqIEZST00gPGRibmFtZT4K"'), 'subsearches': {}}
+        result = self.resolver.resolve(otl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
