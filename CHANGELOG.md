@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2021-09-09
+#### Added
+- B64 encoding for Scala and Spark code blocks
+- Tests for the first point
+
 ## [1.8.0] - 2021-07-27
 ### Added
 - Theme endpoints added

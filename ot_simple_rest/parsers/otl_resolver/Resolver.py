@@ -1,20 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # resolver.py
+import re
 import json
 import logging
-import re
-from hashlib import sha256
-from parsers.otl_to_sparksql.otl_parser import OTLtoSQL
-from parsers.otl_resolver.macros import Macros
-from base64 import urlsafe_b64decode
 import regex as pcre
+from hashlib import sha256
+from base64 import standard_b64encode as b64encode
+from parsers.otl_resolver.macros import Macros
+from parsers.otl_to_sparksql.otl_parser import OTLtoSQL
+
 
 __author__ = ["Andrey Starchenkov", "Anton Khromov"]
 __copyright__ = "Copyright 2019, Open Technologies 98"
 __credits__ = ["Sergei Ermilov", "Anastasiya Safonova"]
 __license__ = ""
-__version__ = "0.3.20"
+__version__ = "0.4.0"
 __maintainer__ = "Andrey Starchenkov"
 __email__ = "akhromov@ot.ru"
 __status__ = "Production"
@@ -36,6 +37,10 @@ class Resolver:
     logger = logging.getLogger('osr')
 
     # Patterns for transformation.
+    # quoted_hide_pattern - the following pattern checks json-like string type,
+    # extended with ability to pass both `'` and `"` as quotes for the string.
+    # Left side of the pattern saves the quote, middle part checks escaping and finishes with copying the quote
+    # WARNING: REGEX engine that fully supports PCRE standard is REQUIRED to make this possible
     quoted_hide_pattern = pcre.compile(r'(?<!\\)(?<q>[\'"])((?:(?!(?<!\\)\g<q>).)*)(?<!\\)\g<q>')
     quoted_return_pattern = r'_quoted_text_(\w+)'
     no_subsearch_return_pattern = r'_hidden_text_(\w+)'
@@ -307,10 +312,10 @@ class Resolver:
         return otl
 
     def scala_inline_transformer(self, match_object):
-        return f"scala {json.dumps(match_object.group(1))}"
+        return f"scala \"{b64encode(match_object.group(1).encode('UTF-8')).decode()}\""
 
     def spark_inline_transformer(self, match_object):
-        return f"spark {json.dumps(match_object.group(1))}"
+        return f"spark \"{b64encode(match_object.group(1).encode('UTF-8')).decode()}\""
 
     def resolve(self, otl):
         """
@@ -342,6 +347,6 @@ class Resolver:
         _otl = re.sub(self.filter_pattern, self.create_filter_graph, _otl, flags=re.I)
         _otl = re.sub(self.otinputlookup_where_pattern, self.create_inputlookup_filter, _otl)
         _otl = re.sub(self.otloadjob_id_pattern, self.create_otloadjob_id, _otl)
-        _otl = re.sub(self.scala_inline_pattern, self.scala_inline_transformer, _otl)
-        _otl = re.sub(self.spark_inline_pattern, self.spark_inline_transformer, _otl)
+        _otl = re.sub(self.scala_inline_pattern, self.scala_inline_transformer, _otl, flags=re.S)
+        _otl = re.sub(self.spark_inline_pattern, self.spark_inline_transformer, _otl, flags=re.S)
         return {'search': (otl, _otl), 'subsearches': self.subsearches}
