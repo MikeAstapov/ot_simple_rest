@@ -6,6 +6,7 @@ import tornado.web
 import jwt
 
 from handlers.eva.base import BaseHandler
+from utils.primitives import EverythingEqual
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -89,7 +90,7 @@ class MakeJob(BaseHandler):
         original_otl = original_otl.strip()
         return original_otl
 
-    def user_has_right(self, indexes):
+    def get_user_indexes_rights(self, indexes):
         """
         It checks Role Model if user has access to requested indexes.
 
@@ -101,26 +102,24 @@ class MakeJob(BaseHandler):
             return True, indexes
 
         accessed_indexes = []
-        user_indexes = self.db.get_indexes_data(user_id=self.current_user,
-                                                names_only=True)
-        access_flag = False
-        if user_indexes:
-            if '*' in user_indexes:
-                access_flag = True
-            else:
-                for index in indexes:
-                    index = index.replace('"', '').replace('\\', '')
-                    for _index in user_indexes:
-                        indexes_from_rm = re.findall(index.replace("*", ".*"), _index)
-                        self.logger.debug(f"Indexes from rm: {indexes_from_rm}. Left index: {index}. "
-                                          f"Right index: {_index}.", extra={'hid': self.handler_id})
-                        for ifrm in indexes_from_rm:
-                            accessed_indexes.append(ifrm)
-            if accessed_indexes:
-                access_flag = True
-        self.logger.debug(f'User has a right: {access_flag}', extra={'hid': self.handler_id})
+        user_indexes = self.db.get_indexes_data(user_id=self.current_user, names_only=True)
 
-        return access_flag, accessed_indexes
+        for index in indexes:
+            if index == '*':
+                accessed_indexes.append(EverythingEqual())  # Everything is in the accessed_indexes list
+                continue
+
+            index = index.replace('"', '').replace('\\', '')
+            for _index in user_indexes:
+                indexes_from_rm = re.findall(index.replace("*", ".*"), _index)
+                self.logger.debug(f"Indexes from rm: {indexes_from_rm}. Left index: {index}. "
+                                  f"Right index: {_index}.", extra={'hid': self.handler_id})
+                for ifrm in indexes_from_rm:
+                    accessed_indexes.append(ifrm)
+
+        self.logger.debug(f'User has a right: {len(accessed_indexes) != 0}', extra={'hid': self.handler_id})
+
+        return accessed_indexes
 
     async def post(self):
         """
@@ -130,14 +129,14 @@ class MakeJob(BaseHandler):
         """
         original_otl = self.get_original_otl()
         indexes = re.findall(r"index\s?=\s?([\"\']?_?\w+[_\w+]*[\"\']?)", original_otl)
-        access_flag, indexes = self.user_has_right(indexes)
-        if not access_flag:
+        user_accessed_indexes = self.get_user_indexes_rights(indexes)
+        if not user_accessed_indexes:
             return self.write({"status": "fail", "error": "User has no access to index"})
 
-        self.logger.debug(f'User has access. Indexes: {indexes}.', extra={'hid': self.handler_id})
+        self.logger.debug(f'User has access. Indexes: {user_accessed_indexes}.', extra={'hid': self.handler_id})
         response = await self.jobs_manager.make_job(hid=self.handler_id,
                                                     request=self.request,
-                                                    indexes=indexes)
+                                                    indexes=user_accessed_indexes)
         self.logger.debug(f'MakeJob RESPONSE: {response}', extra={'hid': self.handler_id})
         self.write(response)
 
