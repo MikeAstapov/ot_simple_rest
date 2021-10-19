@@ -2,13 +2,14 @@ import unittest
 
 import logging
 import parsers.otl_resolver.Resolver as Resolver
+from utils.primitives import EverythingEqual
 
 
 class TestResolver(unittest.TestCase):
 
     def setUp(self) -> None:
         self.maxDiff = None
-        self.resolver = Resolver.Resolver(['main', 'main1', 'main2'], 0, 0, no_subsearch_commands='foreach,appendpipe', macros_dir='./tests/macros/')
+        self.resolver = Resolver.Resolver([EverythingEqual(), 'main', 'main1', 'main2'], 0, 0, no_subsearch_commands='foreach,appendpipe', macros_dir='./tests/macros/')
         logging.basicConfig(
             level='DEBUG',
             format="%(asctime)s %(levelname)-s PID=%(process)d %(module)s:%(lineno)d \

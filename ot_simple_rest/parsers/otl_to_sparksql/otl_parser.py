@@ -70,13 +70,17 @@ class OTLtoSQL:
         # If index is regular expression,
         # find all indices in av_indexes list
         for index_string in indices_list:
+
             if index_string.find('*') >= 0:
-                string = index_string[:index_string.find('*')]
+                unstarred_string = index_string[:index_string.find('*')]
+
                 for index_name in av_indexes:
-                    if index_name.find(string) == 0:
+                    if index_name.find(unstarred_string) == 0:
                         full_indices_list.append(index_name)
+
             else:
-                full_indices_list.append(index_string)
+                if index_string in av_indexes:
+                    full_indices_list.append(index_string)
 
         # Add indices and query strings to map_with_time dictionary
         for index_string in full_indices_list:
