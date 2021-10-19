@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.9.2] - 2021-10-19
 ### Fixed
 - Fix regexep in makejob for using indexes with wildcards (e.g. index=* or index=main*)
+- Fix tests
 
 ## [1.9.1] - 2021-10-08
 ### Fixed
