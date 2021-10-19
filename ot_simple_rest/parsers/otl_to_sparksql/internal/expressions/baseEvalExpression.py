@@ -186,8 +186,11 @@ class BaseEvalExpressions:
 
         if nodes[1][:1] == '!':
             return nodes[1][1:]
-        else:
-            return "!(" + nodes[1] + ")"
+
+        if nodes[1].startswith('('):
+            return "!" + nodes[1]
+
+        return "!(" + nodes[1] + ")"
 
     def transform_comparison(self, _context, nodes):
         """Transforms compare expressions from OTL format to SQL format
