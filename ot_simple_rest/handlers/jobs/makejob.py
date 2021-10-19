@@ -104,12 +104,12 @@ class MakeJob(BaseHandler):
         accessed_indexes = []
         user_indexes = self.db.get_indexes_data(user_id=self.current_user, names_only=True)
 
-        for index in indexes:
-            if index == '*':
-                accessed_indexes.append(EverythingEqual())  # Everything is in the accessed_indexes list
-                continue
+        if '*' in user_indexes:
+            accessed_indexes.append(EverythingEqual())  # Everything is in the accessed_indexes list
 
+        for index in indexes:
             index = index.replace('"', '').replace('\\', '')
+
             for _index in user_indexes:
                 indexes_from_rm = re.findall(index.replace("*", ".*"), _index)
                 self.logger.debug(f"Indexes from rm: {indexes_from_rm}. Left index: {index}. "
@@ -128,7 +128,7 @@ class MakeJob(BaseHandler):
         :return:
         """
         original_otl = self.get_original_otl()
-        indexes = re.findall(r"index\s?=\s?([\"\']?_?\w+[_\w+]*[\"\']?)", original_otl)
+        indexes = re.findall(r"index\s?=\s?([\"\']?_?\w*[\w*][_\w+]*?[\"\']?)", original_otl)
         user_accessed_indexes = self.get_user_indexes_rights(indexes)
         if not user_accessed_indexes:
             return self.write({"status": "fail", "error": "User has no access to index"})
