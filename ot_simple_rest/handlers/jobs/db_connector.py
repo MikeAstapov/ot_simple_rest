@@ -21,7 +21,7 @@ class PostgresConnector(PGConnector):
         stm_tuple = (original_otl, tws, twf, field_extraction, preview)
         self.logger.info(query_str % stm_tuple)
 
-        cache_data = self.execute_query(query_str, params=stm_tuple, fetchall=True)
+        cache_data = self.execute_query(query_str, params=stm_tuple)
         if cache_data:
             cache_id, creating_date = cache_data
         return cache_id, creating_date
@@ -33,7 +33,7 @@ class PostgresConnector(PGConnector):
         stm_tuple = (original_otl, tws, twf, field_extraction, preview)
         self.logger.info(query_str % stm_tuple)
 
-        job_data = self.execute_query(query_str, params=stm_tuple, fetchall=False)
+        job_data = self.execute_query(query_str, params=stm_tuple)
         if job_data:
             job_id, creating_date = job_data
         return job_id, creating_date
