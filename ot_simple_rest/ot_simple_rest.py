@@ -23,6 +23,7 @@ from handlers.eva.role_model import UserHandler, UsersHandler, RoleHandler, Role
 from handlers.eva.papers import PaperLoadHandler, PapersHandler, PaperHandler
 
 from handlers.eva.theme import ThemeListHandler, ThemeGetHandler, ThemeHandler
+from handlers.eva.timelines import GetTimelines
 
 from handlers.jobs.makejob import MakeJob
 from handlers.jobs.loadjob import LoadJob
@@ -155,6 +156,8 @@ def main():
         (r'/api/ping', PingPong),
         (r'/api/checkjob', CheckJob, {"manager": manager}),
         (r'/api/getresult', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
+        (r'/api/gettimelines', GetTimelines, {"mem_conf": mem_conf, "static_conf": static_conf}),
+        # (r'/api/getinterestingfields', GetInterestingFields, {"mem_conf": mem_conf, "static_conf": static_conf}),
         (r'/api/makejob', MakeJob, {"db_conn_pool": db_pool_eva, "manager": manager, "user_conf": user_conf}),
         (r'/api/loadjob', LoadJob, {"manager": manager}),
         (r'/api/otrest', SaveOtRest, {"db_conn_pool": db_pool, "mem_conf": mem_conf}),

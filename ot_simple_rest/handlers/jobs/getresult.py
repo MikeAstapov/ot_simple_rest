@@ -81,7 +81,7 @@ class GetResult(tornado.web.RequestHandler):
         :return:
         """
         self.logger.debug(f'Started loading cache {cid}.')
-        path_to_cache_dir = os.path.join(self.data_path, f'search_{cid}.cache')
+        path_to_cache_dir = os.path.join(self.data_path, self._cache_name_template.format(cid))
         self.logger.debug(f'Path to cache {path_to_cache_dir}.')
         file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
         with open(os.path.join(path_to_cache_dir, "_SCHEMA")) as fr:
