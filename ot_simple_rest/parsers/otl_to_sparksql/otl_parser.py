@@ -20,7 +20,7 @@ class OTLtoSQL:
         """
 
         # Remove time from OTL and save start time and end time values in tws and twf
-        (otl, _tws, _twf) = Timerange.removetime(otl, tws, twf)
+        otl, _tws, _twf = Timerange().otl_remove_timerange(otl, tws, twf)
         indices_list = []
         fields_list = []
 
