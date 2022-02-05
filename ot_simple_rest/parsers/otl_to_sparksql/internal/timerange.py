@@ -370,7 +370,7 @@ class Timerange:
 
         dict_time_mod_args: dict = {"earliest": 0, "latest": 0}
         # -> (earliest|latest)=([a-zA-Z0-9_*-\@]+)
-        otl_line_regex: str = rf"({'|'.join(dict_time_mod_args.keys())})=([()a-zA-Z0-9_*-\@]+)"
+        otl_line_regex: str = rf"({'|'.join(dict_time_mod_args.keys())})=\"?([()a-zA-Z0-9_*-\@]+)"
 
         otl_splited: dict = dict(re.findall(otl_line_regex, otl_line))  # example: {'earliest': '1', 'latest': 'now()'}
         otl_cleaned: str = re.sub(otl_line_regex, "", otl_line)
@@ -405,7 +405,7 @@ if __name__ == "__main__":
             '| otstats abrakadabra latest=now()',  # check now()
             '| otstats ... latest=now',  # check now
             '| otstats ... earliest=1111111100 latest=1111111111',  # check earliest < latest and timestamp
-            '| otstats ... earliest=10/27/2015:00:00:00 latest=10/27/2018:00:00:00',  # check earliest > latest and
+            '| otstats ... earliest=10/27/2015:00:00:00 latest="10/27/2018:00:00:00"',  # check earliest < latest and
             # datetime format
             '| otstats ... earliest=10/27/2015:00:00:00 latest=10/27/2013:00:00:00',  # check earliest > latest
             '| otstats ... latest=-s',  # check seconds
