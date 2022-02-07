@@ -77,7 +77,7 @@ class Timerange:
             current_datetime: optional, set different time or default `None` set current time
 
         """
-        self.__now: datetime = current_datetime if current_datetime else datetime.now()
+        self.__now: datetime = current_datetime or datetime.now()
 
     def __get_current_time(self) -> int:
         """
@@ -234,15 +234,15 @@ class Timerange:
         # split with +, -, @
         timeline_splitted: list = [elem for elem in re.split(spliter_regex, expression_line) if elem]
 
-        for timiline_elem in timeline_splitted:
+        for timeline_elem in timeline_splitted:
 
             # check if spliter is +, -, @
-            if re.findall(spliter_regex, timiline_elem):
-                sign = 1 if timiline_elem is '+' else -1 if timiline_elem is '-' else 0
+            if re.findall(spliter_regex, timeline_elem):
+                sign = 1 if timeline_elem is '+' else -1 if timeline_elem is '-' else 0
                 continue
 
-            # split timiline_elem on nums and words
-            num_abbr_union: list = list(filter(None, re.split(abbr_regex, timiline_elem)))
+            # split timeline_elem on nums and words
+            num_abbr_union: list = list(filter(None, re.split(abbr_regex, timeline_elem)))
 
             # time shift if + or -
             if sign and 0 < len(num_abbr_union):
