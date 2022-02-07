@@ -1,18 +1,13 @@
-import logging
-import json
-import os
 from datetime import datetime
+from .base_builder import BaseBuilder
 # from dateutil.relativedelta import relativedelta
 # import pytz # $ pip install pytz
 
-class TimelinesBuilder:
+
+class TimelinesBuilder(BaseBuilder):
 
     def __init__(self, mem_conf, static_conf):
-        self.mem_conf = mem_conf
-        self.static_conf = static_conf
-        self.data_path = self.mem_conf['path']
-        self.logger = logging.getLogger('osr')
-        self._cache_name_template = 'search_{}.cache/data'
+        super().__init__(mem_conf, static_conf)
         self.INTERVALS = {'m': 60, 'h': 3600, 'd': 86400}
         self.points = 50  # how many point on the timeline
         self.MONTH_NAMES = {
@@ -190,32 +185,6 @@ class TimelinesBuilder:
             timeline.append({'time': t, 'value': 0})
         return list(reversed(timeline))
 
-    def _load_data(self, cid):
-        """
-        Load data by cid
-
-        :param cid:         OT_Dispatcher's job cid
-        :return:            list of dicts from json lines
-        """
-        data = []
-        self.logger.debug(f'Started loading cache {cid}.')
-        path_to_cache_dir = os.path.join(self.data_path, self._cache_name_template.format(cid))
-        self.logger.debug(f'Path to cache {path_to_cache_dir}.')
-        file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
-        for file_name in file_names:
-            self.logger.debug(f'Reading part: {file_name}')
-            with open(os.path.join(path_to_cache_dir, file_name)) as fr:
-                for line in fr:
-                    data.append(json.loads(line))
-        return data
-
-    def _load_data_test(self):
-        data = []
-        with open('tools/test_timelines_builder.json') as fr:
-            for line in fr:
-                data.append(json.loads(line))  # all in one
-        return data
-
     def get_all_timelines(self, cid):
         timelines = [None] * 4
         data = self._load_data(cid)
@@ -225,9 +194,9 @@ class TimelinesBuilder:
         timelines[3] = self.get_months_timeline(data)
         return timelines
 
-    def test_get_all_timelines(self):
+    def test_get_all_timelines(self, data_path):
         timelines = [None] * 4
-        data = self._load_data_test()
+        data = self._load_data_test(data_path)
         timelines[0] = self.get_timeline(data, self.INTERVALS['m'])
         timelines[1] = self.get_timeline(data, self.INTERVALS['h'])
         timelines[2] = self.get_timeline(data, self.INTERVALS['d'])

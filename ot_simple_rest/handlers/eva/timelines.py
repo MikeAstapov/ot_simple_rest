@@ -24,8 +24,7 @@ class GetTimelines(tornado.web.RequestHandler):
         """
         params = self.request.query_arguments
         cid = params.get('cid')[0].decode()
-        # timelines = self.builder.test_get_all_timelines()  # for testing with tools/test_timelines_builder.json
+        # for testing with tools/test_timelines_builder.json
+        # timelines = self.builder.test_get_all_timelines('tools/test_timelines_builder.json')
         timelines = self.builder.get_all_timelines(cid)
         self.write(json.dumps(timelines))
-
-
