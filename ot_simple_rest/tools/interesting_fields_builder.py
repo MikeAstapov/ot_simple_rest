@@ -15,7 +15,6 @@ class InterestingFieldsBuilder(BaseBuilder):
         not_nan_for_every_col = data.count()
         for col in data.columns:
             interesting_fields[col] = {'id': i, 'text': col, 'totalCount': not_nan_for_every_col[col], 'static': []}
-            # .sort_index(ascending=False).sort_values(ascending=False)
             value_counts_columns[col] = data[col].value_counts()
             i += 1
         for col_name, unique_values in value_counts_columns.items():

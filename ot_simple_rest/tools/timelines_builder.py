@@ -100,7 +100,7 @@ class TimelinesBuilder(BaseBuilder):
         while i >= 0 and len(timeline) < self.points:
             # accumulate values for given interval
             if data[i]['_time'] >= last_time:
-                accumulated_value += data[i]['value']
+                accumulated_value += 1
                 i -= 1
             # flush accumulated values and interval to the timeline
             elif last_time - interval <= data[i]['_time'] < last_time or accumulated_value:
@@ -156,7 +156,7 @@ class TimelinesBuilder(BaseBuilder):
         while i >= 0 and len(timeline) < self.points:
             # accumulate values for given interval
             if data[i]['_time'] >= last_time:
-                accumulated_value += data[i]['value']
+                accumulated_value += 1
                 i -= 1
             # flush accumulated values and interval to the timeline
             elif last_time - months[last_month] * self.INTERVALS['d'] <= data[i]['_time'] < last_time or accumulated_value:
