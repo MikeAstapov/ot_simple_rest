@@ -21,7 +21,7 @@ class InterestingFieldsBuilder(BaseBuilder):
             for value_as_index, value_counter in unique_values.items():
                 value = value_as_index
                 count = value_counter
-                percent = count / interesting_fields[col_name]['totalCount'] * 100
+                percent = count / data.shape[0] * 100
                 if data.shape[0] > 300:
                     percent = round(percent, 2)
                 elif 30 < data.shape[0] < 300:
