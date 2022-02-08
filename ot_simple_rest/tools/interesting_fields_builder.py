@@ -6,6 +6,16 @@ class InterestingFieldsBuilder(BaseBuilder):
     def __init__(self, mem_conf, static_conf):
         super().__init__(mem_conf, static_conf)
 
+    @staticmethod
+    def _round_percent(percent, length):
+        if length > 300:
+            percent = round(percent, 2)
+        elif 30 < length < 300:
+            percent = round(percent, 1)
+        else:
+            percent = round(percent)
+        return percent
+
     def _get_fields(self, data):
         if data.empty:
             return []
@@ -22,12 +32,7 @@ class InterestingFieldsBuilder(BaseBuilder):
                 value = value_as_index
                 count = value_counter
                 percent = count / data.shape[0] * 100
-                if data.shape[0] > 300:
-                    percent = round(percent, 2)
-                elif 30 < data.shape[0] < 300:
-                    percent = round(percent, 1)
-                else:
-                    percent = round(percent)
+                percent = self._round_percent(percent, data.shape[0])
                 interesting_fields[col_name]['static'].append({
                     'value': value,
                     'count': count,
