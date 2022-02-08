@@ -1,5 +1,8 @@
 from datetime import datetime
 from .base_builder import BaseBuilder
+import json
+import os
+from file_read_backwards import FileReadBackwards
 # from dateutil.relativedelta import relativedelta
 # import pytz # $ pip install pytz
 
@@ -10,6 +13,8 @@ class TimelinesBuilder(BaseBuilder):
         super().__init__(mem_conf, static_conf)
         self.INTERVALS = {'m': 60, 'h': 3600, 'd': 86400}
         self.points = 50  # how many point on the timeline
+        # approximately self.point months in seconds to optimize (limit) json reading
+        self.BIGGEST_INTERVAL = self.INTERVALS['d'] * 31 * self.points
         self.MONTH_NAMES = {
             '01': 'января',
             '02': 'февраля',
@@ -39,6 +44,52 @@ class TimelinesBuilder(BaseBuilder):
             '12': 'декабрь'
         }
         # self.TIME_ZONE = 'Europe/Moscow'  # TODO set timezone utcfromtimestamp?
+
+    def _load_data(self, cid):
+        """
+        Load data by cid
+
+        :param cid:         OT_Dispatcher's job cid
+        :return:            list of dicts from json lines
+        """
+        data = []
+        last_time = None
+        time_to_break = False
+        self.logger.debug(f'Started loading cache {cid}.')
+        path_to_cache_dir = os.path.join(self.data_path, self._cache_name_template.format(cid))
+        self.logger.debug(f'Path to cache {path_to_cache_dir}.')
+        file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
+        for file_name in file_names:
+            if time_to_break:
+                break
+            self.logger.debug(f'Reading part: {file_name}')
+            with FileReadBackwards(os.path.join(path_to_cache_dir, file_name)) as fr:
+                for line in fr:
+                    tmp = json.loads(line)
+                    if last_time:
+                        if last_time - tmp['_time'] > self.BIGGEST_INTERVAL:
+                            time_to_break = True
+                            break
+                    else:
+                        last_time = tmp['_time']
+                    data.append(tmp)
+        data.reverse()
+        return data
+
+    def _load_data_test(self, data_path):
+        data = []
+        last_time = None
+        with FileReadBackwards(data_path) as fr:
+            for line in fr:
+                tmp = json.loads(line)
+                if last_time:
+                    if last_time - tmp['_time'] > self.BIGGEST_INTERVAL:
+                        break
+                else:
+                    last_time = tmp['_time']
+                data.append(tmp)
+        data.reverse()
+        return data
 
     @staticmethod
     def _convert_hours_am_pm_format(hour: str) -> (str, str):

@@ -45,7 +45,6 @@ class InterestingFieldsBuilder(BaseBuilder):
         data = self._load_json_lines_test(data_path)
         return self._get_fields(data)
 
-
     def get_interesting_fields(self, cid):
         data = self._load_json_lines(cid)
         return self._get_fields(data)
