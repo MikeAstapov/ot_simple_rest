@@ -15,34 +15,6 @@ class TimelinesBuilder(BaseBuilder):
         self.points = 50  # how many point on the timeline
         # approximately self.point months in seconds to optimize (limit) json reading
         self.BIGGEST_INTERVAL = self.INTERVALS['d'] * 31 * self.points
-        self.MONTH_NAMES = {
-            '01': 'января',
-            '02': 'февраля',
-            '03': 'марта',
-            '04': 'апреля',
-            '05': 'мая',
-            '06': 'июня',
-            '07': 'июля',
-            '08': 'августа',
-            '09': 'сентября',
-            '10': 'октября',
-            '11': 'ноября',
-            '12': 'декабря'
-        }
-        self.MONTH_ONLY_NAMES = {
-            '01': 'январь',
-            '02': 'февраль',
-            '03': 'март',
-            '04': 'апрель',
-            '05': 'май',
-            '06': 'июнь',
-            '07': 'июль',
-            '08': 'август',
-            '09': 'сентябрь',
-            '10': 'октябрь',
-            '11': 'ноябрь',
-            '12': 'декабрь'
-        }
         # self.TIME_ZONE = 'Europe/Moscow'  # TODO set timezone utcfromtimestamp?
 
     def _load_data(self, cid):
@@ -100,24 +72,6 @@ class TimelinesBuilder(BaseBuilder):
                 hour = f'0{hour}'
         return hour, am_or_pm
 
-    def _format_time(self, date, tformat):
-        if tformat == '%Y-%m':
-            y, m = date.split('-')
-            return f'{self.MONTH_ONLY_NAMES[m]} {y}'  # январь 2018
-        if tformat == '%Y-%m-%d':
-            y, m, d = date.split('-')
-            return f'{d} {self.MONTH_NAMES[m]} {y}'  # 19 января 2018
-        if tformat == '%Y-%m-%d %H':
-            ymd, hour = date.split()
-            y, m, d = ymd.split('-')
-            hour, am_or_pm = self._convert_hours_am_pm_format(hour)
-            return f'{hour} {am_or_pm} - {d} {self.MONTH_NAMES[m]} {y}'  # 2 PM - 19 января 2018
-        ymd, hm = date.split()
-        y, m, d = ymd.split('-')
-        hour, minutes = hm.split(':')
-        hour, am_or_pm = self._convert_hours_am_pm_format(hour)
-        return f'{hour}:{minutes} {am_or_pm} - {d} {self.MONTH_NAMES[m]} {y}'  # 4:51 PM - 19 января 2018
-
     def _set_timeformat(self, interval) -> str:
         if interval == self.INTERVALS['m']:
             return '%Y-%m-%d %H:%M'
@@ -153,24 +107,20 @@ class TimelinesBuilder(BaseBuilder):
                 i += 1
             # flush accumulated values and interval to the timeline
             elif last_time - interval <= data[i]['_time'] < last_time or accumulated_value:
-                t = self._format_time(datetime.fromtimestamp(last_time).strftime(tformat), tformat)
-                timeline.append({'time': t, 'value': accumulated_value})
+                timeline.append({'time': last_time, 'value': accumulated_value})
                 accumulated_value = 0
                 last_time -= interval
             # move to interval in which current time is located and set 0 values to intervals on the way
             else:
                 while data[i]['_time'] < last_time - interval and len(timeline) < self.points:
-                    t = self._format_time(datetime.fromtimestamp(last_time).strftime(tformat), tformat)
-                    timeline.append({'time': t, 'value': 0})
+                    timeline.append({'time': last_time, 'value': 0})
                     last_time -= interval
         if accumulated_value:
-            t = self._format_time(datetime.fromtimestamp(last_time).strftime(tformat), tformat)
-            timeline.append({'time': t, 'value': accumulated_value})
+            timeline.append({'time': last_time, 'value': accumulated_value})
             last_time -= interval
         # when data ended but timeline does not have 50 values
         while len(timeline) < self.points:
-            t = self._format_time(datetime.fromtimestamp(last_time).strftime(tformat), tformat)
-            timeline.append({'time': t, 'value': 0})
+            timeline.append({'time': last_time, 'value': 0})
             last_time -= interval
         return list(reversed(timeline))
 
@@ -209,29 +159,25 @@ class TimelinesBuilder(BaseBuilder):
                 i += 1
             # flush accumulated values and interval to the timeline
             elif last_time - months[last_month] * self.INTERVALS['d'] <= data[i]['_time'] < last_time or accumulated_value:
-                t = self._format_time(datetime.fromtimestamp(last_time).strftime(tformat), tformat)
-                timeline.append({'time': t, 'value': accumulated_value})
+                timeline.append({'time': last_time, 'value': accumulated_value})
                 accumulated_value = 0
                 last_month = self._calculate_month(last_month, months, data[i]['_time'])
                 last_time -= months[last_month] * self.INTERVALS['d']
             # move to interval in which current time is located and set 0 values to intervals on the way
             else:
                 while data[i]['_time'] < last_time - months[last_month] * self.INTERVALS['d'] and len(timeline) < self.points:
-                    t = self._format_time(datetime.fromtimestamp(last_time).strftime(tformat), tformat)
-                    timeline.append({'time': t, 'value': 0})
+                    timeline.append({'time': last_time, 'value': 0})
                     last_month = self._calculate_month(last_month, months, data[i]['_time'])
                     last_time -= months[last_month] * self.INTERVALS['d']
         if accumulated_value:
-            t = self._format_time(datetime.fromtimestamp(last_time).strftime(tformat), tformat)
-            timeline.append({'time': t, 'value': accumulated_value})
+            timeline.append({'time': last_time, 'value': accumulated_value})
             last_month = self._calculate_month(last_month, months, last_time)
             last_time -= months[last_month] * self.INTERVALS['d']
         # when data ended but timeline does not have 50 values
         while len(timeline) < self.points:
             last_month = self._calculate_month(last_month, months, last_time)
             last_time -= months[last_month] * self.INTERVALS['d']
-            t = self._format_time(datetime.fromtimestamp(last_time).strftime(tformat), tformat)
-            timeline.append({'time': t, 'value': 0})
+            timeline.append({'time': last_time, 'value': 0})
         return list(reversed(timeline))
 
     def get_all_timelines(self, cid):
