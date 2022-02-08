@@ -9,23 +9,30 @@ class InterestingFieldsBuilder(BaseBuilder):
     def _get_fields(self, data):
         if data.empty:
             return []
-        # interesting_fields = [{} for _ in range(data.shape[1])]  # to avoid having on dict referenced many times
         interesting_fields = {}
         i = 0
-        vcs = {}
-        data.dropna(inplace=True)
+        value_counts_columns = {}
+        not_nan_for_every_col = data.count()
         for col in data.columns:
-            interesting_fields[col] = {'id': i, 'text': data.columns[i], 'totalCount': data.shape[0], 'static': []}
-            vcs[col] = data[col].value_counts()
+            interesting_fields[col] = {'id': i, 'text': col, 'totalCount': not_nan_for_every_col[col], 'static': []}
+            # .sort_index(ascending=False).sort_values(ascending=False)
+            value_counts_columns[col] = data[col].value_counts()
             i += 1
-        for k, v in vcs.items():
-            for index, val in v.items():
-                value = index
-                count = val
-                interesting_fields[k]['static'].append({
+        for col_name, unique_values in value_counts_columns.items():
+            for value_as_index, value_counter in unique_values.items():
+                value = value_as_index
+                count = value_counter
+                percent = count / interesting_fields[col_name]['totalCount'] * 100
+                if data.shape[0] > 300:
+                    percent = round(percent, 2)
+                elif 30 < data.shape[0] < 300:
+                    percent = round(percent, 1)
+                else:
+                    percent = round(percent)
+                interesting_fields[col_name]['static'].append({
                     'value': value,
                     'count': count,
-                    '%': count / data.shape[0] * 100
+                    '%': percent
                 })
 
         return list(interesting_fields.values())
