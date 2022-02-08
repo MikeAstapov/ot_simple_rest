@@ -73,8 +73,7 @@ class TimelinesBuilder(BaseBuilder):
                     else:
                         last_time = tmp['_time']
                     data.append(tmp)
-        data.reverse()
-        return data
+        return data  # is not reversed intentionally. This way it is easier to build a timeline
 
     def _load_data_test(self, data_path):
         data = []
@@ -88,8 +87,7 @@ class TimelinesBuilder(BaseBuilder):
                 else:
                     last_time = tmp['_time']
                 data.append(tmp)
-        data.reverse()
-        return data
+        return data  # is not reversed intentionally. This way it is easier to build a timeline
 
     @staticmethod
     def _convert_hours_am_pm_format(hour: str) -> (str, str):
@@ -144,15 +142,15 @@ class TimelinesBuilder(BaseBuilder):
             return timeline
         tformat = self._set_timeformat(interval)
         # round last time to interval
-        last_time = datetime.fromtimestamp(data[-1]['_time'])
+        last_time = datetime.fromtimestamp(data[0]['_time'])
         last_time = self._round_timestamp(last_time, interval)
         accumulated_value = 0
-        i = len(data) - 1
-        while i >= 0 and len(timeline) < self.points:
+        i = 0
+        while i < len(data) and len(timeline) < self.points:
             # accumulate values for given interval
             if data[i]['_time'] >= last_time:
                 accumulated_value += 1
-                i -= 1
+                i += 1
             # flush accumulated values and interval to the timeline
             elif last_time - interval <= data[i]['_time'] < last_time or accumulated_value:
                 t = self._format_time(datetime.fromtimestamp(last_time).strftime(tformat), tformat)
@@ -196,19 +194,19 @@ class TimelinesBuilder(BaseBuilder):
         if not data:
             return timeline
         tformat = '%Y-%m'
-        months = [31, self._feb_days(data[-1]['_time']), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        last_month = datetime.fromtimestamp(data[-1]['_time']).month - 1  # month index
+        months = [31, self._feb_days(data[0]['_time']), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        last_month = datetime.fromtimestamp(data[0]['_time']).month - 1  # month index
         # round last time to interval
-        last_time = datetime.fromtimestamp(data[-1]['_time'])
+        last_time = datetime.fromtimestamp(data[0]['_time'])
         last_time = last_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         last_time = last_time.timestamp()
         accumulated_value = 0
-        i = len(data) - 1
-        while i >= 0 and len(timeline) < self.points:
+        i = 0
+        while i < len(data) and len(timeline) < self.points:
             # accumulate values for given interval
             if data[i]['_time'] >= last_time:
                 accumulated_value += 1
-                i -= 1
+                i += 1
             # flush accumulated values and interval to the timeline
             elif last_time - months[last_month] * self.INTERVALS['d'] <= data[i]['_time'] < last_time or accumulated_value:
                 t = self._format_time(datetime.fromtimestamp(last_time).strftime(tformat), tformat)
