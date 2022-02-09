@@ -43,7 +43,7 @@ class TestTimelines(unittest.TestCase):
         self.assertEqual(result[-1]['value'] == 200, True)
 
     def test_months_timeline(self):
-        result = self.builder.get_months_timeline(self.data)
+        result = self.builder.get_timeline(self.data, self.builder.INTERVALS['M'])
         if len(result) != self.builder.points:  # wrong timeline len
             self.assertEqual(True, False)
         for i in range(len(result) - 4):
@@ -89,7 +89,7 @@ class TestTimelines(unittest.TestCase):
         self.assertEqual(result[-1]['value'] == 957, True)
 
     def test_months_timeline_with_field(self):
-        result = self.builder.get_months_timeline(self.data, 'value')
+        result = self.builder.get_timeline(self.data, self.builder.INTERVALS['M'], 'value')
         if len(result) != self.builder.points:  # wrong timeline len
             self.assertEqual(True, False)
         for i in range(len(result) - 4):

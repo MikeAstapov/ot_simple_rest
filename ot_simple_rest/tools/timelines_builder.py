@@ -11,7 +11,11 @@ class TimelinesBuilder(BaseBuilder):
 
     def __init__(self, mem_conf, static_conf):
         super().__init__(mem_conf, static_conf)
-        self.INTERVALS = {'m': 60, 'h': 3600, 'd': 86400}
+        self.INTERVALS = {'m': 60, 'h': 3600, 'd': 86400, 'M': -1}  # -1 is a signal for getter to count month interval
+        self._interval_info = None
+        self._last_time = None
+        self._last_month = None
+        self._months = None
         self.points = 50  # how many point on the timeline
         # approximately self.point months in seconds to optimize (limit) json reading
         self.BIGGEST_INTERVAL = self.INTERVALS['d'] * 31 * self.points
@@ -82,12 +86,20 @@ class TimelinesBuilder(BaseBuilder):
     def _round_timestamp(self, last_time, interval):
         if interval == self.INTERVALS['m']:
             last_time = last_time.replace(second=0, microsecond=0)
-            return last_time.timestamp()
-        if interval == self.INTERVALS['h']:
+        elif interval == self.INTERVALS['h']:
             last_time = last_time.replace(minute=0, second=0, microsecond=0)
-            return last_time.timestamp()
-        last_time = last_time.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif interval == self.INTERVALS['d']:
+            last_time = last_time.replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            last_time = last_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         return last_time.timestamp()
+
+    @property
+    def interval(self):
+        if self._interval_info != self.INTERVALS['M']:
+            return self._interval_info
+        self._last_month = self._calculate_month(self._last_month, self._months, self._last_time)
+        return self._months[self._last_month] * self.INTERVALS['d']
 
     def get_timeline(self, data, interval, field: [None, str] = None):
         """
@@ -97,36 +109,40 @@ class TimelinesBuilder(BaseBuilder):
         # select interval
         if not data:
             return timeline
+        self._interval_info = interval
+        if self._interval_info == self.INTERVALS['M']:
+            self._months = [31, self._feb_days(data[0]['_time']), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+            self._last_month = datetime.fromtimestamp(data[0]['_time']).month - 1  # month index
         # round last time to interval
-        last_time = datetime.fromtimestamp(data[0]['_time'])
-        last_time = self._round_timestamp(last_time, interval)
+        self._last_time = datetime.fromtimestamp(data[0]['_time'])
+        self._last_time = self._round_timestamp(self._last_time, self._interval_info)
         accumulated_value = 0
         i = 0
         while i < len(data) and len(timeline) < self.points:
             # accumulate values for given interval
-            if data[i]['_time'] >= last_time:
+            if data[i]['_time'] >= self._last_time:
                 if field:
                     accumulated_value += data[i][field]
                 else:
                     accumulated_value += 1
                 i += 1
             # flush accumulated values and interval to the timeline
-            elif last_time - interval <= data[i]['_time'] < last_time or accumulated_value:
-                timeline.append({'time': last_time, 'value': accumulated_value})
+            elif self._last_time - self.interval <= data[i]['_time'] < self._last_time or accumulated_value:
+                timeline.append({'time': self._last_time, 'value': accumulated_value})
                 accumulated_value = 0
-                last_time -= interval
+                self._last_time -= self.interval
             # move to interval in which current time is located and set 0 values to intervals on the way
             else:
-                while data[i]['_time'] < last_time - interval and len(timeline) < self.points:
-                    timeline.append({'time': last_time, 'value': 0})
-                    last_time -= interval
+                while data[i]['_time'] < self._last_time - self.interval and len(timeline) < self.points:
+                    timeline.append({'time': self._last_time, 'value': 0})
+                    self._last_time -= self.interval
         if accumulated_value:
-            timeline.append({'time': last_time, 'value': accumulated_value})
-            last_time -= interval
+            timeline.append({'time': self._last_time, 'value': accumulated_value})
+            self._last_time -= self.interval
         # when data ended but timeline does not have 50 values
         while len(timeline) < self.points:
-            timeline.append({'time': last_time, 'value': 0})
-            last_time -= interval
+            timeline.append({'time': self._last_time, 'value': 0})
+            self._last_time -= self.interval
         return list(reversed(timeline))
 
     @staticmethod
@@ -144,52 +160,6 @@ class TimelinesBuilder(BaseBuilder):
             months = [31, self._feb_days(ts), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]  # mutating months list
         return last_month
 
-    def get_months_timeline(self, data, field: [None, str] = None):
-        """
-        When field is specified field value is accumulated for given interval rather than amount of events
-        """
-        timeline = []
-        if not data:
-            return timeline
-        months = [31, self._feb_days(data[0]['_time']), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        last_month = datetime.fromtimestamp(data[0]['_time']).month - 1  # month index
-        # round last time to interval
-        last_time = datetime.fromtimestamp(data[0]['_time'])
-        last_time = last_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        last_time = last_time.timestamp()
-        accumulated_value = 0
-        i = 0
-        while i < len(data) and len(timeline) < self.points:
-            # accumulate values for given interval
-            if data[i]['_time'] >= last_time:
-                if field:
-                    accumulated_value += data[i][field]
-                else:
-                    accumulated_value += 1
-                i += 1
-            # flush accumulated values and interval to the timeline
-            elif last_time - months[last_month] * self.INTERVALS['d'] <= data[i]['_time'] < last_time or accumulated_value:
-                timeline.append({'time': last_time, 'value': accumulated_value})
-                accumulated_value = 0
-                last_month = self._calculate_month(last_month, months, data[i]['_time'])
-                last_time -= months[last_month] * self.INTERVALS['d']
-            # move to interval in which current time is located and set 0 values to intervals on the way
-            else:
-                while data[i]['_time'] < last_time - months[last_month] * self.INTERVALS['d'] and len(timeline) < self.points:
-                    timeline.append({'time': last_time, 'value': 0})
-                    last_month = self._calculate_month(last_month, months, data[i]['_time'])
-                    last_time -= months[last_month] * self.INTERVALS['d']
-        if accumulated_value:
-            timeline.append({'time': last_time, 'value': accumulated_value})
-            last_month = self._calculate_month(last_month, months, last_time)
-            last_time -= months[last_month] * self.INTERVALS['d']
-        # when data ended but timeline does not have 50 values
-        while len(timeline) < self.points:
-            last_month = self._calculate_month(last_month, months, last_time)
-            last_time -= months[last_month] * self.INTERVALS['d']
-            timeline.append({'time': last_time, 'value': 0})
-        return list(reversed(timeline))
-
     def get_all_timelines(self, cid, field: [None, str] = None):
         """
         When field is specified field value is accumulated for given interval rather than amount of events
@@ -199,5 +169,5 @@ class TimelinesBuilder(BaseBuilder):
         timelines[0] = self.get_timeline(data, self.INTERVALS['m'], field)
         timelines[1] = self.get_timeline(data, self.INTERVALS['h'], field)
         timelines[2] = self.get_timeline(data, self.INTERVALS['d'], field)
-        timelines[3] = self.get_months_timeline(data, field)
+        timelines[3] = self.get_timeline(data, self.INTERVALS['M'], field)
         return timelines
