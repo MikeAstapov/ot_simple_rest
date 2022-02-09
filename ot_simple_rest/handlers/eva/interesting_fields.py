@@ -24,7 +24,5 @@ class GetInterestingFields(tornado.web.RequestHandler):
         """
         params = self.request.query_arguments
         cid = params.get('cid')[0].decode()
-        # for testing with tools/test_interesting_fields_builder.json
-        # interesting_fields = self.builder.test_get_interesting_fields('tools/test_interesting_fields_builder.json')
         interesting_fields = self.builder.get_interesting_fields(cid)
         self.write(json.dumps(interesting_fields, default=str))  # to serialize timestamp
