@@ -5,323 +5,287 @@ from datetime import date as date_class
 from dateutil.relativedelta import relativedelta
 
 
-""" !!!!!!!!!!! """
-""" OLD VERSION """
-""" !!!!!!!!!!! """
+def datatime_reset_weekday(today: datetime) -> datetime:
+    return today - timedelta(days=today.weekday())
 
 
-# class Timerange:
-#     @staticmethod
-#     def get_timestamp(time):
-#         if time == "now":
-#             return int(datetime.now().timestamp())
-#         regex = r"(-|\+|^)?(\d+)(s|m|h|d|w|M|y)?"
-#         result = re.match(regex, time)
-#         if result is not None:
-#             diff_num = int(result.group(2))
-#             if not result.group(1) and not result.group(3):
-#                 return diff_num
-#
-#             dict_delta = {
-#                 's': timedelta(seconds=diff_num),
-#                 'm': timedelta(minutes=diff_num),
-#                 'h': timedelta(hours=diff_num),
-#                 'd': timedelta(days=diff_num),
-#                 'w': timedelta(weeks=diff_num),
-#                 'M': timedelta(weeks=4*diff_num),
-#                 'y': timedelta(weeks=52*diff_num)
-#                          }
-#             now = datetime.now()
-#             delta = dict_delta[result.group(3)]
-#             if result.group(1) == "-":
-#                 res_time = now - delta
-#             else:
-#                 res_time = now + delta
-#             return int(res_time.timestamp())
-#         return None
-#
-#     @staticmethod
-#     def removetime(otl, tws, twf):
-#         _tws = tws
-#         _twf = twf
-#         regex = r"(earliest|latest)=([a-zA-Z0-9_*-]+)"
-#         for (time_modifier, time) in re.findall(regex, otl):
-#             if time_modifier == "earliest":
-#                 _tws = Timerange.get_timestamp(time)
-#             if time_modifier == "latest":
-#                 _twf = Timerange.get_timestamp(time)
-#         service_otl = re.sub(regex, "", otl)
-#         return service_otl, _tws, _twf
+def get_quarter(p_date: date_class) -> int:
+    return (p_date.month - 1) // 3
 
 
-""" !!!!!!!!!!! """
-""" NEW VERSION """
-""" !!!!!!!!!!! """
+def get_first_day_of_the_quarter(p_date: date_class) -> datetime:
+    return datetime(p_date.year, 3 * get_quarter(p_date) + 1, 1)
 
 
-class Timerange:
-    """
-    Cool class!
+def datetime_reset_quarter(p_date: datetime) -> datetime:
+    return get_first_day_of_the_quarter(p_date.date())
 
-    Features:
-        - add format selection from outside
-        - add auto detecting datetime format
-    """
 
-    datetime_format: str = "%m/%d/%Y:%H:%M:%S"
+class SplunkRelativeTimeModifier:
+    abbreviations = {
+        'S': ('s', 'sec', 'secs', 'second', 'seconds'),
+        'M': ('m', 'min', 'minute', 'minutes'),
+        'H': ('h', 'hr', 'hrs', 'hour', 'hours'),
+        'd': ('d', 'day', 'days'),
+        'w': ('w', 'week', 'weeks'),
+        'm': ('mon', 'month', 'months'),
+        'q': ('q', 'qtr', 'qtrs', 'quarter', 'quarters'),
+        'Y': ('y', 'yr', 'yrs', 'year', 'years')
+    }
 
-    def __init__(self, current_datetime: datetime = None):
-        """Class remove time ranges from otl line and convert them to timestamp format.
+    abbreviation_rules = {
+        # calendar time range
+        'std_time_range':
+            {
+                'S': {'allow_snap': True, 'snap_value': 0},
+                'M': {'allow_snap': True, 'snap_value': 0},
+                'H': {'allow_snap': True, 'snap_value': 0},
+                'd': {'allow_snap': True, 'snap_value': 1},
+                'm': {'allow_snap': True, 'snap_value': 1},
+                'Y': {'allow_snap': False, 'snap_value': 0}},
+        # fictitious time range
+        'extra_time_range':
+            {
+                'w': {
+                    'allow_snap': True, 'snap_value': None, 'level': 'd', 'factor_level': 7,
+                    'func_reset_time': datatime_reset_weekday, 'value_range': [0, 7],
+                },
+                'q': {
+                    'allow_snap': True, 'snap_value': None, 'level': 'm', 'factor_level': 3,
+                    'func_reset_time': datetime_reset_quarter, 'value_range': [1, 3],
+                }
+            }
+    }
 
+    spliter_regex = r"(\+|-|\@)"
+    abbr_regex = r"(\d+)"
+
+    def __init__(self, current_datetime=datetime.now()):
+        """
         Args:
-            current_datetime: optional, set different time or default `None` set current time
-
+            current_datetime: datetime relative to which to consider the shift
         """
-        self.__now: datetime = current_datetime or datetime.now()
+        self.current_datetime = current_datetime
+        self.res_datetime = current_datetime
 
-    def __get_current_time(self) -> int:
+    def _get_time_range_key_name_by_abbr(self, abbr: str, with_s: bool = False) -> (str, str) or (None, None):
+        res_ = [
+            (key, self.abbreviations[key][-1 if with_s else -2])
+            for key in self.abbreviations if
+            abbr in self.abbreviations[key]
+        ]
+        return res_[0] if res_ else (None, None)
+
+    def _get_time_range_key_name_by_key(self, abbr_key: str, with_s: bool = False) -> (str, str) or (None, None):
+        return self.abbreviations[abbr_key][-1 if with_s else -2] if abbr_key in self.abbreviations else (None, None)
+
+    def _get_time_range_keys_by_key_under_curr_level(self, abbr_key: str, std_only: bool = True) -> list or None:
         """
-
-        Returns:
-            Current time in timestamp format.
-
+        Return all time range level keys under current level.
         """
-        return int(self.__now.timestamp())
+        res_ = []
+        for key in self.abbreviations:
+            if (std_only and key in self.abbreviation_rules['std_time_range']) or not std_only:
+                res_ += [key]
+            if key == abbr_key:
+                break
+        return res_[:-1] if res_ else None
 
-    @staticmethod
-    def __transform_timestamp_str2int(timestamp: str) -> int:
+    def _replace_time_range_levels_under_curr_to_zero_by_key(self, now: datetime, abbr_key: str) -> datetime:
         """
-        Transform string timestamp to integer.
+        get keys under current level; example: level - day/week, list - [sec, min, hour];
+        than replace datetime ranges to zero; example: (hour=0, min=0, sec=0)
+        """
+        # get keys under current level; example: level - day, list - [sec, min]
+        abbr_key_list = self._get_time_range_keys_by_key_under_curr_level(abbr_key, std_only=True)
+        # create dict abbr_name and zero value from abbr_key_list with and check allow_snap
+        snap_dict = {
+            self._get_time_range_key_name_by_key(abbr_key_i, with_s=False):
+                self.abbreviation_rules['std_time_range'][abbr_key_i]['snap_value']
+            for abbr_key_i in abbr_key_list
+            if self.abbreviation_rules['std_time_range'][abbr_key_i]['allow_snap']
+        }
+        return now.replace(**snap_dict)
 
+    def _get_delta_shift_expression_elem(self, sign: int, abbr: str, value: int) -> relativedelta or None:
+        delta = None
+
+        # check abbreviations and calc delta shift
+        time_range_key, abbr_full = self._get_time_range_key_name_by_abbr(abbr, with_s=True)
+
+        # if standard time range
+        if abbr_full and time_range_key in self.abbreviation_rules['std_time_range']:
+            delta = relativedelta(**{abbr_full: sign * value})
+        # if nonstandard time range
+        elif abbr_full and time_range_key in self.abbreviation_rules['extra_time_range']:
+            factor_level = self.abbreviation_rules['extra_time_range'][time_range_key]['factor_level']
+            abbr_full_ = self._get_time_range_key_name_by_key(
+                self.abbreviation_rules['extra_time_range'][time_range_key]['level'],
+                with_s=True
+            )
+            if factor_level and abbr_full_:
+                value *= factor_level
+                delta = relativedelta(**{abbr_full_: sign * value})
+
+        return delta
+
+    def _get_delta_snap_expression_elem(self, num_abbr_union: list, abbr_key: str) -> relativedelta or None:
+        def check_exists_value_and_value_range():
+            return len(num_abbr_union) == 2 and num_abbr_union[1].isdigit() and \
+                self.abbreviation_rules['extra_time_range'][abbr_key]['value_range']
+
+        delta = None
+
+        if check_exists_value_and_value_range():
+            value = int(num_abbr_union[1])
+            value_min, value_max = self.abbreviation_rules['extra_time_range'][abbr_key]['value_range']
+
+            # check value range, min and max possible value; example
+            if value_min <= value <= value_max:
+                delta = relativedelta(
+                    **{
+                        self._get_time_range_key_name_by_key(
+                            self.abbreviation_rules['extra_time_range'][abbr_key]['level'],
+                            with_s=True
+                        ):
+                            value - 1
+                    })
+        return delta
+
+    def _update_datetime_with_shift(self, num_abbr_union: list, sign: int):
+        """
         Args:
-            timestamp: string timestamp
-
-        Returns:
-            Integer timestamp.
-
+            num_abbr_union: splitted expression element on nums and abbreviations
+            sign: action for expression elements: + or -
         """
-        return int(timestamp)
+        value, abbr, delta = 1, None, None  # default values
 
-    def __transform_datetime_format(self, datetime_line: str) -> int:
+        # check each element in split parts
+        for union_elem in num_abbr_union:
+
+            if union_elem.isdigit():
+                value = int(union_elem)
+            else:
+                abbr = union_elem
+
+            # calculate delta shift for union_elem
+            delta = self._get_delta_shift_expression_elem(sign, abbr, value)
+
+            # update
+            if delta:
+                self.res_datetime += delta
+                value, abbr, delta = 1, None, None
+
+    def _update_datetime_with_snap(self, num_abbr_union: list):
         """
-        Transform datetime to timestamp. Now avaliable only one format: "%m/%d/%Y:%H:%M:%S".
-
         Args:
-            datetime_line: line with datetime format, example: 10/27/2018:00:00:00
-
-        Returns:
-            datetime in timestamp format
-
+            num_abbr_union: splitted expression element on abbreviations and nums
         """
-        return int(datetime.strptime(datetime_line, self.datetime_format).timestamp())
 
-    def __transform_splunk_abbreviations(self, expression_line: str) -> int:
+        def check_standard_time_range():
+            return abbr_key in self.abbreviation_rules['std_time_range']
+
+        def check_nonstandard_time_range():
+            return abbr_key in self.abbreviation_rules['extra_time_range'] and \
+                   self.abbreviation_rules['extra_time_range'][abbr_key]['func_reset_time']
+
+        # FIRST PARAM
+        if not num_abbr_union[0].isdigit():
+            abbr = num_abbr_union[0]
+            # check abbreviations and calc delta shift
+            abbr_key, abbr_full = self._get_time_range_key_name_by_abbr(abbr, with_s=True)
+
+            # if standard time range
+            if check_standard_time_range():
+
+                # get keys under current level; example: level - day/week, list - [sec, min, hour]
+                # replace datetime ranges to zero; example: (hour=0, min=0, sec=0)
+                self.res_datetime = self._replace_time_range_levels_under_curr_to_zero_by_key(self.res_datetime,
+                                                                                              abbr_key)
+
+            # if nonstandard time range and can reset datetime
+            elif check_nonstandard_time_range():
+
+                # reset curr level time range
+                self.res_datetime = self.abbreviation_rules['extra_time_range'][abbr_key]['func_reset_time'](
+                    self.res_datetime)
+
+                # get keys under current level; example: level - day/week, list - [sec, min, hour]
+                # replace datetime ranges to zero; example: (hour=0, min=0, sec=0)
+                self.res_datetime = self._replace_time_range_levels_under_curr_to_zero_by_key(self.res_datetime,
+                                                                                              abbr_key)
+
+                # SECOND PARAM; value only for nonstandard time range or None if not in range
+                delta = self._get_delta_snap_expression_elem(num_abbr_union, abbr_key)
+
+                if delta:
+                    self.res_datetime += delta
+
+    def _split_expression_elem_on_num_abbr_union(self, expression_elem: str, sign: int):
         """
-        Transform splunk expression to timestamp.
-
         Args:
-            expression_line: line with splunk expression, example: -mon@q+1d
+            expression_elem: expression element
+            sign: action for expression elements: +, - or @
+        """
+
+        # split expression_elem on nums and words
+        num_abbr_union = list(filter(None, re.split(self.abbr_regex, expression_elem)))
+
+        # time shift if + or - and not empty expression_elem
+        if sign and num_abbr_union:
+            self._update_datetime_with_shift(num_abbr_union, sign)
+
+        # time snap if @
+        elif not sign and 1 <= len(num_abbr_union) <= 2:
+            self._update_datetime_with_snap(num_abbr_union)
+
+    def process_timeline(self, expression_line: str) -> int:
+        """
+        Args:
+            expression_line: string with time expression, example: -1mon@q+1d
 
         Returns:
             integer timestamp
-
         """
+        # reset result datetime
+        self.res_datetime = self.current_datetime
 
-        # copy original time
-        now: datetime = self.__now
+        # + = 1, - = -1, @ = 0
+        sign: int = 1
 
-        """ !!!!!!!!!!!!!!!! """
-        """ CONFIG FUNCTIONS """
-        """ !!!!!!!!!!!!!!!! """
-
-        def datatime_reset_weekday(today: datetime) -> datetime:
-            return today - timedelta(days=today.weekday())
-
-        def datetime_reset_quarter(today: datetime) -> datetime:
-            def get_first_day_of_the_quarter(p_date: date_class) -> datetime:
-                def get_quarter(p_date_: date_class) -> int:
-                    return (p_date_.month - 1) // 3
-                return datetime(p_date.year, 3 * get_quarter(p_date) + 1, 1)
-            return get_first_day_of_the_quarter(today.date())
-
-        """ !!!!!!!!!!!!! """
-        """ CONFIG PARAMS """
-        """ !!!!!!!!!!!!! """
-
-        abbreviations: dict = {
-            'S': ['s', 'sec', 'secs', 'second', 'seconds'],
-            'M': ['m', 'min', 'minute', 'minutes'],
-            'H': ['h', 'hr', 'hrs', 'hour', 'hours'],
-            'd': ['d', 'day', 'days'],
-            'w': ['w', 'week', 'weeks'],
-            'm': ['mon', 'month', 'months'],
-            'q': ['q', 'qtr', 'qtrs', 'quarter', 'quarters'],
-            'Y': ['y', 'yr', 'yrs', 'year', 'years']
-        }
-
-        abbreviations_rules: dict = {
-            # calendar time range
-            'std_time_range':
-                {
-                    'S': {'allow_snap': True, 'snap_value': 0},
-                    'M': {'allow_snap': True, 'snap_value': 0},
-                    'H': {'allow_snap': True, 'snap_value': 0},
-                    'd': {'allow_snap': True, 'snap_value': 1},
-                    'm': {'allow_snap': True, 'snap_value': 1},
-                    'Y': {'allow_snap': False, 'snap_value': 0}},
-            # fictitious time range
-            'extra_time_range':
-                {
-                    'w': {
-                        'allow_snap': True, 'snap_value': None, 'level': 'd', 'factor_level': 7,
-                        'func_reset_time': datatime_reset_weekday, 'value_range': [0, 7],
-                    },
-                    'q': {
-                        'allow_snap': True, 'snap_value': None, 'level': 'm', 'factor_level': 3,
-                        'func_reset_time': datetime_reset_quarter, 'value_range': [1, 3],
-                    }
-                }
-        }
-
-        """ !!!!!!!!!!!!!!!!!!!! """
-        """ ADDITIONAL FUNCTIONS """
-        """ !!!!!!!!!!!!!!!!!!!! """
-
-        def get_full_abbr_by_name(abbr_: str, with_s: bool = False) -> (str, str) or (None, None):
-            res_ = [(key, abbreviations[key][-1 if with_s else -2])
-                    for key in abbreviations if
-                    abbr_ in abbreviations[key]]
-            return res_[0] if res_ else (None, None)
-
-        def get_full_abbr_by_key(abbr_key_: str, with_s: bool = False) -> (str, str) or (None, None):
-            return abbreviations[abbr_key_][-1 if with_s else -2] if abbr_key_ in abbreviations else (None, None)
-
-        def get_abrr_key_list_up2level(abbr_key_: str, std_only: bool = True) -> list or None:
-            """
-            Return all time range levels under current.
-            """
-            res_ = []
-            for key in abbreviations:
-                if (std_only and key in abbreviations_rules['std_time_range']) or not std_only:
-                    res_ += [key]
-                if key == abbr_key_:
-                    break
-            return res_[:-1] if res_ else None
-
-        def replace_datetime_range_levels_to_zero_under_current(now_: datetime, abbr_key_: str) -> datetime:
-            """
-            get keys under current level; example: level - day/week, list - [sec, min, hour];
-            than replace datetime ranges to zero; example: (hour=0, min=0, sec=0)
-            """
-            # get keys under current level; example: level - day, list - [sec, min]
-            abbr_key_list = get_abrr_key_list_up2level(abbr_key_, std_only=True)
-            # create dict abbr_name and zero value from abbr_key_list with and check allow snap
-            snap_dict = {
-                get_full_abbr_by_key(abbr_key_i, with_s=False):
-                    abbreviations_rules['std_time_range'][abbr_key_i]['snap_value']
-                for abbr_key_i in abbr_key_list
-                if abbreviations_rules['std_time_range'][abbr_key_i]['allow_snap']}
-            return now_.replace(**snap_dict)
-
-        """ !!!!!!!!!!!!!! """
-        """ ALGORITHM BODY """
-        """ !!!!!!!!!!!!!! """
-
-        spliter_regex: str = r"(\+|-|\@)"
-        abbr_regex: str = r"(\d+)"
-        sign: int = 1  # + = 1, - = -1, @ = 0
-
-        # split with +, -, @
-        timeline_splitted: list = [elem for elem in re.split(spliter_regex, expression_line) if elem]
-
-        for timeline_elem in timeline_splitted:
+        # split with +, -, @ on simple expressions
+        for expression_elem in filter(None, re.split(self.spliter_regex, expression_line)):
 
             # check if spliter is +, -, @
-            if re.findall(spliter_regex, timeline_elem):
-                sign = 1 if timeline_elem is '+' else -1 if timeline_elem is '-' else 0
-                continue
+            if re.findall(self.spliter_regex, expression_elem):
+                sign = 1 if expression_elem == '+' else -1 if expression_elem == '-' else 0
+            # else process expression_elem and change res_datetime
+            else:
+                self._split_expression_elem_on_num_abbr_union(expression_elem, sign)
 
-            # split timeline_elem on nums and words
-            num_abbr_union: list = list(filter(None, re.split(abbr_regex, timeline_elem)))
+        return int(self.res_datetime.timestamp())
 
-            # time shift if + or -
-            if sign and 0 < len(num_abbr_union):
-                value, abbr = 1, None  # default values
 
-                # check each element in split parts
-                for elem_union in num_abbr_union:
+class ProcessTimeline(SplunkRelativeTimeModifier):
+    # Now available only one format: "%m/%d/%Y:%H:%M:%S".
+    datetime_format: str = "%m/%d/%Y:%H:%M:%S"
 
-                    if elem_union.isdigit():
-                        value = int(elem_union)
-                    else:
-                        abbr = elem_union
+    def __init__(self, current_datetime=datetime.now()):
+        """
+        Args:
+            current_datetime: current time or None to use datetime.now()
+        """
+        super().__init__(current_datetime)
+        self.current_datetime: datetime = current_datetime
 
-                    # check abbreviations and calc delta shift
-                    abbr_key, abbr_full = get_full_abbr_by_name(abbr, with_s=True)
+    def _validate_strptime_format(self, timeline) -> bool:
+        try:
+            datetime.strptime(timeline, self.datetime_format)
+        except ValueError:
+            return False
+        return True
 
-                    # if standard time range
-                    if abbr_full and abbr_key in abbreviations_rules['std_time_range']:
-                        now += relativedelta(**{abbr_full: sign * value})
-                        value, abbr = 1, None
-
-                    # if nonstandard time range
-                    elif abbr_full and abbr_key in abbreviations_rules['extra_time_range']:
-                        factor_level = abbreviations_rules['extra_time_range'][abbr_key]['factor_level']
-                        abbr_full = get_full_abbr_by_key(abbreviations_rules['extra_time_range'][abbr_key]['level'],
-                                                         with_s=True)
-                        if factor_level and abbr_full:
-                            value *= factor_level
-                            now += relativedelta(**{abbr_full: sign * value})
-                        value, abbr = 1, None
-
-            # time snap if @
-            # тут без говнокода никак, уж извините
-            elif not sign and 1 <= len(num_abbr_union) <= 2:
-
-                # FIRST PARAM
-                if not num_abbr_union[0].isdigit():
-                    abbr = num_abbr_union[0]
-                    # check abbreviations and calc delta shift
-                    abbr_key, abbr_full = get_full_abbr_by_name(abbr, with_s=True)
-
-                    # if standard time range
-                    if abbr_key in abbreviations_rules['std_time_range']:
-
-                        # get keys under current level; example: level - day/week, list - [sec, min, hour]
-                        # replace datetime ranges to zero; example: (hour=0, min=0, sec=0)
-                        now = replace_datetime_range_levels_to_zero_under_current(now, abbr_key)
-
-                    # if nonstandard time range and can reset datetime
-                    elif abbr_key in abbreviations_rules['extra_time_range'] and \
-                            abbreviations_rules['extra_time_range'][abbr_key]['func_reset_time']:
-
-                        # reset curr level time range
-                        now = abbreviations_rules['extra_time_range'][abbr_key]['func_reset_time'](now)
-
-                        # get keys under current level; example: level - day/week, list - [sec, min, hour]
-                        # replace datetime ranges to zero; example: (hour=0, min=0, sec=0)
-                        now = replace_datetime_range_levels_to_zero_under_current(now, abbr_key)
-
-                        # SECOND PARAM; value for nonstandard time range if value range exists
-                        if len(num_abbr_union) == 2 and num_abbr_union[1].isdigit() and \
-                                abbreviations_rules['extra_time_range'][abbr_key]['value_range']:
-                            value = int(num_abbr_union[1])
-                            value_min, value_max = abbreviations_rules['extra_time_range'][abbr_key]['value_range']
-
-                            # check value range, min and max possible value; example
-                            if value_min <= value <= value_max:
-                                now += relativedelta(
-                                    **{
-                                        get_full_abbr_by_key(
-                                            abbreviations_rules['extra_time_range'][abbr_key]['level'],
-                                            with_s=True
-                                        ):
-                                            value - 1
-                                    })
-
-        return int(now.timestamp())
-
-    def select_category_and_process(self, timeline: str) -> int:
+    def select_category_and_process_timeline(self, timeline: str) -> int:
         """
         Selects one of 4 types of time recording and time offsets
 
@@ -330,59 +294,62 @@ class Timerange:
 
         Returns:
             integer timestamp
-
         """
 
-        def validate_strptime_format(datetime_line: str) -> bool:
-            try:
-                datetime.strptime(datetime_line, self.datetime_format)
-            except ValueError:
-                return False
-            return True
+        # CATEGORY: "now()" or "now"
+        if timeline in ("now", "now()"):
+            return int(self.current_datetime.timestamp())
 
-        # "now()" or "now"
-        if timeline is "now()" or timeline is "now":
-            return self.__get_current_time()
-
-        # timestamp
+        # CATEGORY: timestamp
         if timeline.isdigit():
-            return self.__transform_timestamp_str2int(timeline)
+            return int(timeline)
 
-        # datetime, example: 10/27/2018:00:00:00
-        if validate_strptime_format(timeline):
-            return self.__transform_datetime_format(timeline)
+        # CATEGORY: datetime, example: 10/27/2018:00:00:00
+        if self._validate_strptime_format(timeline):
+            return int(datetime.strptime(timeline, self.datetime_format).timestamp())
 
-        return self.__transform_splunk_abbreviations(timeline)
+        # CATEGORY: splunk expression, example: -1h+2m@w2
+        return self.process_timeline(timeline)
 
-    # main function
-    def otl_remove_timerange(self, otl_line: str, tws: int, twf: int) -> (str, int, int):
+
+class OtlTimeRange(ProcessTimeline):
+
+    def __init__(self, current_datetime=datetime.now()):
         """
+        Class remove time ranges from otl line and convert them to timestamp format.
 
+        Args:
+            current_datetime: optional, set different time or default `None` set current time
+        """
+        super().__init__(current_datetime)
+        self.current_datetime: datetime = current_datetime
+
+    def clean_otl_and_process_timerange(self, otl_line: str, tws: int, twf: int) -> (str, int, int):
+        """
         Args:
             otl_line: otl request line with time range
             tws: earliest timestamp
             twf: latest timestamp
 
         Returns:
-            otl request, earliest time, latest time
-
+            clean otl request, earliest time, latest time
         """
 
-        dict_time_mod_args: dict = {"earliest": 0, "latest": 0}
+        dict_time_mod_args = {"earliest": 0, "latest": 0}
         # -> (earliest|latest)=([a-zA-Z0-9_*-\@]+)
-        otl_line_regex: str = rf"({'|'.join(dict_time_mod_args.keys())})=\"?([()a-zA-Z0-9_*-\@]+)"
+        otl_line_regex = rf"({'|'.join(dict_time_mod_args.keys())})=\"?([()a-zA-Z0-9_*-\@]+)"
 
-        otl_splited: dict = dict(re.findall(otl_line_regex, otl_line))  # example: {'earliest': '1', 'latest': 'now()'}
-        otl_cleaned: str = re.sub(otl_line_regex, "", otl_line)
+        otl_splited = dict(re.findall(otl_line_regex, otl_line))  # example: {'earliest': '1', 'latest': 'now()'}
+        otl_cleaned = re.sub(otl_line_regex, "", otl_line)
 
         # check if no modifiers
         if not otl_splited:
             # print('empty')
             return otl_cleaned, tws, twf
 
-        # process time
+        # process timeline
         for key, val in otl_splited.items():
-            dict_time_mod_args[key]: int = self.select_category_and_process(val)
+            dict_time_mod_args[key]: int = self.select_category_and_process_timeline(val)
 
         # check if modifier_name in otl line and twf > tws then replace tws and twf
         if otl_splited and not (dict_time_mod_args["earliest"] != 0 and dict_time_mod_args["latest"] != 0 and
@@ -394,11 +361,10 @@ class Timerange:
 
 
 # local tests
-
 if __name__ == "__main__":
 
     current_time = datetime(2010, 10, 10, 10, 10, 10)
-    MT = Timerange(current_time)
+    OTLTR = OtlTimeRange(current_time)
 
     otl_request_correct = {
         'src': [
@@ -515,9 +481,9 @@ if __name__ == "__main__":
     }
 
     for i, otl in enumerate((otl_request_correct, otl_request_undefined)):
-        print(f"Part {i+1}")
+        print(f"Part {i + 1}")
         for req, expected in zip(otl['src'], otl['dst']):
-            _, time1, time2 = MT.otl_remove_timerange(req, 0, 0)
+            _, time1, time2 = OTLTR.clean_otl_and_process_timerange(req, 0, 0)
             res = f"{datetime.fromtimestamp(time1)}, {datetime.fromtimestamp(time2)}"
             # print(f"{datetime.fromtimestamp(time1)}, {datetime.fromtimestamp(time2)}")
             assert res == expected, \

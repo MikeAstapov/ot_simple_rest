@@ -1,7 +1,7 @@
 from parglare import Parser, Grammar
 
 from parsers.otl_to_sparksql.internal import grammar
-from parsers.otl_to_sparksql.internal.timerange import Timerange
+from parsers.otl_to_sparksql.internal.timerange import OtlTimeRange
 from parsers.otl_to_sparksql.internal.expressions.baseEvalExpression import BaseEvalExpressions
 
 
@@ -20,7 +20,7 @@ class OTLtoSQL:
         """
 
         # Remove time from OTL and save start time and end time values in tws and twf
-        otl, _tws, _twf = Timerange().otl_remove_timerange(otl, tws, twf)
+        otl, _tws, _twf = OtlTimeRange().clean_otl_and_process_timerange(otl, tws, twf)
         indices_list = []
         fields_list = []
 
