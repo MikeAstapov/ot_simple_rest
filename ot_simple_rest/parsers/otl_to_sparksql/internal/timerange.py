@@ -312,7 +312,7 @@ class ProcessTimeline(SplunkRelativeTimeModifier):
         return self.process_timeline(timeline)
 
 
-class OtlTimeRange(ProcessTimeline):
+class OTLTimeRangeExtractor(ProcessTimeline):
 
     def __init__(self, current_datetime=datetime.now()):
         """
@@ -324,7 +324,7 @@ class OtlTimeRange(ProcessTimeline):
         super().__init__(current_datetime)
         self.current_datetime: datetime = current_datetime
 
-    def clean_otl_and_process_timerange(self, otl_line: str, tws: int, twf: int) -> (str, int, int):
+    def extract_timerange(self, otl_line: str, tws: int, twf: int) -> (str, int, int):
         """
         Args:
             otl_line: otl request line with time range
@@ -364,7 +364,7 @@ class OtlTimeRange(ProcessTimeline):
 if __name__ == "__main__":
 
     current_time = datetime(2010, 10, 10, 10, 10, 10)
-    OTLTR = OtlTimeRange(current_time)
+    OTLTR = OTLTimeRangeExtractor(current_time)
 
     otl_request_correct = {
         'src': [
@@ -483,7 +483,7 @@ if __name__ == "__main__":
     for i, otl in enumerate((otl_request_correct, otl_request_undefined)):
         print(f"Part {i + 1}")
         for req, expected in zip(otl['src'], otl['dst']):
-            _, time1, time2 = OTLTR.clean_otl_and_process_timerange(req, 0, 0)
+            _, time1, time2 = OTLTR.extract_timerange(req, 0, 0)
             res = f"{datetime.fromtimestamp(time1)}, {datetime.fromtimestamp(time2)}"
             # print(f"{datetime.fromtimestamp(time1)}, {datetime.fromtimestamp(time2)}")
             assert res == expected, \
