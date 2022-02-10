@@ -13,3 +13,4 @@ pyinstaller==3.6
 python-docx==0.8.10
 preview-generator==0.14
 regex==2021.4.4
+python-dateutil==2.8.2
