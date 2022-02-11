@@ -9,8 +9,8 @@ class TotalTimeParser(TimeParser):
     PROCESSORS = {
         EpochParser: (),
         NowParser: ('current_datetime',),
-        FormattedParser: ('datetime_format',),
         SplunkModifiersParser: ('current_datetime',),
+        FormattedParser: (),
     }
 
     def __init__(self, current_datetime: datetime = datetime.now(), datetime_format: str = "%m/%d/%Y:%H:%M:%S"):
@@ -45,7 +45,8 @@ class OTLTimeRangeExtractor:
 
     FIELDS = ("earliest", "latest")
 
-    # List of time parsing processors. Will be user one by one trying to extract datetime from the arg string
+    # Time parsing processor.
+    # Must implement "parse" method and return parsed and modified time or None if failed to extract.
     PARSER = TotalTimeParser
 
     @classmethod
@@ -89,7 +90,6 @@ class OTLTimeRangeExtractor:
         """
 
         otl_cleaned, timed_args = self._split_otl(otl_line)
-        # print(otl_cleaned, timed_args)
 
         # check if no modifiers
         if not timed_args:
@@ -101,7 +101,7 @@ class OTLTimeRangeExtractor:
 
         # check if modifier_name in otl line and twf > tws then replace tws and twf
         if self._timed_args_are_consistent(timed_args):
-            tws, twf = timed_args.get(self.FIELDS[0], tws), timed_args.get(self.FIELDS[-1], twf)
+            tws, twf = timed_args.get(self.FIELDS[0], tws) or tws, timed_args.get(self.FIELDS[-1], twf) or twf
 
         return otl_cleaned, tws, twf
 
@@ -233,5 +233,5 @@ if __name__ == "__main__":
             res = f"{datetime.fromtimestamp(time1)}, {datetime.fromtimestamp(time2)}"
             # print(f"{datetime.fromtimestamp(time1)}, {datetime.fromtimestamp(time2)}")
             assert res == expected, \
-                AssertionError(f"Got: {res}; Expected: {expected}")
+                AssertionError(f"String: {req}; Got: {res}; Expected: {expected}")
         print("Success")

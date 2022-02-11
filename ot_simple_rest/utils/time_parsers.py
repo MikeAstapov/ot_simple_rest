@@ -33,22 +33,6 @@ class TimeParser:
         self.current_datetime = current_datetime
         self.datetime_format = datetime_format
 
-    @property
-    def current_datetime(self):
-        return self._current_datetime
-
-    @current_datetime.setter
-    def current_datetime(self, value):
-        self._current_datetime = value
-
-    @property
-    def datetime_format(self):
-        return self._datetime_format
-
-    @datetime_format.setter
-    def datetime_format(self, value):
-        self._datetime_format = value
-
     @abstractmethod
     def parse(self, time_string: str) -> datetime or None:
         """Provide conversion method"""
@@ -77,14 +61,12 @@ class EpochParser(TimeParser):
 
 class FormattedParser(TimeParser):
 
-    def __init__(self, datetime_format: str = "%m/%d/%Y:%H:%M:%S"):
-        super().__init__(datetime_format=datetime_format)
-
     def parse(self, time_string: str) -> datetime or None:
         try:
-            return datetime.strptime(time_string, self.datetime_format)
-        except ValueError:
-            return None
+            dateutil.parser.parserinfo.JUMP.append(':')
+            return dateutil.parser.parser().parse(time_string)
+        except (dateutil.parser.ParserError, OverflowError):
+            return
 
 
 class SplunkModifiersParser(TimeParser):
@@ -133,7 +115,7 @@ class SplunkModifiersParser(TimeParser):
             current_datetime: datetime relative to which to consider the shift
         """
         super().__init__(current_datetime=current_datetime)
-        self._res_datetime = current_datetime
+        self._res_datetime = None
 
     def _get_time_range_key_name_by_abbr(self, abbr: str, with_s: bool = False) -> (str, str) or (None, None):
         res_ = [
@@ -331,4 +313,4 @@ class SplunkModifiersParser(TimeParser):
             else:
                 self._split_expression_elem_on_num_abbr_union(expression_elem, sign)
 
-        return self._res_datetime
+        return self._res_datetime if self._res_datetime != self.current_datetime else None
