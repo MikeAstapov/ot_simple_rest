@@ -14,9 +14,6 @@ class InterestingFieldsLoader(BaseLoader):
     def __init__(self, mem_conf, static_conf):
         super().__init__(mem_conf, static_conf)
 
-    def _load_data_test(self, data_path):
-        return pd.read_json(data_path, lines=True, convert_dates=False)
-
     def load_data(self, cid):
         """
         Load data by cid

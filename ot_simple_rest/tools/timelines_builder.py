@@ -59,7 +59,7 @@ class TimelinesBuilder:
         timeline = []
         # select interval
         if not data:
-            return timeline
+            raise Exception('Empty data')
         self._interval_info = interval
         if self._interval_info == self.INTERVALS['M']:
             self._months = [31, self._feb_days(data[0]['_time']), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]

@@ -28,7 +28,9 @@ class GetInterestingFields(tornado.web.RequestHandler):
         cid = params.get('cid')[0].decode()
         try:
             data = self.loader.load_data(cid)
-        except Exception as e:
+            interesting_fields = self.builder.get_interesting_fields(data)
+        except tornado.web.HTTPError as e:
             return self.write({'status': 'failed', 'error': e})
-        interesting_fields = self.builder.get_interesting_fields(data)
+        except Exception as e:
+            return self.write({'status': 'failed', 'error': f'{e} cid {cid}'})
         self.write(json.dumps(interesting_fields))

@@ -28,7 +28,9 @@ class GetTimelines(tornado.web.RequestHandler):
         cid = params.get('cid')[0].decode()
         try:
             data = self.loader.load_data(cid)
-        except Exception as e:
+            timelines = self.builder.get_all_timelines(data)
+        except tornado.web.HTTPError as e:
             return self.write({'status': 'failed', 'error': e})
-        timelines = self.builder.get_all_timelines(data)
+        except Exception as e:
+            return self.write({'status': 'failed', 'error': f'{e} cid {cid}'})
         self.write(json.dumps(timelines))

@@ -14,5 +14,3 @@ class BaseLoader(ABC):
     @abstractmethod
     def load_data(self, cid): raise NotImplementedError
 
-    @abstractmethod
-    def _load_data_test(self, data_path): raise NotImplementedError

@@ -9,7 +9,8 @@ class TestTimelines(unittest.TestCase):
     def setUp(self) -> None:
         self.builder = TimelinesBuilder()
         self.loader = TimelinesLoader({'path': None}, None, self.builder.BIGGEST_INTERVAL)
-        self.data = self.loader._load_data_test('builder_data/test_timelines_builder.json')
+        self.data = []
+        self.loader.read_file_backwards(self.data, 'builder_data/test_timelines_builder.json', None)
 
     def test_minutes_timeline(self):
         result = self.builder.get_timeline(self.data, self.builder.INTERVALS['m'])

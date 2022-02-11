@@ -37,28 +37,25 @@ class TimelinesLoader(BaseLoader):
             if time_to_break:
                 break
             self.logger.debug(f'Reading part: {file_name}')
-            with FileReadBackwards(os.path.join(path_to_cache_dir, file_name)) as fr:
-                for line in fr:
-                    tmp = json.loads(line)
-                    if last_time:
-                        if last_time - tmp['_time'] > self.BIGGEST_INTERVAL:
-                            time_to_break = True
-                            break
-                    else:
-                        last_time = tmp['_time']
-                    data.append(tmp)
+            time_to_break, last_time = self.read_file_backwards(data, os.path.join(path_to_cache_dir, file_name), last_time)
         return data  # is not reversed intentionally. This way it is easier to build a timeline
 
-    def _load_data_test(self, data_path):
-        data = []
-        last_time = None
+    def read_file_backwards(self, data, data_path, last_time) -> (bool, int):
+        """
+        reads file and adds it to data list
+        :param data:        list of data that is mutated inside this method
+        :param data_path:   path to file
+        :param last_time:   left border of a time interval
+        :return bool:       indicating whether it is time to stop reading files
+        :return int:        changing left border of the interval
+        """
         with FileReadBackwards(data_path) as fr:
             for line in fr:
                 tmp = json.loads(line)
                 if last_time:
                     if last_time - tmp['_time'] > self.BIGGEST_INTERVAL:
-                        break
+                        return True, last_time
                 else:
                     last_time = tmp['_time']
                 data.append(tmp)
-        return data  # is not reversed intentionally. This way it is easier to build a timeline
+        return False, last_time

@@ -12,7 +12,7 @@ class InterestingFieldsBuilder:
 
     def get_interesting_fields(self, data):
         if data.empty:
-            return []
+            raise Exception('Empty data')
         interesting_fields = {}
         i = 0
         value_counts_columns = {}
