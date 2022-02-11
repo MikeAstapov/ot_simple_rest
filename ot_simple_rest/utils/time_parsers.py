@@ -24,6 +24,31 @@ def datetime_reset_quarter(p_date: datetime) -> datetime:
 
 class TimeParser:
 
+    def __init__(self, current_datetime: datetime = None, datetime_format: str = None):
+        """
+        Args:
+            current_datetime: datetime relative to which to consider the shift
+            datetime_format: datetime_format
+        """
+        self.current_datetime = current_datetime
+        self.datetime_format = datetime_format
+
+    @property
+    def current_datetime(self):
+        return self._current_datetime
+
+    @current_datetime.setter
+    def current_datetime(self, value):
+        self._current_datetime = value
+
+    @property
+    def datetime_format(self):
+        return self._datetime_format
+
+    @datetime_format.setter
+    def datetime_format(self, value):
+        self._datetime_format = value
+
     @abstractmethod
     def parse(self, time_string: str) -> datetime or None:
         """Provide conversion method"""
@@ -31,11 +56,13 @@ class TimeParser:
 
 
 class NowParser(TimeParser):
-    pattern = ('now', 'now()', 'current')
+    PATTERN = ('now', 'now()', 'current')
 
-    def parse(self, time_string: str) -> datetime:
-        if time_string.lower() in self.pattern:
-            return datetime.now()
+    def __init__(self, current_datetime: datetime = datetime.now()):
+        super().__init__(current_datetime=current_datetime)
+
+    def parse(self, time_string: str) -> datetime or None:
+        return self.current_datetime if time_string.lower() in self.PATTERN else None
 
 
 class EpochParser(TimeParser):
@@ -50,11 +77,14 @@ class EpochParser(TimeParser):
 
 class FormattedParser(TimeParser):
 
+    def __init__(self, datetime_format: str = "%m/%d/%Y:%H:%M:%S"):
+        super().__init__(datetime_format=datetime_format)
+
     def parse(self, time_string: str) -> datetime or None:
         try:
-            return dateutil.parser.parser().parse(time_string)
-        except (dateutil.parser.ParserError, OverflowError):
-            return
+            return datetime.strptime(time_string, self.datetime_format)
+        except ValueError:
+            return None
 
 
 class SplunkModifiersParser(TimeParser):
@@ -97,13 +127,13 @@ class SplunkModifiersParser(TimeParser):
     spliter_regex = r"(\+|-|\@)"
     abbr_regex = r"(\d+)"
 
-    def __init__(self, current_datetime: datetime = None):
+    def __init__(self, current_datetime: datetime = datetime.now()):
         """
         Args:
             current_datetime: datetime relative to which to consider the shift
         """
-        self.current_time = datetime.now()
-        self.res_datetime = self.current_time
+        super().__init__(current_datetime=current_datetime)
+        self._res_datetime = current_datetime
 
     def _get_time_range_key_name_by_abbr(self, abbr: str, with_s: bool = False) -> (str, str) or (None, None):
         res_ = [
@@ -211,7 +241,7 @@ class SplunkModifiersParser(TimeParser):
 
             # update
             if delta:
-                self.res_datetime += delta
+                self._res_datetime += delta
                 value, abbr, delta = 1, None, None
 
     def _update_datetime_with_snap(self, num_abbr_union: list):
@@ -238,26 +268,26 @@ class SplunkModifiersParser(TimeParser):
 
                 # get keys under current level; example: level - day/week, list - [sec, min, hour]
                 # replace datetime ranges to zero; example: (hour=0, min=0, sec=0)
-                self.res_datetime = self._replace_time_range_levels_under_curr_to_zero_by_key(self.res_datetime,
-                                                                                              abbr_key)
+                self._res_datetime = self._replace_time_range_levels_under_curr_to_zero_by_key(self._res_datetime,
+                                                                                               abbr_key)
 
             # if nonstandard time range and can reset datetime
             elif check_nonstandard_time_range():
 
                 # reset curr level time range
-                self.res_datetime = self.abbreviation_rules['extra_time_range'][abbr_key]['func_reset_time'](
-                    self.res_datetime)
+                self._res_datetime = self.abbreviation_rules['extra_time_range'][abbr_key]['func_reset_time'](
+                    self._res_datetime)
 
                 # get keys under current level; example: level - day/week, list - [sec, min, hour]
                 # replace datetime ranges to zero; example: (hour=0, min=0, sec=0)
-                self.res_datetime = self._replace_time_range_levels_under_curr_to_zero_by_key(self.res_datetime,
-                                                                                              abbr_key)
+                self._res_datetime = self._replace_time_range_levels_under_curr_to_zero_by_key(self._res_datetime,
+                                                                                               abbr_key)
 
                 # SECOND PARAM; value only for nonstandard time range or None if not in range
                 delta = self._get_delta_snap_expression_elem(num_abbr_union, abbr_key)
 
                 if delta:
-                    self.res_datetime += delta
+                    self._res_datetime += delta
 
     def _split_expression_elem_on_num_abbr_union(self, expression_elem: str, sign: int):
         """
@@ -286,7 +316,7 @@ class SplunkModifiersParser(TimeParser):
             integer timestamp
         """
         # reset result datetime
-        self.res_datetime = self.current_time
+        self._res_datetime = self.current_datetime
 
         # + = 1, - = -1, @ = 0
         sign = 1
@@ -301,4 +331,4 @@ class SplunkModifiersParser(TimeParser):
             else:
                 self._split_expression_elem_on_num_abbr_union(expression_elem, sign)
 
-        return self.res_datetime
+        return self._res_datetime

@@ -1,26 +1,44 @@
 import re
 from datetime import datetime
-from utils.time_parsers import NowParser, EpochParser, FormattedParser, SplunkModifiersParser
+from utils.time_parsers import NowParser, EpochParser, FormattedParser, SplunkModifiersParser, TimeParser
 
 
-class TotalTimeParser:
+class TotalTimeParser(TimeParser):
 
-    PROCESSORS = (
-        EpochParser, NowParser, FormattedParser, SplunkModifiersParser  # Order matters!
-    )
+    # ORDER MATTERS!  {Processor: (*args)}
+    PROCESSORS = {
+        EpochParser: (),
+        NowParser: ('current_datetime',),
+        FormattedParser: ('datetime_format',),
+        SplunkModifiersParser: ('current_datetime',),
+    }
 
-    @classmethod
-    def _time_modify(cls, item: datetime):
+    def __init__(self, current_datetime: datetime = datetime.now(), datetime_format: str = "%m/%d/%Y:%H:%M:%S"):
+        """
+        Args:
+            current_datetime: datetime relative to which to consider the shift
+            datetime_format: date and time format, example: "%m/%d/%Y:%H:%M:%S"
+        """
+        super().__init__(current_datetime=current_datetime, datetime_format=datetime_format)
+        self._processor_args2kwargs(locals())
+
+    def _processor_args2kwargs(self, locals_init: dict):
+        self.PROCESSORS = {
+            parser: {arg: locals_init[arg] for arg in p_args}
+            for parser, p_args in self.PROCESSORS.items()
+        }
+
+    @staticmethod  # можно так сделать или нет?
+    def _time_modify(item: datetime) -> int:
         """Modify datetime before return. Customize here!"""
         return int(item.timestamp())
 
-    @classmethod
-    def parse(cls, time_string: str) -> datetime or None:
+    def parse(self, time_string: str) -> int or None:
         """Apply all the processors before parsing success"""
-        for parser in cls.PROCESSORS:
-            parsed_time = parser().parse(time_string)
+        for parser, p_args in self.PROCESSORS.items():
+            parsed_time = parser(**p_args).parse(time_string)
             if parsed_time:
-                return cls._time_modify(parsed_time)
+                return self._time_modify(parsed_time)
 
 
 class OTLTimeRangeExtractor:
@@ -35,13 +53,17 @@ class OTLTimeRangeExtractor:
         """Check extracted and parsed args. Customize here!"""
         if not set(args).issubset(set(cls.FIELDS)):
             return False
-        # TODO check necessity
-        # if args.get(cls.FIELDS[0], 0) > args.get(cls.FIELDS[-1], 0):
-        #     return False
+        # timestamp comparison
+        if set(cls.FIELDS).issubset(set(args)) and args[cls.FIELDS[0]] > args[cls.FIELDS[1]]:
+            return False
         return True
 
-    def __init__(self, current_time: datetime = datetime.now()):
-        self.current_time = current_time
+    def __init__(self, current_datetime: datetime = datetime.now()):
+        """
+        Args:
+            current_datetime: datetime relative to which to consider the shift
+        """
+        self.PARSER = self.PARSER(current_datetime=current_datetime)
 
     def _split_otl(self, line: str) -> (str, dict):
         """ Split OTL line by regex and extract timed args"""
@@ -67,7 +89,7 @@ class OTLTimeRangeExtractor:
         """
 
         otl_cleaned, timed_args = self._split_otl(otl_line)
-        print(otl_cleaned, timed_args)
+        # print(otl_cleaned, timed_args)
 
         # check if no modifiers
         if not timed_args:
