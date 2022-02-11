@@ -1,16 +1,11 @@
 from datetime import datetime
-from .base_builder import BaseBuilder
-import json
-import os
-from file_read_backwards import FileReadBackwards
 # from dateutil.relativedelta import relativedelta
 # import pytz # $ pip install pytz
 
 
-class TimelinesBuilder(BaseBuilder):
+class TimelinesBuilder:
 
-    def __init__(self, mem_conf, static_conf):
-        super().__init__(mem_conf, static_conf)
+    def __init__(self):
         self.INTERVALS = {'m': 60, 'h': 3600, 'd': 86400, 'M': -1}  # -1 is a signal for getter to count month interval
         self._interval_info = None
         self._last_time = None
@@ -20,50 +15,6 @@ class TimelinesBuilder(BaseBuilder):
         # approximately self.point months in seconds to optimize (limit) json reading
         self.BIGGEST_INTERVAL = self.INTERVALS['d'] * 31 * self.points
         # self.TIME_ZONE = 'Europe/Moscow'  # TODO set timezone utcfromtimestamp?
-
-    def _load_data(self, cid):
-        """
-        Load data by cid
-
-        :param cid:         OT_Dispatcher's job cid
-        :return:            list of dicts from json lines
-        """
-        data = []
-        last_time = None
-        time_to_break = False
-        self.logger.debug(f'Started loading cache {cid}.')
-        path_to_cache_dir = os.path.join(self.data_path, self._cache_name_template.format(cid))
-        self.logger.debug(f'Path to cache {path_to_cache_dir}.')
-        file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
-        for file_name in file_names:
-            if time_to_break:
-                break
-            self.logger.debug(f'Reading part: {file_name}')
-            with FileReadBackwards(os.path.join(path_to_cache_dir, file_name)) as fr:
-                for line in fr:
-                    tmp = json.loads(line)
-                    if last_time:
-                        if last_time - tmp['_time'] > self.BIGGEST_INTERVAL:
-                            time_to_break = True
-                            break
-                    else:
-                        last_time = tmp['_time']
-                    data.append(tmp)
-        return data  # is not reversed intentionally. This way it is easier to build a timeline
-
-    def _load_data_test(self, data_path):
-        data = []
-        last_time = None
-        with FileReadBackwards(data_path) as fr:
-            for line in fr:
-                tmp = json.loads(line)
-                if last_time:
-                    if last_time - tmp['_time'] > self.BIGGEST_INTERVAL:
-                        break
-                else:
-                    last_time = tmp['_time']
-                data.append(tmp)
-        return data  # is not reversed intentionally. This way it is easier to build a timeline
 
     @staticmethod
     def _convert_hours_am_pm_format(hour: str) -> (str, str):
@@ -92,7 +43,7 @@ class TimelinesBuilder(BaseBuilder):
             last_time = last_time.replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             last_time = last_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        return last_time.timestamp()
+        return int(last_time.timestamp())
 
     @property
     def interval(self):
@@ -160,12 +111,11 @@ class TimelinesBuilder(BaseBuilder):
             months = [31, self._feb_days(ts), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]  # mutating months list
         return last_month
 
-    def get_all_timelines(self, cid, field: [None, str] = None):
+    def get_all_timelines(self, data, field: [None, str] = None):
         """
         When field is specified field value is accumulated for given interval rather than amount of events
         """
         timelines = [None] * 4
-        data = self._load_data(cid)
         timelines[0] = self.get_timeline(data, self.INTERVALS['m'], field)
         timelines[1] = self.get_timeline(data, self.INTERVALS['h'], field)
         timelines[2] = self.get_timeline(data, self.INTERVALS['d'], field)

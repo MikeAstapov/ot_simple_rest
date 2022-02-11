@@ -1,13 +1,15 @@
 import unittest
 import json
 from tools.timelines_builder import TimelinesBuilder
+from tools.timelines_loader import TimelinesLoader
 
 
 class TestTimelines(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.builder = TimelinesBuilder({'path': None}, None)
-        self.data = self.builder._load_data_test('builder_data/test_timelines_builder.json')
+        self.builder = TimelinesBuilder()
+        self.loader = TimelinesLoader({'path': None}, None, self.builder.BIGGEST_INTERVAL)
+        self.data = self.loader._load_data_test('builder_data/test_timelines_builder.json')
 
     def test_minutes_timeline(self):
         result = self.builder.get_timeline(self.data, self.builder.INTERVALS['m'])

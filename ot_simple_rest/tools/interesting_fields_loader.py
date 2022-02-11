@@ -1,23 +1,21 @@
-import logging
+from .base_loader import BaseLoader
 import os
-from abc import ABC
 import pandas as pd
 
 
-class BaseBuilder(ABC):
+class InterestingFieldsLoader(BaseLoader):
+
+    """
+    main purpose to load data from cid and return the data as a dataframe
+    """
 
     def __init__(self, mem_conf, static_conf):
-        self.mem_conf = mem_conf
-        self.static_conf = static_conf
-        self.data_path = self.mem_conf['path']
-        self.logger = logging.getLogger('osr')
-        self._cache_name_template = 'search_{}.cache/data'
+        super().__init__(mem_conf, static_conf)
 
-    @staticmethod
-    def _load_json_lines_test(data_path):
-        return pd.read_json(data_path, lines=True)
+    def _load_data_test(self, data_path):
+        return pd.read_json(data_path, lines=True, convert_dates=False)
 
-    def _load_json_lines(self, cid):
+    def load_data(self, cid):
         """
         Load data by cid
 
@@ -31,7 +29,7 @@ class BaseBuilder(ABC):
         file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
         for file_name in file_names:
             self.logger.debug(f'Reading part: {file_name}')
-            df = pd.read_json(os.path.join(path_to_cache_dir, file_name), lines=True)
+            df = pd.read_json(os.path.join(path_to_cache_dir, file_name), lines=True, convert_dates=False)
             if not data:
                 data = df
             else:

@@ -1,10 +1,4 @@
-from .base_builder import BaseBuilder
-
-
-class InterestingFieldsBuilder(BaseBuilder):
-
-    def __init__(self, mem_conf, static_conf):
-        super().__init__(mem_conf, static_conf)
+class InterestingFieldsBuilder:
 
     @staticmethod
     def _round_percent(percent, length):
@@ -16,7 +10,7 @@ class InterestingFieldsBuilder(BaseBuilder):
             percent = round(percent)
         return percent
 
-    def _get_fields(self, data):
+    def get_interesting_fields(self, data):
         if data.empty:
             return []
         interesting_fields = {}
@@ -24,7 +18,7 @@ class InterestingFieldsBuilder(BaseBuilder):
         value_counts_columns = {}
         not_nan_for_every_col = data.count()
         for col in data.columns:
-            interesting_fields[col] = {'id': i, 'text': col, 'totalCount': not_nan_for_every_col[col], 'static': []}
+            interesting_fields[col] = {'id': i, 'text': col, 'totalCount': int(not_nan_for_every_col[col]), 'static': []}
             value_counts_columns[col] = data[col].value_counts()
             i += 1
         for col_name, unique_values in value_counts_columns.items():
@@ -38,9 +32,4 @@ class InterestingFieldsBuilder(BaseBuilder):
                     'count': count,
                     '%': percent
                 })
-
         return list(interesting_fields.values())
-
-    def get_interesting_fields(self, cid):
-        data = self._load_json_lines(cid)
-        return self._get_fields(data)

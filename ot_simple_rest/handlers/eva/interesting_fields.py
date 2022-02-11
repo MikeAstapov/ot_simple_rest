@@ -1,6 +1,7 @@
 import json
 import tornado.web
 from tools.interesting_fields_builder import InterestingFieldsBuilder
+from tools.interesting_fields_loader import InterestingFieldsLoader
 
 __author__ = "Ilia Sagaidak"
 __copyright__ = "Copyright 2022, Open Technologies 98"
@@ -15,7 +16,8 @@ __status__ = "Dev"
 class GetInterestingFields(tornado.web.RequestHandler):
 
     def initialize(self, mem_conf, static_conf):
-        self.builder = InterestingFieldsBuilder(mem_conf, static_conf)
+        self.builder = InterestingFieldsBuilder()
+        self.loader = InterestingFieldsLoader(mem_conf, static_conf)
 
     async def get(self):
         """
@@ -24,5 +26,6 @@ class GetInterestingFields(tornado.web.RequestHandler):
         """
         params = self.request.query_arguments
         cid = params.get('cid')[0].decode()
-        interesting_fields = self.builder.get_interesting_fields(cid)
-        self.write(json.dumps(interesting_fields, default=str))  # to serialize timestamp
+        data = self.loader.load_data(cid)
+        interesting_fields = self.builder.get_interesting_fields(data)
+        self.write(json.dumps(interesting_fields))
