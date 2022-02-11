@@ -26,6 +26,9 @@ class GetInterestingFields(tornado.web.RequestHandler):
         """
         params = self.request.query_arguments
         cid = params.get('cid')[0].decode()
-        data = self.loader.load_data(cid)
+        try:
+            data = self.loader.load_data(cid)
+        except Exception as e:
+            return self.write({'status': 'failed', 'error': e})
         interesting_fields = self.builder.get_interesting_fields(data)
         self.write(json.dumps(interesting_fields))

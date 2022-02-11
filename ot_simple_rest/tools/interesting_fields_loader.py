@@ -1,6 +1,8 @@
 from .base_loader import BaseLoader
+from pathlib import Path
 import os
 import pandas as pd
+from tornado.web import HTTPError
 
 
 class InterestingFieldsLoader(BaseLoader):
@@ -26,7 +28,10 @@ class InterestingFieldsLoader(BaseLoader):
         self.logger.debug(f'Started loading cache {cid}.')
         path_to_cache_dir = os.path.join(self.data_path, self._cache_name_template.format(cid))
         self.logger.debug(f'Path to cache {path_to_cache_dir}.')
-        file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
+        if not os.path.exists(path_to_cache_dir):
+            self.logger.error(f'No cache with id={cid}')
+            raise HTTPError(405, f'No cache with id={cid}')
+        file_names = Path(path_to_cache_dir).glob('*.json')
         for file_name in file_names:
             self.logger.debug(f'Reading part: {file_name}')
             df = pd.read_json(os.path.join(path_to_cache_dir, file_name), lines=True, convert_dates=False)
