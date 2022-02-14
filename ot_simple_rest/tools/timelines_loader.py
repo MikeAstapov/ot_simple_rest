@@ -4,6 +4,7 @@ import json
 import os
 from file_read_backwards import FileReadBackwards
 from tornado.web import HTTPError
+from typing import List, Dict, Optional, Tuple
 
 
 class TimelinesLoader(BaseLoader):
@@ -16,11 +17,11 @@ class TimelinesLoader(BaseLoader):
     TimelinesBuilder already knows that the list is reversed, and it will reverse timeline after creating it.
     """
 
-    def __init__(self, mem_conf, static_conf, biggest_interval):
+    def __init__(self, mem_conf: Dict, static_conf: Dict, biggest_interval: int):
         super().__init__(mem_conf, static_conf)
         self.BIGGEST_INTERVAL = biggest_interval
 
-    def load_data(self, cid):
+    def load_data(self, cid: str) -> List[Dict]:
         """
         Load data by cid
         :param cid:         OT_Dispatcher's job cid
@@ -28,7 +29,7 @@ class TimelinesLoader(BaseLoader):
         """
         data = []
         last_time = None
-        time_to_break = False
+        break_now = False
         self.logger.debug(f'Started loading cache {cid}.')
         path_to_cache_dir = os.path.join(self.data_path, self._cache_name_template.format(cid))
         self.logger.debug(f'Path to cache {path_to_cache_dir}.')
@@ -37,13 +38,13 @@ class TimelinesLoader(BaseLoader):
             raise HTTPError(405, f'No cache with id={cid}')
         file_names = Path(path_to_cache_dir).glob('*.json')
         for file_name in file_names:
-            if time_to_break:
+            if break_now:
                 break
             self.logger.debug(f'Reading part: {file_name}')
-            time_to_break, last_time = self.read_file_backwards(data, os.path.join(path_to_cache_dir, file_name), last_time)
+            break_now, last_time = self.read_file_backwards(data, os.path.join(path_to_cache_dir, file_name), last_time)
         return data  # is not reversed intentionally. This way it is easier to build a timeline
 
-    def read_file_backwards(self, data, data_path, last_time) -> (bool, int):
+    def read_file_backwards(self, data: List, data_path: bytes, last_time: Optional[int]) -> Tuple[bool, int]:
         """
         Reads file and adds it to data list
         :param data:        list of data that is mutated inside this method

@@ -2,6 +2,7 @@ import json
 import tornado.web
 from tools.interesting_fields_builder import InterestingFieldsBuilder
 from tools.interesting_fields_loader import InterestingFieldsLoader
+from typing import Dict
 
 __author__ = "Ilia Sagaidak"
 __copyright__ = "Copyright 2022, Open Technologies 98"
@@ -27,7 +28,7 @@ class GetInterestingFields(tornado.web.RequestHandler):
             :%: percent of count from all rows in the data table
     """
 
-    def initialize(self, mem_conf, static_conf):
+    def initialize(self, mem_conf: Dict, static_conf: Dict):
         self.builder = InterestingFieldsBuilder()
         self.loader = InterestingFieldsLoader(mem_conf, static_conf)
 

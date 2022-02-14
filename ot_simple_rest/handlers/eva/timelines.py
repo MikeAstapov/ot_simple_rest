@@ -2,6 +2,7 @@ import json
 import tornado.web
 from tools.timelines_builder import TimelinesBuilder
 from tools.timelines_loader import TimelinesLoader
+from typing import Dict
 
 __author__ = "Ilia Sagaidak"
 __copyright__ = "Copyright 2022, Open Technologies 98"
@@ -27,7 +28,7 @@ class GetTimelines(tornado.web.RequestHandler):
     4th - 1 month
     """
 
-    def initialize(self, mem_conf, static_conf):
+    def initialize(self, mem_conf: Dict, static_conf: Dict):
         self.builder = TimelinesBuilder()
         self.loader = TimelinesLoader(mem_conf, static_conf, self.builder.BIGGEST_INTERVAL)
 

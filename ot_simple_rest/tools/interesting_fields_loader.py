@@ -2,7 +2,9 @@ from .base_loader import BaseLoader
 from pathlib import Path
 import os
 import pandas as pd
+from pandas import DataFrame as PandasDataFrame
 from tornado.web import HTTPError
+from typing import Dict
 
 
 class InterestingFieldsLoader(BaseLoader):
@@ -11,10 +13,10 @@ class InterestingFieldsLoader(BaseLoader):
     Main purpose to load data from cid and return the data as a dataframe.
     """
 
-    def __init__(self, mem_conf, static_conf):
+    def __init__(self, mem_conf: Dict, static_conf: Dict):
         super().__init__(mem_conf, static_conf)
 
-    def load_data(self, cid):
+    def load_data(self, cid: str) -> PandasDataFrame:
         """
         Load data by cid
 

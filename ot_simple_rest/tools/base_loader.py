@@ -1,5 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
+from typing import Any, Dict
 
 
 class BaseLoader(ABC):
@@ -8,7 +9,7 @@ class BaseLoader(ABC):
     Interface for loaders, that load data using only cid
     """
 
-    def __init__(self, mem_conf, static_conf):
+    def __init__(self, mem_conf: Dict, static_conf: Dict):
         self.mem_conf = mem_conf
         self.static_conf = static_conf
         self.data_path = self.mem_conf['path']
@@ -16,5 +17,5 @@ class BaseLoader(ABC):
         self._cache_name_template = 'search_{}.cache/data'
 
     @abstractmethod
-    def load_data(self, cid): raise NotImplementedError
+    def load_data(self, cid: str) -> Any: raise NotImplementedError
 

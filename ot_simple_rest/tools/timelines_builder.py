@@ -1,5 +1,6 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from typing import List, Dict, Optional, Union
 # import pytz # $ pip install pytz
 
 
@@ -26,8 +27,7 @@ class TimelinesBuilder:
         self.BIGGEST_INTERVAL = self.INTERVALS['d'] * 31 * self.points
         # self.TIME_ZONE = 'Europe/Moscow'  # TODO set timezone utcfromtimestamp?
 
-
-    def _round_timestamp(self, last_time, interval):
+    def _round_timestamp(self, last_time: datetime, interval: int) -> datetime:
         if interval == self.INTERVALS['m']:
             last_time = last_time.replace(second=0, microsecond=0)
         elif interval == self.INTERVALS['h']:
@@ -39,7 +39,7 @@ class TimelinesBuilder:
         return last_time
 
     @property
-    def interval(self):
+    def interval(self) -> relativedelta:
         if self._interval_info == self.INTERVALS['m']:
             return relativedelta(minutes=1)
         if self._interval_info == self.INTERVALS['h']:
@@ -48,7 +48,8 @@ class TimelinesBuilder:
             return relativedelta(days=1)
         return relativedelta(months=1)
 
-    def get_timeline(self, data, interval, field: [None, str] = None):
+    def get_timeline(self, data: List[Dict], interval: int, field: Optional[str] = None) \
+            -> List[Dict[str, Union[int, float]]]:
         """
         When field is specified field value is accumulated for given interval rather than amount of events
         """
@@ -90,7 +91,8 @@ class TimelinesBuilder:
             self._last_time -= self.interval
         return list(reversed(timeline))
 
-    def get_all_timelines(self, data, field: [None, str] = None):
+    def get_all_timelines(self, data: List[Dict], field: Optional[str] = None) \
+            -> List[List[Dict[str, Union[int, float]]]]:
         """
         When field is specified field value is accumulated for given interval rather than amount of events
         """

@@ -1,3 +1,7 @@
+from pandas import DataFrame as PandasDataFrame
+from typing import List, Dict
+
+
 class InterestingFieldsBuilder:
     """
     The builder class is responsible for creating the list of interesting fields from already loaded data.
@@ -13,7 +17,7 @@ class InterestingFieldsBuilder:
     """
 
     @staticmethod
-    def _round_percent(percent, length):
+    def _round_percent(percent: float, length: int):
         if length > 300:
             percent = round(percent, 2)
         elif 30 < length < 300:
@@ -22,7 +26,7 @@ class InterestingFieldsBuilder:
             percent = round(percent)
         return percent
 
-    def get_interesting_fields(self, data):
+    def get_interesting_fields(self, data: PandasDataFrame) -> List[Dict]:
         if data.empty:
             raise Exception('Empty data')
         interesting_fields = {}
