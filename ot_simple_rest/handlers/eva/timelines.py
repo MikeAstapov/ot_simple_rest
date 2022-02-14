@@ -32,10 +32,6 @@ class GetTimelines(tornado.web.RequestHandler):
         self.loader = TimelinesLoader(mem_conf, static_conf, self.builder.BIGGEST_INTERVAL)
 
     async def get(self):
-        """
-        It writes response to remote side.
-        :return: list of 4 timelines
-        """
         params = self.request.query_arguments
         cid = params.get('cid')[0].decode()
         try:

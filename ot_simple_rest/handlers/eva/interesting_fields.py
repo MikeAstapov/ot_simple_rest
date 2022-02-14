@@ -32,10 +32,6 @@ class GetInterestingFields(tornado.web.RequestHandler):
         self.loader = InterestingFieldsLoader(mem_conf, static_conf)
 
     async def get(self):
-        """
-        It writes response to remote side.
-        :return: list of dictionaries where every dictionary represents interesting fields for one column of data
-        """
         params = self.request.query_arguments
         cid = params.get('cid')[0].decode()
         try:
