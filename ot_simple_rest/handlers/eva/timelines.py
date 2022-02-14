@@ -39,7 +39,7 @@ class GetTimelines(tornado.web.RequestHandler):
             data = self.loader.load_data(cid)
             timelines = self.builder.get_all_timelines(data)
         except tornado.web.HTTPError as e:
-            return self.write({'status': 'failed', 'error': e})
+            return self.write(json.dumps({'status': 'failed', 'error': e}, default=str))
         except Exception as e:
-            return self.write({'status': 'failed', 'error': f'{e} cid {cid}'})
+            return self.write(json.dumps({'status': 'failed', 'error': f'{e} cid {cid}'}, default=str))
         self.write(json.dumps(timelines))
