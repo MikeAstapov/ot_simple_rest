@@ -24,6 +24,9 @@ def datetime_reset_quarter(p_date: datetime) -> datetime:
 
 
 class TimeParser:
+    """
+    Base abs. class to use as a parent for time-parsing classes
+    """
 
     def __init__(self, current_datetime: datetime = None, datetime_format: str = None):
         """
@@ -35,7 +38,7 @@ class TimeParser:
         self.datetime_format = datetime_format
 
     @abstractmethod
-    def parse(self, time_string: str) -> datetime or None:
+    def parse(self, time_string: str) -> Optional[datetime]:
         """Provide conversion method"""
         raise NotImplementedError
 
@@ -51,6 +54,12 @@ class NowParser(TimeParser):
 
 
 class EpochParser(TimeParser):
+    """
+    Parse datetime string in epoch-time UNIX format
+
+    >>> EpochParser().parse('1234567890')
+    datetime.datetime(2009, 2, 14, 2, 31, 30)
+    """
 
     def parse(self, time_string: str) -> datetime or None:
         if time_string.isdigit():
@@ -61,8 +70,21 @@ class EpochParser(TimeParser):
 
 
 class FormattedParser(TimeParser):
+    """
+    Parse string datetime representation using various formats.
 
-    def parse(self, time_string: str) -> datetime or None:
+    >>> FormattedParser().parse("14/02/1983 16:00")
+    datetime.datetime(1983, 2, 14, 16, 0)
+    >>> FormattedParser().parse("11.09.2000")
+    datetime.datetime(2000, 11, 9, 0, 0)
+    >>> FormattedParser().parse("04 June 2022 3 PM")
+    datetime.datetime(2022, 6, 4, 15, 0)
+
+    """
+
+    # TODO Consider current date while parsing strings like '16:00'
+
+    def parse(self, time_string: str) -> Optional[datetime]:
         try:
             dateutil.parser.parserinfo.JUMP.append(':')
             return dateutil.parser.parser().parse(time_string)
@@ -316,13 +338,19 @@ class SplunkModifiersParser(TimeParser):
         elif not sign and 1 <= len(num_abbr_union) <= 2:
             self._update_datetime_with_snap(num_abbr_union)
 
-    def parse(self, time_string: str) -> datetime or None:
+    def parse(self, time_string: str) -> Optional[datetime]:
         """
         Args:
-            time_string: string with time expression, example: -1mon@q+1d
-
+            time_string: string with time expression, examples: "-1mon@q+1d", "10/27/2015:00:00:00"
         Returns:
-            integer timestamp
+            Datetime
+
+        >>> SplunkModifiersParser(current_datetime=datetime.fromtimestamp(1274567891)).parse("-1mon@q+1d")
+        datetime.datetime(2010, 4, 2, 0, 0)
+        >>> SplunkModifiersParser(current_datetime=datetime.fromtimestamp(1274567891)).parse("+4mon1week2day@q")
+        datetime.datetime(2010, 10, 1, 0, 0)
+        >>> SplunkModifiersParser(current_datetime=datetime.fromtimestamp(1274567891)).parse("-2d")
+        datetime.datetime(2010, 5, 21, 2, 38, 11)
         """
         # reset result datetime and set change flag = False
         self._reset_res_datetime()
@@ -341,3 +369,8 @@ class SplunkModifiersParser(TimeParser):
                 self._split_expression_elem_on_num_abbr_union(expression_elem, sign)
 
         return self.result
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()

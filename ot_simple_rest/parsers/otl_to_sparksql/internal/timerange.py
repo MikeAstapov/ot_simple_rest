@@ -1,10 +1,20 @@
 import re
 from datetime import datetime
+from typing import Optional
 
-from utils.time_parsers import NowParser, EpochParser, FormattedParser, SplunkModifiersParser, TimeParser
+from utils.time_parsers import NowParser, EpochParser, FormattedParser, SplunkModifiersParser
 
 
-class TotalTimeParser(TimeParser):
+class TotalTimeParser:
+    """
+    Trys to parse given string as a datetime object using sequence of processors.
+    Returns datetime modified with _time_modify method.
+
+    >>> TotalTimeParser(current_datetime=datetime.fromtimestamp(1234567890)).parse('12.02.1983')
+    439160400
+    >>> TotalTimeParser(current_datetime=datetime.fromtimestamp(1234567890)).parse('-27days@day')
+    1232226000
+    """
 
     # ORDER MATTERS!  {Processor: (*args)}
     PROCESSORS = {
@@ -14,13 +24,11 @@ class TotalTimeParser(TimeParser):
         FormattedParser: (),
     }
 
-    def __init__(self, current_datetime: datetime = datetime.now(), datetime_format: str = "%m/%d/%Y:%H:%M:%S"):
+    def __init__(self, current_datetime: datetime = datetime.now()):
         """
         Args:
             current_datetime: datetime relative to which to consider the shift
-            datetime_format: date and time format, example: "%m/%d/%Y:%H:%M:%S"
         """
-        super().__init__(current_datetime=current_datetime, datetime_format=datetime_format)
         self._processor_args2kwargs(locals())
 
     def _processor_args2kwargs(self, locals_init: dict):
@@ -34,7 +42,7 @@ class TotalTimeParser(TimeParser):
         """Modify datetime before return. Customize here!"""
         return int(item.timestamp())
 
-    def parse(self, time_string: str) -> int or None:
+    def parse(self, time_string: str) -> Optional[int]:
         """Apply all the processors before parsing success"""
         for parser, p_args in self.PROCESSORS.items():
             parsed_time = parser(**p_args).parse(time_string)
@@ -88,6 +96,9 @@ class OTLTimeRangeExtractor:
 
         Returns:
             clean otl request, earliest time, latest time
+
+        >>> OTLTimeRangeExtractor().extract_timerange("| eval salary=500000 latest=14.02.1983:15:00", 0, 0)
+        ('| eval salary=500000 ', 0, 414072000)
         """
 
         otl_cleaned, timed_args = self._split_otl(otl_line)
@@ -105,3 +116,8 @@ class OTLTimeRangeExtractor:
             tws, twf = timed_args.get(self.FIELDS[0], tws) or tws, timed_args.get(self.FIELDS[-1], twf) or twf
 
         return otl_cleaned, tws, twf
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
