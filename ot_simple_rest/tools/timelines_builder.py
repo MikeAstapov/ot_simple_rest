@@ -83,13 +83,15 @@ class TimelinesBuilder:
                     accumulated_value += 1
                 i += 1
             # flush accumulated values and interval to the timeline
-            elif self._last_time - self.interval <= datetime.fromtimestamp(data[i]['_time']) < self._last_time \
-                    or accumulated_value:
+            elif self._last_time - self.interval <= datetime.fromtimestamp(data[i]['_time']) < self._last_time:
                 timeline.append({'time': self._last_time.timestamp(), 'value': accumulated_value})
                 accumulated_value = 0
                 self._last_time -= self.interval
             # move to interval in which current time is located and set 0 values to intervals on the way
             else:
+                if accumulated_value:
+                    timeline.append({'time': self._last_time.timestamp(), 'value': accumulated_value})
+                    accumulated_value = 0
                 while datetime.fromtimestamp(data[i]['_time']) < self._last_time - self.interval \
                         and len(timeline) < self.points:
                     timeline.append({'time': self._last_time.timestamp(), 'value': 0})
