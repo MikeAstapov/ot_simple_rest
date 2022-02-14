@@ -8,7 +8,7 @@ from tornado.web import HTTPError
 class InterestingFieldsLoader(BaseLoader):
 
     """
-    main purpose to load data from cid and return the data as a dataframe
+    Main purpose to load data from cid and return the data as a dataframe.
     """
 
     def __init__(self, mem_conf, static_conf):

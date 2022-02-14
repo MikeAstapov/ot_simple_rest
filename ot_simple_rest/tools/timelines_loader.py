@@ -9,7 +9,11 @@ from tornado.web import HTTPError
 class TimelinesLoader(BaseLoader):
 
     """
-    main purpose to load data from cid and return the data as a reversed list of dictionaries
+    Main purpose is to load data from cid and return the data as a reversed list of dictionaries.
+    For timelines we need not all data but only the data that enters timelines timeinterval
+    multiplied by the number of objects on a timeline.
+    Hence we are reading the data backwards to prevent reading useless data for the timeline.
+    TimelinesBuilder already knows that the list is reversed, and it will reverse timeline after creating it.
     """
 
     def __init__(self, mem_conf, static_conf, biggest_interval):
@@ -19,7 +23,6 @@ class TimelinesLoader(BaseLoader):
     def load_data(self, cid):
         """
         Load data by cid
-
         :param cid:         OT_Dispatcher's job cid
         :return:            list of dicts from json lines
         """
@@ -42,7 +45,7 @@ class TimelinesLoader(BaseLoader):
 
     def read_file_backwards(self, data, data_path, last_time) -> (bool, int):
         """
-        reads file and adds it to data list
+        Reads file and adds it to data list
         :param data:        list of data that is mutated inside this method
         :param data_path:   path to file
         :param last_time:   left border of a time interval

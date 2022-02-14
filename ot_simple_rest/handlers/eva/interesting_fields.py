@@ -14,6 +14,18 @@ __status__ = "Dev"
 
 
 class GetInterestingFields(tornado.web.RequestHandler):
+    """
+    Returns a list of dictionaries where every dictionary represents interesting fields for one column of data
+
+    interesting fields consist of:
+    :id: serial number of a column
+    :text: name of a column
+    :totalCount: number of not empty cells in the column (null is considered an empty cell)
+    :static: list of dictionaries where every dictionary is an info about every unique value in a column consists of:
+            :value: value itself
+            :count: how many times the value appears in the column
+            :%: percent of count from all rows in the data table
+    """
 
     def initialize(self, mem_conf, static_conf):
         self.builder = InterestingFieldsBuilder()
@@ -22,7 +34,7 @@ class GetInterestingFields(tornado.web.RequestHandler):
     async def get(self):
         """
         It writes response to remote side.
-        :return: list of 4 timelines
+        :return: list of dictionaries where every dictionary represents interesting fields for one column of data
         """
         params = self.request.query_arguments
         cid = params.get('cid')[0].decode()

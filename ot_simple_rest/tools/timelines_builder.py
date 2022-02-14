@@ -4,6 +4,18 @@ from datetime import datetime
 
 
 class TimelinesBuilder:
+    """
+    The builder class is responsible for creating  a list of 4 timelines.
+    Every timeline has 50 objects. One object is a pair (time, value) and represents a time interval.
+    :time: - unix timestamp
+    :value: - how many events happened during the time interval
+
+    Timelines differ by their time interval:
+    1st - 1 minute
+    2nd - 1 hour
+    3rd - 1 day
+    4th - 1 month
+    """
 
     def __init__(self):
         self.INTERVALS = {'m': 60, 'h': 3600, 'd': 86400, 'M': -1}  # -1 is a signal for getter to count month interval

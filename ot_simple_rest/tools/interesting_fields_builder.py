@@ -1,4 +1,16 @@
 class InterestingFieldsBuilder:
+    """
+    The builder class is responsible for creating the list of interesting fields from already loaded data.
+
+    interesting fields consist of:
+    :id: serial number of a column
+    :text: name of a column
+    :totalCount: number of not empty cells in the column (null is considered an empty cell)
+    :static: list of dictionaries where every dictionary is an info about every unique value in a column consists of:
+            :value: value itself
+            :count: how many times the value appears in the column
+            :%: percent of count from all rows in the data table
+    """
 
     @staticmethod
     def _round_percent(percent, length):

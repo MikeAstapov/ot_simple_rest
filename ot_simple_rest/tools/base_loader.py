@@ -4,6 +4,10 @@ from abc import ABC, abstractmethod
 
 class BaseLoader(ABC):
 
+    """
+    Interface for loaders, that load data using only cid
+    """
+
     def __init__(self, mem_conf, static_conf):
         self.mem_conf = mem_conf
         self.static_conf = static_conf
