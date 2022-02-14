@@ -1,5 +1,5 @@
+from datetime import datetime, timedelta, date, timezone
 from typing import Optional, Tuple, Union, Dict
-from datetime import datetime, timedelta, date
 from abc import abstractmethod
 import re
 
@@ -15,12 +15,13 @@ def get_quarter(p_date: date) -> int:
     return (p_date.month - 1) // 3
 
 
-def get_first_day_of_the_quarter(p_date: date) -> datetime:
-    return datetime(p_date.year, 3 * get_quarter(p_date) + 1, 1)
+def get_first_day_of_the_quarter(p_datetime: datetime) -> datetime:
+    p_date = p_datetime.date()
+    return p_datetime.replace(p_date.year, 3 * get_quarter(p_date) + 1, 1)
 
 
-def datetime_reset_quarter(p_date: datetime) -> datetime:
-    return get_first_day_of_the_quarter(p_date.date())
+def datetime_reset_quarter(p_datetime: datetime) -> datetime:
+    return get_first_day_of_the_quarter(p_datetime)
 
 
 class TimeParser:
@@ -28,13 +29,18 @@ class TimeParser:
     Base abs. class to use as a parent for time-parsing classes
     """
 
-    def __init__(self, current_datetime: datetime = None, datetime_format: str = None):
+    def __init__(self,
+                 current_datetime: datetime = datetime.now(),
+                 tz: Optional[timezone] = None,
+                 datetime_format: Optional[str] = None):
         """
         Args:
             current_datetime: datetime relative to which to consider the shift
-            datetime_format: datetime_format
+            tz: time zone, example: timezone(timedelta(hours=-1))
+            datetime_format: datetime format
         """
-        self.current_datetime = current_datetime
+        self.tz = tz
+        self.current_datetime = current_datetime.replace(tzinfo=self.tz)
         self.datetime_format = datetime_format
 
     @abstractmethod
@@ -44,10 +50,21 @@ class TimeParser:
 
 
 class NowParser(TimeParser):
+    """
+    Parse string with pattern and convert to current time in datetime format
+
+    >>> NowParser(datetime(2010, 10, 10, 10, 10, 10), timezone(timedelta(hours=+3))).parse("now()").ctime()
+    'Sun Oct 10 10:10:10 2010'
+    >>> NowParser(datetime(2010, 10, 10, 10, 10, 10), timezone(timedelta(hours=+4))).parse("now()").ctime()
+    'Sun Oct 10 10:10:10 2010'
+    >>> NowParser(datetime(2020, 10, 10, 10, 10, 10), timezone(timedelta(hours=-1))).parse("now()").ctime()
+    'Sat Oct 10 10:10:10 2020'
+    """
+
     PATTERN = ('now', 'now()', 'current')
 
-    def __init__(self, current_datetime: datetime = datetime.now()):
-        super().__init__(current_datetime=current_datetime)
+    def __init__(self, current_datetime: datetime = datetime.now(), tz: timezone = None):
+        super().__init__(current_datetime=current_datetime, tz=tz)
 
     def parse(self, time_string: str) -> datetime or None:
         return self.current_datetime if time_string.lower() in self.PATTERN else None
@@ -57,14 +74,17 @@ class EpochParser(TimeParser):
     """
     Parse datetime string in epoch-time UNIX format
 
-    >>> EpochParser().parse('1234567890')
-    datetime.datetime(2009, 2, 14, 2, 31, 30)
+    >>> EpochParser().parse('1234567890').ctime()
+    'Sat Feb 14 02:31:30 2009'
     """
+
+    def __init__(self, tz: timezone = None):
+        super().__init__(tz=tz)
 
     def parse(self, time_string: str) -> datetime or None:
         if time_string.isdigit():
             try:
-                return datetime.fromtimestamp(float(time_string))
+                return datetime.fromtimestamp(float(time_string), self.tz)
             except ValueError:
                 return
 
@@ -72,27 +92,36 @@ class EpochParser(TimeParser):
 class FormattedParser(TimeParser):
     """
     Parse string datetime representation using various formats.
+    Parse string relative time, example: "16:00", "15:30:00"
 
-    >>> FormattedParser().parse("14/02/1983 16:00")
-    datetime.datetime(1983, 2, 14, 16, 0)
-    >>> FormattedParser().parse("11.09.2000")
-    datetime.datetime(2000, 11, 9, 0, 0)
-    >>> FormattedParser().parse("04 June 2022 3 PM")
-    datetime.datetime(2022, 6, 4, 15, 0)
+    >>> FormattedParser(datetime(2010, 10, 10, 10, 10, 10)).parse("14/02/1983 16:00").ctime()
+    'Mon Feb 14 16:00:00 1983'
+    >>> FormattedParser(datetime(2010, 10, 10, 10, 10, 10)).parse("11.09.2000").ctime()
+    'Thu Nov  9 00:00:00 2000'
+    >>> FormattedParser(datetime(2010, 10, 10, 10, 10, 10)).parse("04 June 2022 3 PM").ctime()
+    'Sat Jun  4 15:00:00 2022'
+    >>> FormattedParser(datetime(2010, 10, 10, 10, 10, 10)).parse("16:00").ctime()
+    'Sun Oct 10 16:00:00 2010'
 
     """
 
-    # TODO Consider current date while parsing strings like '16:00'
+    def __init__(self, current_datetime: datetime = datetime.now(), tz: timezone = None):
+        super().__init__(current_datetime=current_datetime, tz=tz)
 
     def parse(self, time_string: str) -> Optional[datetime]:
+        # see `default` arg in dateutil.parser.parser().parse; only for relative time_string, example: "16:00"
+        default = self.current_datetime.replace(hour=0, minute=0, second=0, microsecond=0)
         try:
             dateutil.parser.parserinfo.JUMP.append(':')
-            return dateutil.parser.parser().parse(time_string)
+            return dateutil.parser.parser().parse(time_string, default=default)
         except (dateutil.parser.ParserError, OverflowError):
             return
 
 
 class TimeRangeSettings:
+    """
+    Main settings for time range.
+    """
 
     def __init__(
             self,
@@ -120,6 +149,10 @@ class TimeRangeSettings:
 
 
 class SplunkModifiersParser(TimeParser):
+    """
+    Parse string splunk relative time expression and transform to datetime
+    """
+
     abbreviations: Dict[str, TimeRangeSettings] = {
         # 'ms': TimeRange('microsecond', ('ms', 'micsec', 'microsecond', 'microseconds'), True, True, 0),
         'S': TimeRangeSettings('second', ('s', 'sec', 'secs', 'second', 'seconds'), True, True, 0),
@@ -137,12 +170,8 @@ class SplunkModifiersParser(TimeParser):
     spliter_regex = r"(\+|-|\@)"
     abbr_regex = r"(\d+)"
 
-    def __init__(self, current_datetime: datetime = datetime.now()):
-        """
-        Args:
-            current_datetime: datetime relative to which to consider the shift
-        """
-        super().__init__(current_datetime=current_datetime)
+    def __init__(self, current_datetime: datetime = datetime.now(), tz: timezone = None):
+        super().__init__(current_datetime=current_datetime, tz=tz)
         self.res_datetime = None
 
     @property
@@ -345,12 +374,14 @@ class SplunkModifiersParser(TimeParser):
         Returns:
             Datetime
 
-        >>> SplunkModifiersParser(current_datetime=datetime.fromtimestamp(1274567891)).parse("-1mon@q+1d")
-        datetime.datetime(2010, 4, 2, 0, 0)
-        >>> SplunkModifiersParser(current_datetime=datetime.fromtimestamp(1274567891)).parse("+4mon1week2day@q")
-        datetime.datetime(2010, 10, 1, 0, 0)
-        >>> SplunkModifiersParser(current_datetime=datetime.fromtimestamp(1274567891)).parse("-2d")
-        datetime.datetime(2010, 5, 21, 2, 38, 11)
+        >>> SplunkModifiersParser(current_datetime=datetime.fromtimestamp(1274567891)).parse("-1mon@q+1d").ctime()
+        'Fri Apr  2 00:00:00 2010'
+        >>> SplunkModifiersParser(current_datetime=datetime.fromtimestamp(1274567891)).parse("+4mon1week2day@q").ctime()
+        'Fri Oct  1 00:00:00 2010'
+        >>> SplunkModifiersParser(current_datetime=datetime.fromtimestamp(1274567891)).parse("-2d").ctime()
+        'Fri May 21 02:38:11 2010'
+        >>> SplunkModifiersParser(current_datetime=datetime(2010, 10, 10, 10, 10, 10,)).parse("-12mon1y@y").ctime()
+        'Tue Jan  1 00:00:00 2008'
         """
         # reset result datetime and set change flag = False
         self._reset_res_datetime()
@@ -368,6 +399,7 @@ class SplunkModifiersParser(TimeParser):
             else:
                 self._split_expression_elem_on_num_abbr_union(expression_elem, sign)
 
+        # print(self.result)
         return self.result
 
 
