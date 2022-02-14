@@ -18,6 +18,15 @@ class InterestingFieldsBuilder:
 
     @staticmethod
     def _round_percent(percent: float, length: int):
+        """
+        >>> ifb = InterestingFieldsBuilder()
+        >>> ifb._round_percent(42.9184168, 301)
+        42.92
+        >>> ifb._round_percent(42.9184168, 31)
+        42.9
+        >>> ifb._round_percent(42.9184168, 30)
+        43
+        """
         if length > 300:
             percent = round(percent, 2)
         elif 30 < length < 300:

@@ -28,6 +28,18 @@ class TimelinesBuilder:
         # self.TIME_ZONE = 'Europe/Moscow'  # TODO set timezone utcfromtimestamp?
 
     def _round_timestamp(self, last_time: datetime, interval: int) -> datetime:
+        """
+        >>> tlb = TimelinesBuilder()
+        >>> dt = datetime(2007, 12, 31, 4, 19, 37)
+        >>> tlb._round_timestamp(dt, tlb.INTERVALS['m'])
+        datetime.datetime(2007, 12, 31, 4, 19)
+        >>> tlb._round_timestamp(dt, tlb.INTERVALS['h'])
+        datetime.datetime(2007, 12, 31, 4, 0)
+        >>> tlb._round_timestamp(dt, tlb.INTERVALS['d'])
+        datetime.datetime(2007, 12, 31, 0, 0)
+        >>> tlb._round_timestamp(dt, tlb.INTERVALS['M'])
+        datetime.datetime(2007, 12, 1, 0, 0)
+        """
         if interval == self.INTERVALS['m']:
             last_time = last_time.replace(second=0, microsecond=0)
         elif interval == self.INTERVALS['h']:
@@ -96,9 +108,8 @@ class TimelinesBuilder:
         """
         When field is specified field value is accumulated for given interval rather than amount of events
         """
-        timelines = [None] * 4
-        timelines[0] = self.get_timeline(data, self.INTERVALS['m'], field)
-        timelines[1] = self.get_timeline(data, self.INTERVALS['h'], field)
-        timelines[2] = self.get_timeline(data, self.INTERVALS['d'], field)
-        timelines[3] = self.get_timeline(data, self.INTERVALS['M'], field)
+        timelines = [self.get_timeline(data, self.INTERVALS['m'], field),
+                     self.get_timeline(data, self.INTERVALS['h'], field),
+                     self.get_timeline(data, self.INTERVALS['d'], field),
+                     self.get_timeline(data, self.INTERVALS['M'], field)]
         return timelines
