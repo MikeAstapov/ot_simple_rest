@@ -1,9 +1,7 @@
 from .base_loader import BaseLoader
-from pathlib import Path
 import json
 import os
 from file_read_backwards import FileReadBackwards
-from tornado.web import HTTPError
 from typing import List, Dict, Optional, Tuple
 
 
@@ -30,13 +28,8 @@ class TimelinesLoader(BaseLoader):
         data = []
         last_time = None
         break_now = False
-        self.logger.debug(f'Started loading cache {cid}.')
-        path_to_cache_dir = os.path.join(self.data_path, self._cache_name_template.format(cid))
-        self.logger.debug(f'Path to cache {path_to_cache_dir}.')
-        if not os.path.exists(path_to_cache_dir):
-            self.logger.error(f'No cache with id={cid}')
-            raise HTTPError(405, f'No cache with id={cid}')
-        file_names = Path(path_to_cache_dir).glob('*.json')
+        path_to_cache_dir = self._get_path_to_cache_dir(cid)
+        file_names = self._get_cache_file_names(path_to_cache_dir, cid)
         for file_name in file_names:
             if break_now:
                 break
@@ -44,7 +37,7 @@ class TimelinesLoader(BaseLoader):
             break_now, last_time = self.read_file_backwards(data, os.path.join(path_to_cache_dir, file_name), last_time)
         return data  # is not reversed intentionally. This way it is easier to build a timeline
 
-    def read_file_backwards(self, data: List, data_path: bytes, last_time: Optional[int]) -> Tuple[bool, int]:
+    def read_file_backwards(self, data: List, data_path: str, last_time: Optional[int]) -> Tuple[bool, int]:
         """
         Reads file and adds it to data list
         :param data:        list of data that is mutated inside this method

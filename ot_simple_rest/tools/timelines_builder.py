@@ -1,7 +1,6 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from typing import List, Dict, Optional, Union
-# import pytz # $ pip install pytz
 
 
 class TimelinesBuilder:
@@ -22,10 +21,9 @@ class TimelinesBuilder:
         self.INTERVALS = {'m': 60, 'h': 3600, 'd': 86400, 'M': -1}  # -1 is a signal for getter to count month interval
         self._interval_info = None
         self._last_time = None
-        self.points = 50  # how many point on the timeline
+        self.points = 50  # how many points on the timeline
         # approximately self.point months in seconds to optimize (limit) json reading
         self.BIGGEST_INTERVAL = self.INTERVALS['d'] * 31 * self.points
-        # self.TIME_ZONE = 'Europe/Moscow'  # TODO set timezone utcfromtimestamp?
 
     def _round_timestamp(self, last_time: datetime, interval: int) -> datetime:
         """
