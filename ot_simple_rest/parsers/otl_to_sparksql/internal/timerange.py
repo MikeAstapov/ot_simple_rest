@@ -19,7 +19,7 @@ class TotalTimeParser:
         FormattedParser: ('current_datetime', 'tz',),
     }
 
-    def __init__(self, current_datetime: datetime = datetime.now(), tz: timezone = None):
+    def __init__(self, current_datetime: datetime = datetime.now(), tz: Optional[timezone] = None):
         """
         Args:
             current_datetime: datetime relative to which to consider the shift
@@ -95,7 +95,7 @@ class OTLTimeRangeExtractor:
         otl_cleaned = re.sub(cls.OTL_REGEX, "", line)
         return otl_cleaned, timed_args
 
-    def __init__(self, current_datetime: datetime = datetime.now(), tz: timezone = None):
+    def __init__(self, current_datetime: datetime = datetime.now(), tz: Optional[timezone] = None):
         """
         Args:
             current_datetime: datetime relative to which to consider the shift

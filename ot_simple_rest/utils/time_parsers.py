@@ -63,10 +63,10 @@ class NowParser(TimeParser):
 
     PATTERN = ('now', 'now()', 'current')
 
-    def __init__(self, current_datetime: datetime = datetime.now(), tz: timezone = None):
+    def __init__(self, current_datetime: datetime = datetime.now(), tz: Optional[timezone] = None):
         super().__init__(current_datetime=current_datetime, tz=tz)
 
-    def parse(self, time_string: str) -> datetime or None:
+    def parse(self, time_string: str) -> Optional[datetime]:
         return self.current_datetime if time_string.lower() in self.PATTERN else None
 
 
@@ -78,7 +78,7 @@ class EpochParser(TimeParser):
     'Sat Feb 14 02:31:30 2009'
     """
 
-    def __init__(self, tz: timezone = None):
+    def __init__(self, tz: Optional[timezone] = None):
         super().__init__(tz=tz)
 
     def parse(self, time_string: str) -> datetime or None:
@@ -105,7 +105,7 @@ class FormattedParser(TimeParser):
 
     """
 
-    def __init__(self, current_datetime: datetime = datetime.now(), tz: timezone = None):
+    def __init__(self, current_datetime: datetime = datetime.now(), tz: Optional[timezone] = None):
         super().__init__(current_datetime=current_datetime, tz=tz)
 
     def parse(self, time_string: str) -> Optional[datetime]:
@@ -170,7 +170,7 @@ class SplunkModifiersParser(TimeParser):
     spliter_regex = r"(\+|-|\@)"
     abbr_regex = r"(\d+)"
 
-    def __init__(self, current_datetime: datetime = datetime.now(), tz: timezone = None):
+    def __init__(self, current_datetime: datetime = datetime.now(), tz: Optional[timezone] = None):
         super().__init__(current_datetime=current_datetime, tz=tz)
         self.res_datetime = None
 
