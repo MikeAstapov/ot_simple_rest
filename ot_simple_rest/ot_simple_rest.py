@@ -39,11 +39,11 @@ from jobs_manager.manager import JobsManager
 from task_scheduler.tasks import DbTasksSchduler
 
 __author__ = "Andrey Starchenkov"
-__copyright__ = "Copyright 2019, Open Technologies 98"
+__copyright__ = "Copyright 2019, ISG Neuro"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "1.9.1"
-__maintainer__ = "Andrey Starchenkov"
+__version__ = "1.10.0"
+__maintainer__ = "Egor Lukyanov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Production"
 

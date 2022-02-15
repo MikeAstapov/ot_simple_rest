@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+new## [1.10.0] - 2022-02-15
+### Added
+- Complex datetime string parsing in earliest/latest args including enhanced Splunk relative time modifiers
+- Timelines and interesting fields support for S&R
+
 ## [1.9.2] - 2021-10-19
 ### Fixed
 - Fix regexep in makejob for using indexes with wildcards (e.g. index=* or index=main*)
