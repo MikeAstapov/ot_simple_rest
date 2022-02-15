@@ -9,7 +9,7 @@ from tornado.web import HTTPError
 class BaseLoader(ABC):
 
     """
-    Interface for loaders, that load data using only cid
+    Base class for loaders, that loads data using only cid
     """
 
     def __init__(self, mem_conf: Dict, static_conf: Dict):
@@ -30,7 +30,8 @@ class BaseLoader(ABC):
             raise HTTPError(405, f'No cache with id={cid}')
         return Path(path_to_cache_dir).glob('*.json')
 
-
     @abstractmethod
-    def load_data(self, cid: str) -> Any: raise NotImplementedError
+    def load_data(self, cid: str) -> Any:
+        """Implement data loading"""
+        raise NotImplementedError
 
