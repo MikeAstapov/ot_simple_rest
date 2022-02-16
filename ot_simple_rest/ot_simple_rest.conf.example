@@ -4,14 +4,14 @@ logs_path = ./logs/
 
 [db_conf]
 host = localhost
-database = dispatcher
-user = dispatcher
+database = test_dispatcher
+user = tester
 password = password
 
 [db_conf_eva]
 host = localhost
-database = eva
-user = dispatcher
+database = test_eva
+user = tester
 password = password
 
 [db_pool_conf]
@@ -22,17 +22,19 @@ max_size = 20
 # async = False
 
 [mem_conf]
-path = /opt/otp/caches/
+path = /tmp/caches
 
 [dispatcher]
 tracker_max_interval = 60
 
 [resolver]
 no_subsearch_commands = foreach,appendpipe
+macros_dir = /opt/otp/macros/
 
 [static]
 use_nginx = True
 base_url = cache/{}
+static_path = /opt/otp/static/
 
 [user]
 check_index_access = False
