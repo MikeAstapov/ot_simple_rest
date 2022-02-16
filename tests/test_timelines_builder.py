@@ -1,5 +1,6 @@
 import unittest
 import json
+import os.path
 from tools.timelines_builder import TimelinesBuilder
 from tools.timelines_loader import TimelinesLoader
 
@@ -8,9 +9,11 @@ class TestTimelines(unittest.TestCase):
 
     def setUp(self) -> None:
         self.builder = TimelinesBuilder()
-        self.loader = TimelinesLoader({'path': None}, None, self.builder.BIGGEST_INTERVAL)
+        self.loader = TimelinesLoader({'path': None}, {}, self.builder.BIGGEST_INTERVAL)
         self.data = []
-        self.loader.read_file_backwards(self.data, 'builder_data/test_timelines_builder.json', None)
+        makefile_test = not os.path.isfile('builder_data/test_timelines_builder.json')
+        self.path_beginning = 'tests/' if makefile_test else ''
+        self.loader.read_file_backwards(self.data, self.path_beginning + 'builder_data/test_timelines_builder.json', None)
 
     def test_minutes_timeline(self):
         result = self.builder.get_timeline(self.data, self.builder.INTERVALS['m'])
@@ -58,7 +61,7 @@ class TestTimelines(unittest.TestCase):
                          result[-4]['value'] == 1, True)
 
     def test_minutes_timeline_with_field(self):
-        with open('builder_data/right_values_minutes_timeline.json') as file:
+        with open(self.path_beginning + 'builder_data/right_values_minutes_timeline.json') as file:
             target = json.load(file)
         result = self.builder.get_timeline(self.data, self.builder.INTERVALS['m'], 'value')
         self.assertEqual(result, target)
@@ -105,7 +108,8 @@ class TestTimelines(unittest.TestCase):
 
     def test_gap_in_data(self):
         data_with_gaps = []
-        self.loader.read_file_backwards(data_with_gaps, 'builder_data/test_timelines_builder_with_gaps.json', None)
+        self.loader.read_file_backwards(data_with_gaps, self.path_beginning +
+                                        'builder_data/test_timelines_builder_with_gaps.json', None)
         result = self.builder.get_timeline(data_with_gaps, self.builder.INTERVALS['m'])
         if len(result) != self.builder.points:  # wrong timeline len
             self.assertEqual(True, False)
@@ -118,7 +122,8 @@ class TestTimelines(unittest.TestCase):
 
     def test_leap_year(self):
         big_data = []
-        self.loader.read_file_backwards(big_data, 'builder_data/test_timelines_builder_leap_years.json', None)
+        self.loader.read_file_backwards(big_data, self.path_beginning +
+                                        'builder_data/test_timelines_builder_leap_years.json', None)
         result = self.builder.get_timeline(big_data, self.builder.INTERVALS['M'])
         if len(result) != self.builder.points:  # wrong timeline len
             self.assertEqual(True, False)

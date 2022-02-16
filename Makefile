@@ -167,10 +167,9 @@ clean_test:
 	rm -rf /tmp/caches
 	rm -f ot_simple_rest/ot_simple_rest.conf
 
-
 ot_simple_rest.pid: venv
 	echo "Starting daemon for testing"
-	cp ot_simple_rest/ot_simple_rest.conf.example ot_simple_rest/ot_simple_rest.conf
+	cp tests/rest/ot_simple_rest.conf ot_simple_rest/ot_simple_rest.conf
 	venv/bin/python ot_simple_rest/ot_simple_rest.py & echo $$! > ot_simple_rest.pid
 	sleep 2
 
