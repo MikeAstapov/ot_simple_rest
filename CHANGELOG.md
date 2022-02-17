@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix check_cache at makejob that caused makejob fail and immediate run of checkjob even if cache for the job existed
 
 ## [Unreleased]
+new## [1.10.0] - 2022-02-15
+### Added
+- Complex datetime string parsing in earliest/latest args including enhanced Splunk relative time modifiers
+- Timelines and interesting fields support for S&R
+
 ## [1.9.2] - 2021-10-19
 ### Fixed
 - Fix regexep in makejob for using indexes with wildcards (e.g. index=* or index=main*)

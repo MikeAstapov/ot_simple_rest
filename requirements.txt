@@ -13,3 +13,6 @@ pyinstaller==3.6
 python-docx==0.8.10
 preview-generator==0.14
 regex==2021.4.4
+python-dateutil==2.8.2
+pandas==1.1.5
+file_read_backwards==2.0.0

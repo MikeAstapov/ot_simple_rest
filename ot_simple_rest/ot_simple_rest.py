@@ -23,6 +23,8 @@ from handlers.eva.role_model import UserHandler, UsersHandler, RoleHandler, Role
 from handlers.eva.papers import PaperLoadHandler, PapersHandler, PaperHandler
 
 from handlers.eva.theme import ThemeListHandler, ThemeGetHandler, ThemeHandler
+from handlers.eva.timelines import GetTimelines
+from handlers.eva.interesting_fields import GetInterestingFields
 
 from handlers.jobs.makejob import MakeJob
 from handlers.jobs.loadjob import LoadJob
@@ -37,11 +39,11 @@ from jobs_manager.manager import JobsManager
 from task_scheduler.tasks import DbTasksSchduler
 
 __author__ = "Andrey Starchenkov"
-__copyright__ = "Copyright 2019, Open Technologies 98"
+__copyright__ = "Copyright 2019, ISG Neuro"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "1.9.3"
-__maintainer__ = "Andrey Starchenkov"
+__version__ = "1.10.0"
+__maintainer__ = "Egor Lukyanov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Production"
 
@@ -155,6 +157,8 @@ def main():
         (r'/api/ping', PingPong),
         (r'/api/checkjob', CheckJob, {"manager": manager}),
         (r'/api/getresult', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
+        (r'/api/gettimelines', GetTimelines, {"mem_conf": mem_conf, "static_conf": static_conf}),
+        (r'/api/getinterestingfields', GetInterestingFields, {"mem_conf": mem_conf, "static_conf": static_conf}),
         (r'/api/makejob', MakeJob, {"db_conn_pool": db_pool_eva, "manager": manager, "user_conf": user_conf}),
         (r'/api/loadjob', LoadJob, {"manager": manager}),
         (r'/api/otrest', SaveOtRest, {"db_conn_pool": db_pool, "mem_conf": mem_conf}),
