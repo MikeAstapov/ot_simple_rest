@@ -94,11 +94,11 @@ class FormattedParser(TimeParser):
     Parse string datetime representation using various formats.
     Parse string relative time, example: "16:00", "15:30:00"
 
-    >>> FormattedParser(datetime(2010, 10, 10, 10, 10, 10)).parse("14/02/1983 16:00").ctime()
+    >>> FormattedParser().parse("14/02/1983 16:00").ctime()
     'Mon Feb 14 16:00:00 1983'
-    >>> FormattedParser(datetime(2010, 10, 10, 10, 10, 10)).parse("11.09.2000").ctime()
+    >>> FormattedParser().parse("11.09.2000").ctime()
     'Thu Nov  9 00:00:00 2000'
-    >>> FormattedParser(datetime(2010, 10, 10, 10, 10, 10)).parse("04 June 2022 3 PM").ctime()
+    >>> FormattedParser().parse("04 June 2022 3 PM").ctime()
     'Sat Jun  4 15:00:00 2022'
     >>> FormattedParser(datetime(2010, 10, 10, 10, 10, 10)).parse("16:00").ctime()
     'Sun Oct 10 16:00:00 2010'
