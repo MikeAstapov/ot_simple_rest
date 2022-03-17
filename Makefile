@@ -142,9 +142,10 @@ check_index_access = False\n\
 nginx:
 	echo Create nginx configs
 	mkdir $@
-	mkdir $@/conf.d
-	cp nginx_example_configs/nginx.conf $@
-	cp nginx_example_configs/nginx_eva.conf $@/conf.d
+	cp -r nginx_example_configs/* $@
+	#mkdir $@/conf.d
+	#cp nginx_example_configs/nginx.conf $@
+	#cp nginx_example_configs/nginx_eva.conf $@/conf.d
 
 clean_nginx:
 	echo Cleaning nginx directory
