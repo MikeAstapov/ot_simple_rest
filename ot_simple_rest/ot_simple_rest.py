@@ -128,6 +128,7 @@ def main():
     static_conf = dict(config['static'])
     user_conf = dict(config['user'])
     pool_conf = dict(config['db_pool_conf'])
+    notification_conf = dict(config['notifications'])
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -155,7 +156,7 @@ def main():
     # Set TORNADO application with custom handlers.
     application = tornado.web.Application([
         (r'/api/ping', PingPong),
-        (r'/api/checkjob', CheckJob, {"manager": manager}),
+        (r'/api/checkjob', CheckJob, {"manager": manager, "notification_conf": notification_conf, "db_conn_pool": db_pool}),
         (r'/api/getresult', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
         (r'/api/gettimelines', GetTimelines, {"mem_conf": mem_conf, "static_conf": static_conf}),
         (r'/api/getinterestingfields', GetInterestingFields, {"mem_conf": mem_conf, "static_conf": static_conf}),

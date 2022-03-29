@@ -1,6 +1,7 @@
 import logging
 import uuid
-
+from .notifications import NotificationType
+from tools.pg_connector import PGConnector
 import tornado.web
 
 
@@ -26,7 +27,7 @@ class CheckJob(tornado.web.RequestHandler):
     5. Return Job's status or results.
     """
 
-    def initialize(self, manager):
+    def initialize(self, manager, notification_conf, db_conn_pool):
         """
         Gets config and init logger.
 
@@ -37,6 +38,9 @@ class CheckJob(tornado.web.RequestHandler):
         self.handler_id = str(uuid.uuid4())
         self.jobs_manager = manager
         self.logger = logging.getLogger('osr_hid')
+        self.notification_conf = notification_conf
+        self.db = PGConnector(db_conn_pool)
+        self.get_current_running_jobs_number = "SELECT COUNT(*) FROM otlqueries WHERE status = 'running';"  # SQL query
 
     def write_error(self, status_code: int, **kwargs) -> None:
         """Override to implement custom error pages.
@@ -65,5 +69,13 @@ class CheckJob(tornado.web.RequestHandler):
         """
         response = self.jobs_manager.check_job(hid=self.handler_id,
                                                request=self.request)
+        # TODO check if too many jobs are currently running
+        try:
+            running_jobs_counter = self.db.execute_query(self.get_current_running_jobs_number)
+        except Exception as e:
+            self.write({'status': 'error', 'msg': e})
+            return
+        if running_jobs_counter[0] >= int(self.notification_conf.get('too_many_jobs', 8)):  # 8 is a default value
+            response['notification'] = NotificationType.TOO_MANY_JOBS  # message code
         self.logger.debug(f'CheckJob RESPONSE: {response}', extra={'hid': self.handler_id})
         self.write(response)
