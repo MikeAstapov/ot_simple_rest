@@ -41,6 +41,7 @@ class CheckJob(tornado.web.RequestHandler):
         self.notification_conf = notification_conf
         self.db = PGConnector(db_conn_pool)
         self.get_current_running_jobs_number = "SELECT COUNT(*) FROM otlqueries WHERE status = 'running';"  # SQL query
+        self.default_too_many_jobs = 8
 
     def write_error(self, status_code: int, **kwargs) -> None:
         """Override to implement custom error pages.
@@ -73,9 +74,11 @@ class CheckJob(tornado.web.RequestHandler):
         try:
             running_jobs_counter = self.db.execute_query(self.get_current_running_jobs_number)
         except Exception as e:
-            self.write({'status': 'error', 'msg': e})
+            error = {'status': 'error', 'msg': e}
+            self.logger.error(f"CheckJob RESPONSE: {error}", extra={'hid': self.handler_id})
+            self.write(error)
             return
-        if running_jobs_counter[0] >= int(self.notification_conf.get('too_many_jobs', 8)):  # 8 is a default value
+        if running_jobs_counter[0] >= int(self.notification_conf.get('too_many_jobs', self.default_too_many_jobs)):
             response['notification'] = NotificationType.TOO_MANY_JOBS  # message code
         self.logger.debug(f'CheckJob RESPONSE: {response}', extra={'hid': self.handler_id})
         self.write(response)
