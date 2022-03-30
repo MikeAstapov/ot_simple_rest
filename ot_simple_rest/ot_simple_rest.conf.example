@@ -39,5 +39,5 @@ static_path = /opt/otp/static/
 [user]
 check_index_access = False
 
-[notifications]
-too_many_jobs = 2
+[user_warning]
+jobs_queue_threshold = 2

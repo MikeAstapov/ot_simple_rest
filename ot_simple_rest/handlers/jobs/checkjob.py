@@ -1,7 +1,6 @@
 import logging
 import uuid
-from .notifications import NotificationType
-from tools.pg_connector import PGConnector
+from .notifications import NotificationChecker
 import tornado.web
 
 
@@ -38,10 +37,7 @@ class CheckJob(tornado.web.RequestHandler):
         self.handler_id = str(uuid.uuid4())
         self.jobs_manager = manager
         self.logger = logging.getLogger('osr_hid')
-        self.notification_conf = notification_conf
-        self.db = PGConnector(db_conn_pool)
-        self.get_current_running_jobs_number = "SELECT COUNT(*) FROM otlqueries WHERE status = 'running';"  # SQL query
-        self.default_too_many_jobs = 8
+        self.notification_checker = NotificationChecker(notification_conf, db_conn_pool)
 
     def write_error(self, status_code: int, **kwargs) -> None:
         """Override to implement custom error pages.
@@ -68,17 +64,13 @@ class CheckJob(tornado.web.RequestHandler):
 
         :return:
         """
-        response = self.jobs_manager.check_job(hid=self.handler_id,
-                                               request=self.request)
-        # TODO check if too many jobs are currently running
         try:
-            running_jobs_counter = self.db.execute_query(self.get_current_running_jobs_number)
+            response = self.jobs_manager.check_job(hid=self.handler_id, request=self.request)
+            self.notification_checker.check_too_many_jobs(response)
         except Exception as e:
-            error = {'status': 'error', 'msg': e}
+            error = {'status': 'error', 'msg': str(e)}
             self.logger.error(f"CheckJob RESPONSE: {error}", extra={'hid': self.handler_id})
             self.write(error)
             return
-        if running_jobs_counter[0] >= int(self.notification_conf.get('too_many_jobs', self.default_too_many_jobs)):
-            response['notification'] = NotificationType.TOO_MANY_JOBS  # message code
         self.logger.debug(f'CheckJob RESPONSE: {response}', extra={'hid': self.handler_id})
         self.write(response)

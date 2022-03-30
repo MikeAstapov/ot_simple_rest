@@ -128,7 +128,7 @@ def main():
     static_conf = dict(config['static'])
     user_conf = dict(config['user'])
     pool_conf = dict(config['db_pool_conf'])
-    notification_conf = dict(config['notifications'])
+    notification_conf = dict(config['user_warning'])
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
