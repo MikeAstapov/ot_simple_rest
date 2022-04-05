@@ -66,7 +66,9 @@ class CheckJob(tornado.web.RequestHandler):
         """
         try:
             response = self.jobs_manager.check_job(hid=self.handler_id, request=self.request)
-            self.notification_checker.check_too_many_jobs(response)
+            notifications = self.notification_checker.check_notifications()
+            if notifications:
+                response['notifications'] = notifications
         except Exception as e:
             error = {'status': 'error', 'msg': str(e)}
             self.logger.error(f"CheckJob RESPONSE: {error}", extra={'hid': self.handler_id})

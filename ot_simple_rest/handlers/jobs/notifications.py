@@ -1,8 +1,7 @@
-from tools.pg_connector import PGConnector
+from .db_connector import PostgresConnector
 
 
 class NotificationType:
-
     TOO_MANY_JOBS = 1
 
 
@@ -10,12 +9,18 @@ class NotificationChecker:
 
     def __init__(self, notification_conf, db_conn_pool):
         self.notification_conf = notification_conf
-        self.db = PGConnector(db_conn_pool)
-        self.get_current_running_jobs_number = "SELECT COUNT(*) FROM otlqueries WHERE status = 'running';"  # SQL query
+        self.db = PostgresConnector(db_conn_pool)
         self.default_too_many_jobs = 8
 
-    def check_too_many_jobs(self, response):
-        running_jobs_counter = self.db.execute_query(self.get_current_running_jobs_number)
-        if running_jobs_counter[0] >= int(self.notification_conf.get('jobs_queue_threshold',
-                                                                     self.default_too_many_jobs)):
-            response['notification'] = NotificationType.TOO_MANY_JOBS  # message code
+    def check_notifications(self):
+        """
+        gathers and returns list of all notifications where every element is a structure
+        :code: message code
+        :value: additional info if necessary or None
+        """
+        running_jobs_counter = self.db.get_running_jobs_num()
+        notifications = []
+        if running_jobs_counter >= int(self.notification_conf.get('jobs_queue_threshold',
+                                                                  self.default_too_many_jobs)):
+            notifications.append({'code': NotificationType.TOO_MANY_JOBS, 'value': running_jobs_counter})
+        return notifications

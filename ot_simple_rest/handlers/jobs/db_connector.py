@@ -130,3 +130,7 @@ class PostgresConnector(PGConnector):
     def add_roles(self, *, username, roles, indexes):
         query_str = "INSERT INTO RoleModel (username, roles, indexes) VALUES (%s, %s, %s);"
         self.execute_query(query_str, params=(username, roles, indexes,), with_commit=True, with_fetch=False)
+
+    def get_running_jobs_num(self):
+        query_str = "SELECT COUNT(*) FROM otlqueries WHERE status = 'running';"
+        return self.execute_query(query_str)[0]
