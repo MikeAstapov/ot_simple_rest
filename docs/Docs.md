@@ -164,7 +164,6 @@
 {"status": "failed / "canceled", "error": msg} — задание завершилось с ошибкой, либо отменено  
 {"status": "notfound", "error": "Job is not found"} — задание не найдено в БД  
 {"status": "success", "cid": 12} - задание успешно завершено
-
 </pre>
 
 <br>
