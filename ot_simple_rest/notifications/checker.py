@@ -24,8 +24,7 @@ class NotificationChecker:
         notifications = []
 
         for handler in NOTIFICATION_HANDLERS:
-            notifications.append(
-                handler.check(db=self.db, conf=self.notification_conf)
-            )
-
+            notification = handler.check(db=self.db, conf=self.notification_conf)
+            if notification:
+                notifications.append(notification)
         return notifications

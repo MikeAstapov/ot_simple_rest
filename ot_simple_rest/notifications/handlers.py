@@ -19,7 +19,7 @@ class TooManyJobsNotification(AbstractNotificationHandler):
 
     def check(self, *args, **kwargs) -> Dict[str, str]:
         db = kwargs.get('db')
-        conf: dict = kwargs.get('notification_conf')
+        conf: dict = kwargs.get('conf')
         if db and conf:
             running_jobs_counter = db.get_running_jobs_num()
             if running_jobs_counter >= int(conf.get('jobs_queue_threshold', self.DEFAULT_THRESHOLD)):
