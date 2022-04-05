@@ -1,7 +1,8 @@
 import logging
 import uuid
-from .notifications import NotificationChecker
 import tornado.web
+
+from notifications.checker import NotificationChecker
 
 
 __author__ = "Andrey Starchenkov, Anton Khromov"
