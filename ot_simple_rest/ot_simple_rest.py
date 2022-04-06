@@ -4,6 +4,7 @@
 
 import logging.config
 import os
+import sys
 from configparser import ConfigParser
 
 import tornado.ioloop
@@ -115,9 +116,13 @@ def main():
 
     # # # # # # #  Configuration section  # # # # # # #
 
-    basedir = os.path.dirname(os.path.abspath(__file__))
+    # check if you are running script or executable to get right config path
+    if getattr(sys, 'frozen', False):
+        basedir = os.path.dirname(sys.executable)
+    else:
+        basedir = os.path.dirname(os.path.abspath(__file__))
+
     config = ConfigParser()
-    print(os.path.join(basedir, 'ot_simple_rest.conf'))
     config.read(os.path.join(basedir, 'ot_simple_rest.conf'))
 
     db_conf = dict(config['db_conf'])
