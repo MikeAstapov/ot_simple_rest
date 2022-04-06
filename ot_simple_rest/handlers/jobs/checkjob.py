@@ -73,7 +73,6 @@ class CheckJob(tornado.web.RequestHandler):
         except Exception as e:
             error = {'status': 'error', 'msg': str(e)}
             self.logger.error(f"CheckJob RESPONSE: {error}", extra={'hid': self.handler_id})
-            self.write(error)
-            return
+            return self.write(error)
         self.logger.debug(f'CheckJob RESPONSE: {response}', extra={'hid': self.handler_id})
         self.write(response)

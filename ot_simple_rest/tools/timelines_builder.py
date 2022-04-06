@@ -64,9 +64,6 @@ class TimelinesBuilder:
         When field is specified field value is accumulated for given interval rather than amount of events
         """
         timeline = []
-        # select interval
-        if not data:
-            raise Exception('Empty data')
         self._interval_info = interval
         self._last_time = datetime.fromtimestamp(data[0]['_time'])
         self._last_time = self._round_timestamp(self._last_time, self._interval_info)
