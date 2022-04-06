@@ -116,8 +116,8 @@ def main():
     # # # # # # #  Configuration section  # # # # # # #
 
     basedir = os.path.dirname(os.path.abspath(__file__))
-
     config = ConfigParser()
+    print(os.path.join(basedir, 'ot_simple_rest.conf'))
     config.read(os.path.join(basedir, 'ot_simple_rest.conf'))
 
     db_conf = dict(config['db_conf'])
