@@ -27,7 +27,7 @@ class TimelinesLoader(BaseLoader):
         file_names = self._get_cache_file_names(path_to_cache_dir, cid)
         for file_name in file_names:
             self.logger.debug(f'Reading part: {file_name}')
-            fresh_time = self.read_file(os.path.join(path_to_cache_dir, file_name), fresh_time)
+            fresh_time = self.read_file(data, os.path.join(path_to_cache_dir, file_name), fresh_time)
         if not len(data):
             raise Exception('Empty data')
         return data, fresh_time
