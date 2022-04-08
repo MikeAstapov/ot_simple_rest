@@ -10,7 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *replace nginx configuration files which are used in repo
 - *update pyinstaller version in requirements
 
-##[1.10.0] - 2022-02-15
+## [1.10.1] - 2022-04-8
+### Added
+- Notifications for EVA in checkjob
+### Fixed
+- Timelines can now work with unordered data
+
+## [1.10.0] - 2022-02-15
 ### Added
 - Complex datetime string parsing in earliest/latest args including enhanced Splunk relative time modifiers
 - Timelines and interesting fields support for S&R
