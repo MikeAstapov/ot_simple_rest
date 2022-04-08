@@ -56,7 +56,12 @@ class TimelinesBuilder:
             -> List[List[Dict[str, int]]]:
 
         fresh_time = datetime.fromtimestamp(fresh_time)
-        timelines = [[{}]*self.points, [{}]*self.points, [{}]*self.points, [{}]*self.points]
+        timelines = [
+            [{} for _ in range(self.points)],
+            [{} for _ in range(self.points)],
+            [{} for _ in range(self.points)],
+            [{} for _ in range(self.points)]
+        ]
         old_times = (  # oldest time for every timeline
             fresh_time.replace(second=0) - relativedelta(minutes=self.points - 1),
             fresh_time.replace(minute=0, second=0) - relativedelta(hours=self.points - 1),
