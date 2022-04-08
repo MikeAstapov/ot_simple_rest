@@ -29,14 +29,14 @@ class GetTimelines(tornado.web.RequestHandler):
     """
 
     def initialize(self, mem_conf: Dict, static_conf: Dict):
+        self.loader = TimelinesLoader(mem_conf, static_conf)
         self.builder = TimelinesBuilder()
-        self.loader = TimelinesLoader(mem_conf, static_conf, self.builder.BIGGEST_INTERVAL)
 
     async def get(self):
         params = self.request.query_arguments
         cid = params.get('cid')[0].decode()
         try:
-            data, fresh_time = self.loader.load_data(cid)
+            data, fresh_time = self.loader.load_data(cid)  # fresh_time indicates last time interval in all timelines
             timelines = self.builder.get_all_timelines(data, fresh_time)
         except tornado.web.HTTPError as e:
             return self.write(json.dumps({'status': 'failed', 'error': e}, default=str))

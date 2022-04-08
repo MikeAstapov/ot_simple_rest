@@ -11,15 +11,17 @@ class TimelinesLoader(BaseLoader):
     multiplied by the number of objects on a timeline.
     """
 
-    def __init__(self, mem_conf: Dict, static_conf: Dict, biggest_interval: int):
+    def __init__(self, mem_conf: Dict, static_conf: Dict):
         super().__init__(mem_conf, static_conf)
-        self.BIGGEST_INTERVAL = biggest_interval
+        self.points = 50  # how many points on the timeline
+        # approximately self.point months in seconds
+        self.BIGGEST_INTERVAL = 86400 * 31 * self.points
 
     def load_data(self, cid: str) -> Tuple[List[int], int]:
         """
         Load data by cid
         :param cid:         OT_Dispatcher's job cid
-        :return:            list of dicts from json lines
+        :return:            list of timestamps and last_timestamp
         """
         data = []
         fresh_time = None
@@ -36,7 +38,7 @@ class TimelinesLoader(BaseLoader):
     def read_file(data: List[int], data_path: str, fresh_time: Optional[int]) -> int:
         """
         Reads file and adds it to data list
-        :param data:        list of data that is mutated inside this method
+        :param data:        list of timestamps that is mutated inside this method
         :param data_path:   path to file
         :param fresh_time:  last time
         """

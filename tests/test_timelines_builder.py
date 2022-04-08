@@ -8,7 +8,7 @@ class TestTimelines(unittest.TestCase):
 
     def setUp(self) -> None:
         self.builder = TimelinesBuilder()
-        self.loader = TimelinesLoader({'path': None}, {}, self.builder.BIGGEST_INTERVAL)
+        self.loader = TimelinesLoader({'path': None}, {})
         data = []
         makefile_test = not os.path.isfile('builder_data/test_timelines_builder.json')
         self.path_beginning = 'tests/' if makefile_test else ''
