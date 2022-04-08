@@ -4,6 +4,7 @@
 
 import logging.config
 import os
+import sys
 from configparser import ConfigParser
 
 import tornado.ioloop
@@ -42,7 +43,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, ISG Neuro"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "1.10.0"
+__version__ = "1.10.1"
 __maintainer__ = "Egor Lukyanov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Production"
@@ -115,7 +116,11 @@ def main():
 
     # # # # # # #  Configuration section  # # # # # # #
 
-    basedir = os.path.dirname(os.path.abspath(__file__))
+    # check if you are running script or executable to get right config path
+    if getattr(sys, 'frozen', False):
+        basedir = os.path.dirname(sys.executable)
+    else:
+        basedir = os.path.dirname(os.path.abspath(__file__))
 
     config = ConfigParser()
     config.read(os.path.join(basedir, 'ot_simple_rest.conf'))
@@ -128,6 +133,7 @@ def main():
     static_conf = dict(config['static'])
     user_conf = dict(config['user'])
     pool_conf = dict(config['db_pool_conf'])
+    notification_conf = dict(config['notification_triggers']) if 'notification_triggers' in config else dict()
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -155,7 +161,7 @@ def main():
     # Set TORNADO application with custom handlers.
     application = tornado.web.Application([
         (r'/api/ping', PingPong),
-        (r'/api/checkjob', CheckJob, {"manager": manager}),
+        (r'/api/checkjob', CheckJob, {"manager": manager, "notification_conf": notification_conf, "db_conn_pool": db_pool}),
         (r'/api/getresult', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
         (r'/api/gettimelines', GetTimelines, {"mem_conf": mem_conf, "static_conf": static_conf}),
         (r'/api/getinterestingfields', GetInterestingFields, {"mem_conf": mem_conf, "static_conf": static_conf}),

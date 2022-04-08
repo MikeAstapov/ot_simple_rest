@@ -182,6 +182,7 @@
 {"status": "failed / "canceled", "error": msg} — задание завершилось с ошибкой, либо отменено  
 {"status": "notfound", "error": "Job is not found"} — задание не найдено в БД  
 {"status": "success", "schema": "%s, events: {…}} - задание успешно завершено
+{"status": "running", "notifications": [{"code": int, "value": value or None}, ...]} - ключ notification появляется только в том случае, когда есть о чем уведомлять пользователя. {"code": int, "value": value or None} - один элемент и списка уведомлений, где code - код уведомления, а value - дополнительная информация или None, если она не нужна.
 </pre>
 
 <br>

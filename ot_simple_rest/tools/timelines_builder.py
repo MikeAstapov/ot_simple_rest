@@ -1,6 +1,13 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Tuple
+
+
+class TimeIntervals:
+    MINUTES = 0
+    HOURS = 1
+    DAYS = 2
+    MONTHS = 3
 
 
 class TimelinesBuilder:
@@ -18,98 +25,61 @@ class TimelinesBuilder:
     """
 
     def __init__(self):
-        self.INTERVALS = {'m': 60, 'h': 3600, 'd': 86400, 'M': -1}  # -1 is a signal for getter to count month interval
-        self._interval_info = None
-        self._last_time = None
         self.points = 50  # how many points on the timeline
-        # approximately self.point months in seconds to optimize (limit) json reading
-        self.BIGGEST_INTERVAL = self.INTERVALS['d'] * 31 * self.points
 
-    def _round_timestamp(self, last_time: datetime, interval: int) -> datetime:
-        """
-        >>> tlb = TimelinesBuilder()
-        >>> dt = datetime(2007, 12, 31, 4, 19, 37)
-        >>> tlb._round_timestamp(dt, tlb.INTERVALS['m'])
-        datetime.datetime(2007, 12, 31, 4, 19)
-        >>> tlb._round_timestamp(dt, tlb.INTERVALS['h'])
-        datetime.datetime(2007, 12, 31, 4, 0)
-        >>> tlb._round_timestamp(dt, tlb.INTERVALS['d'])
-        datetime.datetime(2007, 12, 31, 0, 0)
-        >>> tlb._round_timestamp(dt, tlb.INTERVALS['M'])
-        datetime.datetime(2007, 12, 1, 0, 0)
-        """
-        if interval == self.INTERVALS['m']:
-            last_time = last_time.replace(second=0, microsecond=0)
-        elif interval == self.INTERVALS['h']:
-            last_time = last_time.replace(minute=0, second=0, microsecond=0)
-        elif interval == self.INTERVALS['d']:
-            last_time = last_time.replace(hour=0, minute=0, second=0, microsecond=0)
-        else:
-            last_time = last_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        return last_time
+    def fill_in_time(
+            self, timelines: List[List[Dict[str, int]]], old_time: datetime, step: relativedelta, interval: int):
+        """fills in time for a single timeline"""
+        for i in range(self.points):
+            timelines[interval][i].update(time=old_time.timestamp(), value=0)
+            old_time += step
 
-    @property
-    def interval(self) -> relativedelta:
-        if self._interval_info == self.INTERVALS['m']:
-            return relativedelta(minutes=1)
-        if self._interval_info == self.INTERVALS['h']:
-            return relativedelta(hours=1)
-        if self._interval_info == self.INTERVALS['d']:
-            return relativedelta(days=1)
-        return relativedelta(months=1)
+    def fill_in_all_time(self, timelines: List, old_times: Tuple, intervals: Tuple):
+        """fills in time for every timeline"""
+        for interval in (TimeIntervals.MINUTES, TimeIntervals.HOURS, TimeIntervals.DAYS, TimeIntervals.MONTHS):
+            self.fill_in_time(timelines, old_times[interval], intervals[interval], interval)
 
-    def get_timeline(self, data: List[Dict], interval: int, field: Optional[str] = None) \
-            -> List[Dict[str, Union[int, float]]]:
-        """
-        When field is specified field value is accumulated for given interval rather than amount of events
-        """
-        timeline = []
-        # select interval
-        if not data:
-            raise Exception('Empty data')
-        self._interval_info = interval
-        self._last_time = datetime.fromtimestamp(data[0]['_time'])
-        self._last_time = self._round_timestamp(self._last_time, self._interval_info)
-        accumulated_value = 0
-        i = 0
-        while i < len(data) and len(timeline) < self.points:
-            # accumulate values for given interval
-            if datetime.fromtimestamp(data[i]['_time']) >= self._last_time:
-                if field:
-                    accumulated_value += data[i][field]
+    @staticmethod
+    def find_index_in_timeline(old_time: datetime, current_time: datetime, interval: int) -> int:
+        """returns position of timeinterval in a given timeline"""
+        if interval == TimeIntervals.MONTHS:
+            return (current_time.year - old_time.year) * 12 + current_time.month - old_time.month
+        diff = current_time - old_time
+        if interval == TimeIntervals.DAYS:
+            return int(diff.total_seconds() / 86400)
+        if interval == TimeIntervals.HOURS:
+            return int(diff.total_seconds() / 3600)
+        if interval == TimeIntervals.MINUTES:
+            return int(diff.total_seconds() / 60)
+
+    def get_all_timelines(self, data: List[int], fresh_time: int) -> List[List[Dict[str, int]]]:
+
+        fresh_time = datetime.fromtimestamp(fresh_time)
+        timelines = [
+            [{} for _ in range(self.points)],
+            [{} for _ in range(self.points)],
+            [{} for _ in range(self.points)],
+            [{} for _ in range(self.points)]
+        ]
+        old_times = (  # oldest time for every timeline
+            fresh_time.replace(second=0) - relativedelta(minutes=self.points - 1),
+            fresh_time.replace(minute=0, second=0) - relativedelta(hours=self.points - 1),
+            fresh_time.replace(hour=0, minute=0, second=0) - relativedelta(days=self.points - 1),
+            fresh_time.replace(day=1, hour=0, minute=0, second=0) - relativedelta(months=self.points - 1)
+        )
+        intervals = (  # intervals for every timeline
+            relativedelta(minutes=1),
+            relativedelta(hours=1),
+            relativedelta(days=1),
+            relativedelta(months=1)
+        )
+        self.fill_in_all_time(timelines, old_times, intervals)
+        for elem in data:
+            elem = datetime.fromtimestamp(elem)
+            # there's no point to check days timeline if months timeline doesn't pass condition
+            for interval in (TimeIntervals.MONTHS, TimeIntervals.DAYS, TimeIntervals.HOURS, TimeIntervals.MINUTES):
+                if elem >= old_times[interval]:
+                    timelines[interval][self.find_index_in_timeline(old_times[interval], elem, interval)]['value'] += 1
                 else:
-                    accumulated_value += 1
-                i += 1
-            # flush accumulated values and interval to the timeline
-            elif self._last_time - self.interval <= datetime.fromtimestamp(data[i]['_time']) < self._last_time:
-                timeline.append({'time': self._last_time.timestamp(), 'value': accumulated_value})
-                accumulated_value = 0
-                self._last_time -= self.interval
-            # move to interval in which current time is located and set 0 values to intervals on the way
-            else:
-                if accumulated_value:
-                    timeline.append({'time': self._last_time.timestamp(), 'value': accumulated_value})
-                    accumulated_value = 0
-                while datetime.fromtimestamp(data[i]['_time']) < self._last_time - self.interval \
-                        and len(timeline) < self.points:
-                    timeline.append({'time': self._last_time.timestamp(), 'value': 0})
-                    self._last_time -= self.interval
-        if accumulated_value:
-            timeline.append({'time': self._last_time.timestamp(), 'value': accumulated_value})
-            self._last_time -= self.interval
-        # when data ended but timeline does not have 50 values
-        while len(timeline) < self.points:
-            timeline.append({'time': self._last_time.timestamp(), 'value': 0})
-            self._last_time -= self.interval
-        return list(reversed(timeline))
-
-    def get_all_timelines(self, data: List[Dict], field: Optional[str] = None) \
-            -> List[List[Dict[str, Union[int, float]]]]:
-        """
-        When field is specified field value is accumulated for given interval rather than amount of events
-        """
-        timelines = [self.get_timeline(data, self.INTERVALS['m'], field),
-                     self.get_timeline(data, self.INTERVALS['h'], field),
-                     self.get_timeline(data, self.INTERVALS['d'], field),
-                     self.get_timeline(data, self.INTERVALS['M'], field)]
+                    break
         return timelines

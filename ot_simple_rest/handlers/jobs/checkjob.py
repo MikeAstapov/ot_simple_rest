@@ -1,7 +1,8 @@
 import logging
 import uuid
-
 import tornado.web
+
+from notifications.checker import NotificationChecker
 
 
 __author__ = "Andrey Starchenkov, Anton Khromov"
@@ -26,7 +27,7 @@ class CheckJob(tornado.web.RequestHandler):
     5. Return Job's status or results.
     """
 
-    def initialize(self, manager):
+    def initialize(self, manager, notification_conf, db_conn_pool):
         """
         Gets config and init logger.
 
@@ -37,6 +38,7 @@ class CheckJob(tornado.web.RequestHandler):
         self.handler_id = str(uuid.uuid4())
         self.jobs_manager = manager
         self.logger = logging.getLogger('osr_hid')
+        self.notification_checker = NotificationChecker(notification_conf, db_conn_pool)
 
     def write_error(self, status_code: int, **kwargs) -> None:
         """Override to implement custom error pages.
@@ -63,7 +65,14 @@ class CheckJob(tornado.web.RequestHandler):
 
         :return:
         """
-        response = self.jobs_manager.check_job(hid=self.handler_id,
-                                               request=self.request)
+        try:
+            response = self.jobs_manager.check_job(hid=self.handler_id, request=self.request)
+            notifications = self.notification_checker.check_notifications()
+            if notifications:
+                response['notifications'] = notifications
+        except Exception as e:
+            error = {'status': 'error', 'msg': str(e)}
+            self.logger.error(f"CheckJob RESPONSE: {error}", extra={'hid': self.handler_id})
+            return self.write(error)
         self.logger.debug(f'CheckJob RESPONSE: {response}', extra={'hid': self.handler_id})
         self.write(response)
