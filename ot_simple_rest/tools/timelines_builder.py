@@ -52,8 +52,7 @@ class TimelinesBuilder:
         if interval == TimeIntervals.MINUTES:
             return int(diff.total_seconds() / 60)
 
-    def get_all_timelines(self, data: List[int], fresh_time: int) \
-            -> List[List[Dict[str, int]]]:
+    def get_all_timelines(self, data: List[int], fresh_time: int) -> List[List[Dict[str, int]]]:
 
         fresh_time = datetime.fromtimestamp(fresh_time)
         timelines = [
