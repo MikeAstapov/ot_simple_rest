@@ -27,10 +27,11 @@ class TimelinesBuilder:
     def __init__(self):
         self.points = 50  # how many points on the timeline
 
-    def fill_in_time(self, timelines: List[List[Dict[str, int]]], old_time: datetime, step: relativedelta, interval: int):
+    def fill_in_time(
+            self, timelines: List[List[Dict[str, int]]], old_time: datetime, step: relativedelta, interval: int):
         """fills in time for a single timeline"""
         for i in range(self.points):
-            timelines[interval][i] = {'time': old_time.timestamp(), 'value': 0}
+            timelines[interval][i].update(time=old_time.timestamp(), value=0)
             old_time += step
 
     def fill_in_all_time(self, timelines: List, old_times: Tuple, intervals: Tuple):
@@ -55,7 +56,7 @@ class TimelinesBuilder:
             -> List[List[Dict[str, int]]]:
 
         fresh_time = datetime.fromtimestamp(fresh_time)
-        timelines = [[0]*self.points, [0]*self.points, [0]*self.points, [0]*self.points]
+        timelines = [[{}]*self.points, [{}]*self.points, [{}]*self.points, [{}]*self.points]
         old_times = (  # oldest time for every timeline
             fresh_time.replace(second=0) - relativedelta(minutes=self.points - 1),
             fresh_time.replace(minute=0, second=0) - relativedelta(hours=self.points - 1),
