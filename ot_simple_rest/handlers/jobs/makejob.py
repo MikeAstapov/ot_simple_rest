@@ -137,15 +137,18 @@ class MakeJob(BaseHandler):
         original_otl = self.get_original_otl()
         indexes = re.findall(r"index\s?=\s?([\"\']?_?\w*[\w*][_\w+]*?[\"\']?)", original_otl)
         user_accessed_indexes = self.get_user_indexes_rights(indexes)
+
         if not user_accessed_indexes:
             return self.write({"status": "fail", "error": "User has no access to index"})
-        indexes_with_asterisk = [index for index in indexes if '*' in index]
-        if indexes_with_asterisk and len(user_accessed_indexes) == 1 and user_accessed_indexes[0] == '*':
-            return self.write({
-                "status": "fail",
-                "error": f"Can't find matches for indexes: {indexes_with_asterisk}. "
-                         f"Check and update actual indexes in database! "
-            })
+
+        if len(user_accessed_indexes) == 1 and user_accessed_indexes[0] == '*':
+            for index in indexes:
+                if '*' in index:
+                    return self.write({
+                        "status": "fail",
+                        "error": f"Can't find matches for indexes: {indexes_with_asterisk}. "
+                                 f"Check and update actual indexes in database! "
+                    })
 
         self.logger.debug(f'User has access. Indexes: {user_accessed_indexes}.', extra={'hid': self.handler_id})
         response = await self.jobs_manager.make_job(hid=self.handler_id,
