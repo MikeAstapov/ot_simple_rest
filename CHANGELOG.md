@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.2] - 2022-05-12
+### Added
+- New error message for index names with asterisk don't match with names in database
+- Extra logs in MakeJob
+### Fixed
+- Fixed the matching of index names with an asterisk with index names in database when performing a search
+
 ## [1.10.1] - 2022-04-8
 ### Added
 - Notifications for EVA in checkjob
