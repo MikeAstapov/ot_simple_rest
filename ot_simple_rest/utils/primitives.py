@@ -1,4 +1,14 @@
 
+class RestUser:
+
+    def __init__(self, name: str, _id: int):
+        self.name = name
+        self.id = _id
+
+    def __str__(self):
+        return f'user name={self.name} with ID={self.id}'
+
+
 class EverythingEqual:
 
     def __eq__(self, other):
