@@ -7,6 +7,11 @@ from utils.primitives import RestUser
 def concat(*args):
     return ' '.join(args)
 
+
+def format_args(args):
+    return ', '.join([f'{key}: {", ".join([v.decode() for v in value])}' for key, value in args])
+
+
 class Tornado(Application):
     """
     Class extending Tornado web app with additional request logging
@@ -45,8 +50,6 @@ class Tornado(Application):
             log_method(
                 concat('Body ', handler.request.body.decode().replace('\n', ' '))) if handler.request.body else None
             log_method(
-                concat('Args ',
-                       ', '.join([f'{key}: {", ".join([v.decode() for v in value])}' for key, value in handler.request.arguments.items()])
-                       )) if handler.request.arguments else None
+                concat('Args ', format_args(handler.request.arguments.items()))) if handler.request.arguments else None
 
 
