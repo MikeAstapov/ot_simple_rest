@@ -8,7 +8,6 @@ import sys
 from configparser import ConfigParser
 
 import tornado.ioloop
-import tornado.web
 
 from psycopg2.pool import ThreadedConnectionPool
 
@@ -43,10 +42,12 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, ISG Neuro"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "1.10.2"
+__version__ = "1.11.0"
 __maintainer__ = "Egor Lukyanov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Production"
+
+from utils.tornado_mod import Tornado
 
 
 def set_logger(loglevel, logfile, logger_name):
@@ -159,7 +160,7 @@ def main():
     scheduler.start()
 
     # Set TORNADO application with custom handlers.
-    application = tornado.web.Application([
+    application = Tornado([
         (r'/api/ping', PingPong),
         (r'/api/checkjob', CheckJob, {"manager": manager, "notification_conf": notification_conf, "db_conn_pool": db_pool}),
         (r'/api/getresult', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
@@ -239,7 +240,10 @@ def main():
         (r'/api/theme/create', ThemeHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/theme/delete', ThemeHandler, {"db_conn_pool": db_pool_eva}),
     ],
-        login_url=r'/api/auth/login'
+        login_url=r'/api/auth/login',
+
+        log_user_activity=False if user_conf.get(
+            'log_user_activity', 'False') == 'False' else True  # simple_rest style ^.-
     )
 
     logger.info('Starting server')

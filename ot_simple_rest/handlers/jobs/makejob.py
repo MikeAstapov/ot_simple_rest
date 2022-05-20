@@ -146,7 +146,7 @@ class MakeJob(BaseHandler):
                 if '*' in index:
                     return self.write({
                         "status": "fail",
-                        "error": f"Can't find matches for indexes: {indexes_with_asterisk}. "
+                        "error": f"Can't find matches for index: {index}. "
                                  f"Check and update actual indexes in database! "
                     })
 

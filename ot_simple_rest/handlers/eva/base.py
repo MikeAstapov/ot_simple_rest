@@ -7,6 +7,7 @@ import jwt
 import tornado.web
 
 from handlers.eva.db_connector import PostgresConnector
+from utils.primitives import RestUser
 
 SECRET_KEY = '8b62abb2-bbf6-4e0e-a7c1-2e4734bebbd9'
 
@@ -51,6 +52,7 @@ class BaseHandler(tornado.web.RequestHandler):
         return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
     async def prepare(self):
+
         self.data = json.loads(self.request.body) if self.request.body else dict()
         client_token = self.get_cookie('eva_token')
         if client_token:
@@ -58,8 +60,9 @@ class BaseHandler(tornado.web.RequestHandler):
             try:
                 token_data = self.decode_token(client_token)
                 user_id = token_data['user_id']
-                self.permissions = self.db.get_permissions_data(user_id=user_id,
-                                                                names_only=True)
+                user_name = token_data['username']
+                self.request.user = RestUser(name=user_name, _id=user_id)
+                self.permissions = self.db.get_permissions_data(user_id=user_id, names_only=True)
             except (jwt.ExpiredSignatureError, jwt.DecodeError):
                 pass
             else:
