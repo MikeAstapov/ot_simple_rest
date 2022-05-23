@@ -38,6 +38,7 @@ static_path = /opt/otp/static/
 
 [user]
 check_index_access = False
+log_user_activity = True
 
 [notification_triggers]
 jobs_queue_threshold = 2

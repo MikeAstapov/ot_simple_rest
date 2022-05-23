@@ -98,26 +98,33 @@ class MakeJob(BaseHandler):
         :type indexes: List.
         :return: Boolean access flag and resolved indexes.
         """
+        self.logger.debug(f'Indexes: {indexes}')
         if not indexes:
             return True, indexes
 
         accessed_indexes = []
         user_indexes = self.db.get_indexes_data(user_id=self.current_user, names_only=True)
+        self.logger.debug(f'Available indexes for user: {user_indexes}')
 
         if '*' in user_indexes:
             accessed_indexes.append(EverythingEqual())  # Everything is in the accessed_indexes list
 
         for index in indexes:
+            self.logger.debug(f'Current index in indexes: {index}')
             index = index.replace('"', '').replace('\\', '')
+            self.logger.debug(f'Current index after replace \: {index}')
 
             for _index in user_indexes:
+                self.logger.debug(f'Current _index in user_indexes: {_index}')
                 indexes_from_rm = re.findall(index.replace("*", ".*"), _index)
                 self.logger.debug(f"Indexes from rm: {indexes_from_rm}. Left index: {index}. "
                                   f"Right index: {_index}.", extra={'hid': self.handler_id})
-                for ifrm in indexes_from_rm:
-                    accessed_indexes.append(ifrm)
+
+                if indexes_from_rm:
+                    accessed_indexes += [_index]
 
         self.logger.debug(f'User has a right: {len(accessed_indexes) != 0}', extra={'hid': self.handler_id})
+        self.logger.debug(f'accessed_indexes: {accessed_indexes}')
 
         return accessed_indexes
 
@@ -130,8 +137,18 @@ class MakeJob(BaseHandler):
         original_otl = self.get_original_otl()
         indexes = re.findall(r"index\s?=\s?([\"\']?_?\w*[\w*][_\w+]*?[\"\']?)", original_otl)
         user_accessed_indexes = self.get_user_indexes_rights(indexes)
+
         if not user_accessed_indexes:
             return self.write({"status": "fail", "error": "User has no access to index"})
+
+        if len(user_accessed_indexes) == 1 and user_accessed_indexes[0] == '*':
+            for index in indexes:
+                if '*' in index:
+                    return self.write({
+                        "status": "fail",
+                        "error": f"Can't find matches for index: {index}. "
+                                 f"Check and update actual indexes in database! "
+                    })
 
         self.logger.debug(f'User has access. Indexes: {user_accessed_indexes}.', extra={'hid': self.handler_id})
         response = await self.jobs_manager.make_job(hid=self.handler_id,
@@ -139,4 +156,3 @@ class MakeJob(BaseHandler):
                                                     indexes=user_accessed_indexes)
         self.logger.debug(f'MakeJob RESPONSE: {response}', extra={'hid': self.handler_id})
         self.write(response)
-
