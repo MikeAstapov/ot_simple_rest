@@ -1,6 +1,7 @@
 import logging
 import uuid
 from ot_simple_rest.notifications.checker import NotificationChecker
+from ot_simple_rest.notifications.handlers import LimitedDataNotification
 
 import tornado.web
 
@@ -36,7 +37,7 @@ class LoadJob(tornado.web.RequestHandler):
         self.handler_id = str(uuid.uuid4())
         self.jobs_manager = manager
         self.logger = logging.getLogger('osr_hid')
-        self.notification_checker = NotificationChecker()
+        self.notification_checker = NotificationChecker([LimitedDataNotification])
 
     def write_error(self, status_code: int, **kwargs) -> None:
         """Override to implement custom error pages.
