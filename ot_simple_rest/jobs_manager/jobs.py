@@ -62,16 +62,21 @@ class Job:
             df_schema = fr.read()
         yield '{"status": "success", "schema": "%s", "events": {' % df_schema.strip()
         length = len(file_names)
+        strnum = 0
         for i in range(length):
             file_name = file_names[i]
             self.logger.debug(f'Reading part: {file_name}', extra={'hid': self.handler_id})
             yield f'"{file_name}": '
+            body = str()
             with open(path_to_cache_dir + file_name) as fr:
-                body = fr.read()
+                for line in fr.readlines():
+                    body += line
+                    strnum += 1
             yield json.dumps(body)
             if i != length - 1:
                 yield ", "
         yield '}}'
+        yield strnum
 
     @staticmethod
     def validate():
@@ -296,7 +301,8 @@ class Job:
             if status == 'finished' and expiring_date:
                 if with_load:
                     # Step 4. Load results of Job from cache for transcending.
-                    response = ''.join(list(self.load_and_send_from_memcache(cid)))
+                    data = list(self.load_and_send_from_memcache(cid))
+                    response = (''.join(data[:-1]), data[-1])
                     self.logger.info(f'Cache cid={cid} was loaded.', extra={'hid': self.handler_id})
                 else:
                     self.logger.info(f'Cache for task_id={cid} was found.', extra={'hid': self.handler_id})

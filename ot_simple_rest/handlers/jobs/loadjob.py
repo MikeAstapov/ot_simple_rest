@@ -1,5 +1,6 @@
 import logging
 import uuid
+from ot_simple_rest.notifications.checker import NotificationChecker
 
 import tornado.web
 
@@ -35,6 +36,7 @@ class LoadJob(tornado.web.RequestHandler):
         self.handler_id = str(uuid.uuid4())
         self.jobs_manager = manager
         self.logger = logging.getLogger('osr_hid')
+        self.notification_checker = NotificationChecker()
 
     def write_error(self, status_code: int, **kwargs) -> None:
         """Override to implement custom error pages.
@@ -61,7 +63,18 @@ class LoadJob(tornado.web.RequestHandler):
 
         :return:
         """
-        response = self.jobs_manager.load_job(hid=self.handler_id,
-                                              request=self.request)
+        try:
+            response, strnum = self.jobs_manager.load_job(hid=self.handler_id,
+                                                request=self.request)
+            notifications = self.notification_checker.check_notifications(strnum=strnum)
+            if notifications:
+                response['notifications'] = notifications
+        except Exception as e:
+            error = {'status': 'error', 'msg': str(e)}
+            self.logger.error(f"LoadJob RESPONSE: {error}", extra={'hid': self.handler_id})
+            return self.write(error)
         self.logger.debug(f'LoadJob RESPONSE: {response}', extra={'hid': self.handler_id})
         self.write(response)
+
+
+

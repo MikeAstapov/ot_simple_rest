@@ -1,7 +1,5 @@
 from typing import List
 
-from handlers.jobs.db_connector import PostgresConnector
-
 from notifications.handlers import AbstractNotificationHandler, TooManyJobsNotification
 
 
@@ -12,11 +10,10 @@ NOTIFICATION_HANDLERS: List[AbstractNotificationHandler] = [
 
 class NotificationChecker:
 
-    def __init__(self, notification_conf, db_conn_pool):
-        self.notification_conf = notification_conf
-        self.db = PostgresConnector(db_conn_pool)
+    def __init__(self, handlers=NOTIFICATION_HANDLERS):
+        self.handlers = handlers
 
-    def check_notifications(self):
+    def check_notifications(self, **kwargs):
         """
         gathers and returns list of all notifications where every element is a structure
 
@@ -24,7 +21,7 @@ class NotificationChecker:
         notifications = []
 
         for handler in NOTIFICATION_HANDLERS:
-            notification = handler.check(db=self.db, conf=self.notification_conf)
+            notification = handler.check(**kwargs)
             if notification:
                 notifications.append(notification)
         return notifications

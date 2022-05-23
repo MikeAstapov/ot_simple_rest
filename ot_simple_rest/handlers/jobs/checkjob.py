@@ -38,7 +38,9 @@ class CheckJob(tornado.web.RequestHandler):
         self.handler_id = str(uuid.uuid4())
         self.jobs_manager = manager
         self.logger = logging.getLogger('osr_hid')
-        self.notification_checker = NotificationChecker(notification_conf, db_conn_pool)
+        self.notification_checker = NotificationChecker()
+        self.notification_conf = notification_conf
+        self.db_conn_pool = db_conn_pool
 
     def write_error(self, status_code: int, **kwargs) -> None:
         """Override to implement custom error pages.
@@ -67,7 +69,7 @@ class CheckJob(tornado.web.RequestHandler):
         """
         try:
             response = self.jobs_manager.check_job(hid=self.handler_id, request=self.request)
-            notifications = self.notification_checker.check_notifications()
+            notifications = self.notification_checker.check_notifications(db_pool=self.db, conf = self.notification_conf)
             if notifications:
                 response['notifications'] = notifications
         except Exception as e:
