@@ -1,4 +1,6 @@
 import json
+from ot_simple_rest.notifications.checker import NotificationChecker
+from ot_simple_rest.notifications.handlers import LimitedDataNotification
 import tornado.web
 from tools.timelines_builder import TimelinesBuilder
 from tools.timelines_loader import TimelinesLoader
@@ -31,17 +33,22 @@ class GetTimelines(tornado.web.RequestHandler):
     def initialize(self, mem_conf: Dict, static_conf: Dict):
         self.loader = TimelinesLoader(mem_conf, static_conf)
         self.builder = TimelinesBuilder()
+        self.notification_checker = NotificationChecker([LimitedDataNotification()])
 
     async def get(self):
         params = self.request.query_arguments
         cid = params.get('cid')[0].decode()
+        response = dict()
         try:
-            data, fresh_time = self.loader.load_data(cid)  # fresh_time indicates last time interval in all timelines
-            timelines = self.builder.get_all_timelines(data, fresh_time)
+            data, fresh_time, total_lines = self.loader.load_data(cid)  # fresh_time indicates last time interval in all timelines
+            response["timelines"] = self.builder.get_all_timelines(data, fresh_time)
+            notifications = self.notification_checker.check_notifications(lines_total=total_lines)
+            if notifications:
+                response["notifications"] = notifications
         except tornado.web.HTTPError as e:
             return self.write(json.dumps({'status': 'failed', 'error': e}, default=str))
         except KeyError:
             return self.write(json.dumps({'status': 'failed', 'error': "'_time' column is missing"}, default=str))
         except Exception as e:
             return self.write(json.dumps({'status': 'failed', 'error': f'{e} cid {cid}'}, default=str))
-        self.write(json.dumps(timelines))
+        self.write(json.dumps(response))

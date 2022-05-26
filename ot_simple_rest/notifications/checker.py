@@ -3,14 +3,9 @@ from typing import List
 from notifications.handlers import AbstractNotificationHandler, TooManyJobsNotification
 
 
-NOTIFICATION_HANDLERS: List[AbstractNotificationHandler] = [
-    TooManyJobsNotification(),
-]
-
-
 class NotificationChecker:
 
-    def __init__(self, handlers=NOTIFICATION_HANDLERS):
+    def __init__(self, handlers : List[AbstractNotificationHandler]):
         self.handlers = handlers
 
     def check_notifications(self, **kwargs):
@@ -20,7 +15,7 @@ class NotificationChecker:
         """
         notifications = []
 
-        for handler in NOTIFICATION_HANDLERS:
+        for handler in self.handlers:
             notification = handler.check(**kwargs)
             if notification:
                 notifications.append(notification)

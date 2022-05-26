@@ -1,7 +1,7 @@
 from .base_loader import BaseLoader
 import json
 import os
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Union
 
 
 class TimelinesLoader(BaseLoader):
@@ -27,15 +27,17 @@ class TimelinesLoader(BaseLoader):
         fresh_time = None
         path_to_cache_dir = self._get_path_to_cache_dir(cid)
         file_names = self._get_cache_file_names(path_to_cache_dir, cid)
+        total_lines = 0
         for file_name in file_names:
             self.logger.debug(f'Reading part: {file_name}')
-            fresh_time = self.read_file(data, os.path.join(path_to_cache_dir, file_name), fresh_time)
+            fresh_time, line_number = self.read_file(data, os.path.join(path_to_cache_dir, file_name), fresh_time)
+            total_lines += line_number
         if not len(data):
             raise Exception('Empty data')
-        return data, fresh_time
+        return data, fresh_time, total_lines
 
     @staticmethod
-    def read_file(data: List[int], data_path: str, fresh_time: Optional[int]) -> int:
+    def read_file(data: List[int], data_path: str, fresh_time: Optional[int]) -> Union[int, int]:
         """
         Reads file and adds it to data list
         :param data:        list of timestamps that is mutated inside this method
@@ -43,9 +45,11 @@ class TimelinesLoader(BaseLoader):
         :param fresh_time:  last time
         """
         with open(data_path) as fr:
+            line_number = 0
             for line in fr:
+                line_number += 1
                 _time = json.loads(line)['_time']
                 if (fresh_time and _time > fresh_time) or not fresh_time:
                     fresh_time = _time
                 data.append(_time)
-        return fresh_time
+        return fresh_time, line_number
