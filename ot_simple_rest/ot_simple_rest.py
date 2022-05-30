@@ -162,9 +162,11 @@ def main():
     # Set TORNADO application with custom handlers.
     application = Tornado([
         (r'/api/ping', PingPong),
-        (r'/api/checkjob', CheckJob, {"manager": manager, "notification_conf": notification_conf, "db_conn_pool": db_pool}),
+        (r'/api/checkjob', CheckJob, {"manager": manager, "notification_conf": notification_conf,
+                                      "db_conn_pool": db_pool}),
         (r'/api/getresult', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
-        (r'/api/gettimelines', GetTimelines, {"mem_conf": mem_conf, "static_conf": static_conf}),
+        (r'/api/gettimelines', GetTimelines, {"mem_conf": mem_conf, "static_conf": static_conf,
+                                              "notification_conf": notification_conf}),
         (r'/api/getinterestingfields', GetInterestingFields, {"mem_conf": mem_conf, "static_conf": static_conf}),
         (r'/api/makejob', MakeJob, {"db_conn_pool": db_pool_eva, "manager": manager, "user_conf": user_conf}),
         (r'/api/loadjob', LoadJob, {"manager": manager}),
@@ -207,7 +209,6 @@ def main():
         (r'/api/dash/export', DashExportHandler, {"db_conn_pool": db_pool_eva, "static_conf": static_conf}),
         (r'/api/dash/import', DashImportHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/dashByName', DashByNameHandler, {"db_conn_pool": db_pool_eva}),
-        
 
         (r'/api/load/svg', SvgLoadHandler, {"db_conn_pool": db_pool_eva, "static_conf": static_conf}),
 

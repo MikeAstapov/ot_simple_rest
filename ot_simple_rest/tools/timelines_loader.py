@@ -17,7 +17,7 @@ class TimelinesLoader(BaseLoader):
         # approximately self.point months in seconds
         self.BIGGEST_INTERVAL = 86400 * 31 * self.points
 
-    def load_data(self, cid: str) -> Tuple[List[int], int]:
+    def load_data(self, cid: str) -> Tuple[List[int], int, int]:
         """
         Load data by cid
         :param cid:         OT_Dispatcher's job cid
@@ -37,7 +37,7 @@ class TimelinesLoader(BaseLoader):
         return data, fresh_time, total_lines
 
     @staticmethod
-    def read_file(data: List[int], data_path: str, fresh_time: Optional[int]) -> Union[int, int]:
+    def read_file(data: List[int], data_path: str, fresh_time: Optional[int]) -> Tuple[Union[int, int], int]:
         """
         Reads file and adds it to data list
         :param data:        list of timestamps that is mutated inside this method

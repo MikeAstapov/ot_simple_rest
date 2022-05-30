@@ -1,7 +1,5 @@
 import logging
 import uuid
-from ot_simple_rest.notifications.checker import NotificationChecker
-from ot_simple_rest.notifications.handlers import LimitedDataNotification
 
 import tornado.web
 

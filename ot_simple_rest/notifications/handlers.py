@@ -5,6 +5,7 @@ import notifications.codes
 from notifications.format import Notification
 from handlers.jobs.db_connector import PostgresConnector
 
+
 class AbstractNotificationHandler:
 
     @abstractmethod
@@ -13,11 +14,10 @@ class AbstractNotificationHandler:
 
 
 class TooManyJobsNotification(AbstractNotificationHandler):
-
     DEFAULT_THRESHOLD = 8
     NOTIFICATION_CODE = notifications.codes.TOO_MANY_JOBS
 
-    def __init__(self, db_pool, conf:dict) -> None:
+    def __init__(self, db_pool, conf: dict) -> None:
         super().__init__()
         self.db = PostgresConnector(db_pool)
         self.conf = conf
@@ -30,18 +30,18 @@ class TooManyJobsNotification(AbstractNotificationHandler):
 
         return {}
 
-class LimitedDataNotification(AbstractNotificationHandler):
 
+class LimitedDataNotification(AbstractNotificationHandler):
     DEFAULT_THRESHOLD = 10000
     NOTIFICATION_CODE = notifications.codes.LIMITED_DATA
-    
-    def __init__(self, threshold = DEFAULT_THRESHOLD) -> None:
+
+    def __init__(self, conf: Dict = None) -> None:
         super().__init__()
-        self.threshold = threshold
+        self.threshold = conf.get('limited_data_threshold', self.DEFAULT_THRESHOLD)
 
     def check(self, *args, **kwargs) -> Dict[str, str]:
-        strnum = kwargs.get('lines_total')
-        if strnum==self.threshold:
-            return Notification(code=self.NOTIFICATION_CODE, value=strnum).as_dict()
+        lines_count = kwargs.get('lines_total')
+        if lines_count == self.threshold:
+            return Notification(code=self.NOTIFICATION_CODE, value=lines_count).as_dict()
 
         return {}

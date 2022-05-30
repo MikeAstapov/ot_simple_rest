@@ -12,7 +12,8 @@ class TestTimelines(unittest.TestCase):
         data = []
         makefile_test = not os.path.isfile('builder_data/test_timelines_builder.json')
         self.path_beginning = 'tests/' if makefile_test else ''
-        fresh_time = self.loader.read_file(data, self.path_beginning + 'builder_data/test_timelines_builder.json', None)
+        fresh_time, _ = self.loader.read_file(data, self.path_beginning + 'builder_data/test_timelines_builder.json',
+                                              None)
         self.timelines = self.builder.get_all_timelines(data, fresh_time)
 
     def test_minutes_timeline(self):
@@ -62,8 +63,8 @@ class TestTimelines(unittest.TestCase):
 
     def test_gap_in_data(self):
         data_with_gaps = []
-        fresh_time = self.loader.read_file(data_with_gaps, self.path_beginning +
-                                           'builder_data/test_timelines_builder_with_gaps.json', None)
+        fresh_time, _ = self.loader.read_file(data_with_gaps, self.path_beginning +
+                                              'builder_data/test_timelines_builder_with_gaps.json', None)
         timelines = self.builder.get_all_timelines(data_with_gaps, fresh_time)
         result = timelines[TimeIntervals.MINUTES]
         if len(result) != self.builder.points:  # wrong timeline len
@@ -77,8 +78,8 @@ class TestTimelines(unittest.TestCase):
 
     def test_leap_year(self):
         big_data = []
-        fresh_time = self.loader.read_file(big_data, self.path_beginning +
-                                           'builder_data/test_timelines_builder_leap_years.json', None)
+        fresh_time, _ = self.loader.read_file(big_data, self.path_beginning +
+                                              'builder_data/test_timelines_builder_leap_years.json', None)
         self.ordered = self.builder.get_all_timelines(big_data, fresh_time)
         result = self.ordered[TimeIntervals.MONTHS]
         if len(result) != self.builder.points:  # wrong timeline len
@@ -88,7 +89,7 @@ class TestTimelines(unittest.TestCase):
     def test_unordered_data(self):
         self.test_leap_year()
         unordered_data = []
-        fresh_time = self.loader.read_file(unordered_data, self.path_beginning +
+        fresh_time, _ = self.loader.read_file(unordered_data, self.path_beginning +
                                            'builder_data/test_timelines_builder_unordered.json', None)
         timelines = self.builder.get_all_timelines(unordered_data, fresh_time)
         self.assertEqual(timelines, self.ordered)

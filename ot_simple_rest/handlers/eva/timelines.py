@@ -1,6 +1,6 @@
 import json
-from ot_simple_rest.notifications.checker import NotificationChecker
-from ot_simple_rest.notifications.handlers import LimitedDataNotification
+from notifications.checker import NotificationChecker
+from notifications.handlers import LimitedDataNotification
 import tornado.web
 from tools.timelines_builder import TimelinesBuilder
 from tools.timelines_loader import TimelinesLoader
@@ -30,10 +30,10 @@ class GetTimelines(tornado.web.RequestHandler):
     4th - 1 month
     """
 
-    def initialize(self, mem_conf: Dict, static_conf: Dict):
+    def initialize(self, mem_conf: Dict, static_conf: Dict, notification_conf: Dict):
         self.loader = TimelinesLoader(mem_conf, static_conf)
         self.builder = TimelinesBuilder()
-        self.notification_checker = NotificationChecker([LimitedDataNotification()])
+        self.notification_checker = NotificationChecker([LimitedDataNotification(notification_conf)])
 
     async def get(self):
         params = self.request.query_arguments
