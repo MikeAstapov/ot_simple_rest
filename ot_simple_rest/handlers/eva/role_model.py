@@ -471,7 +471,8 @@ class GroupDashboardsHandler(BaseHandler):
 
 class UserSettingHandler(BaseHandler):
     async def get(self):
-        self.logger.debug("User = '%s'" % self.current_user)
+        self.logger.debug("User = '%s'" % self.current_user,
+                          extra={'hid': self.handler_id})
         user_setting = self.db.get_user_setting(self.current_user)
         self.logger.debug("Returned user setting jjjj= '%s'" % user_setting)
         self.write(user_setting)
@@ -481,7 +482,8 @@ class UserSettingHandler(BaseHandler):
         if not new_setting:
             raise tornado.web.HTTPError(400, "param 'setting' is needed")
 
-        self.logger.debug("User = '%s', with setting = '%s'" % (self.current_user, new_setting))
+        self.logger.debug("User = '%s', with setting = '%s'" % (self.current_user, new_setting),
+                          extra={'hid': self.handler_id})
         try:
             status = self.db.update_user_setting(self.current_user, new_setting)
             if status:
