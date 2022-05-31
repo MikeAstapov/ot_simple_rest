@@ -61,7 +61,15 @@ class LoadJob(tornado.web.RequestHandler):
 
         :return:
         """
-        response = self.jobs_manager.load_job(hid=self.handler_id,
-                                              request=self.request)
+        try:
+            response, strnum = self.jobs_manager.load_job(hid=self.handler_id,
+                                                request=self.request)
+        except Exception as e:
+            error = {'status': 'error', 'msg': str(e)}
+            self.logger.error(f"LoadJob RESPONSE: {error}", extra={'hid': self.handler_id})
+            return self.write(error)
         self.logger.debug(f'LoadJob RESPONSE: {response}', extra={'hid': self.handler_id})
         self.write(response)
+
+
+
