@@ -42,4 +42,4 @@ log_user_activity = True
 
 [notification_triggers]
 jobs_queue_threshold = 2
-limited_data_threshold = 10000
+limited_data_threshold = 100000
