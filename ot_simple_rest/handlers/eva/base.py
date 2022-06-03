@@ -2,6 +2,7 @@
 import logging
 
 import json
+import uuid
 
 import jwt
 import tornado.web
@@ -30,6 +31,7 @@ class BaseHandler(tornado.web.RequestHandler):
         :param db_conn_pool: Postgres DB connection pool object.
         :return:
         """
+        self.handler_id = str(uuid.uuid4())
         self.logger = logging.getLogger('osr_hid')
         self.db = PostgresConnector(db_conn_pool)
         self.permissions = None
