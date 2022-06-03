@@ -32,7 +32,7 @@ class TooManyJobsNotification(AbstractNotificationHandler):
 
 
 class LimitedDataNotification(AbstractNotificationHandler):
-    DEFAULT_THRESHOLD = 10000
+    DEFAULT_THRESHOLD = 100000
     NOTIFICATION_CODE = notifications.codes.LIMITED_DATA
 
     def __init__(self, conf: Dict = None) -> None:
@@ -40,7 +40,7 @@ class LimitedDataNotification(AbstractNotificationHandler):
         self.threshold = conf.get('limited_data_threshold', self.DEFAULT_THRESHOLD)
 
     def check(self, *args, **kwargs) -> Dict[str, str]:
-        lines_count = kwargs.get('lines_total')
+        lines_count = kwargs.get('lines_total', 0)
         if lines_count == self.threshold:
             return Notification(code=self.NOTIFICATION_CODE, value=lines_count).as_dict()
 

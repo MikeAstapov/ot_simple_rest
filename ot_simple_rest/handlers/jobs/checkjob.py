@@ -3,7 +3,7 @@ import uuid
 import tornado.web
 
 from notifications.checker import NotificationChecker
-from notifications.handlers import TooManyJobsNotification
+from notifications.handlers import TooManyJobsNotification, LimitedDataNotification
 
 __author__ = "Andrey Starchenkov, Anton Khromov"
 __copyright__ = "Copyright 2019, Open Technologies 98"
@@ -38,7 +38,8 @@ class CheckJob(tornado.web.RequestHandler):
         self.handler_id = str(uuid.uuid4())
         self.jobs_manager = manager
         self.logger = logging.getLogger('osr_hid')
-        self.notification_checker = NotificationChecker([TooManyJobsNotification(db_conn_pool, notification_conf)])
+        self.notification_checker = NotificationChecker([TooManyJobsNotification(db_conn_pool, notification_conf),
+                                                         LimitedDataNotification(notification_conf)])
 
     def write_error(self, status_code: int, **kwargs) -> None:
         """Override to implement custom error pages.
@@ -67,7 +68,7 @@ class CheckJob(tornado.web.RequestHandler):
         """
         try:
             response = self.jobs_manager.check_job(hid=self.handler_id, request=self.request)
-            notifications = self.notification_checker.check_notifications()
+            notifications = self.notification_checker.check_notifications(**response)
             if notifications:
                 response['notifications'] = notifications
         except Exception as e:

@@ -17,6 +17,19 @@ __email__ = "akhromov@ot.ru"
 __status__ = "Production"
 
 
+def count_lines(mem_conf, cid):
+    _path = mem_conf['path']
+    path_to_cache_dir = os.path.join(_path, f'search_{cid}.cache/data/')
+    file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
+    length = len(file_names)
+    lines = 0
+    for i in range(length):
+        file_name = file_names[i]
+        with open(path_to_cache_dir + file_name) as fr:
+            lines += len(fr.readlines())
+    return lines
+
+
 class Job:
     """
     This class contains all of methods for check job status
@@ -300,7 +313,7 @@ class Job:
                     self.logger.info(f'Cache cid={cid} was loaded.', extra={'hid': self.handler_id})
                 else:
                     self.logger.info(f'Cache for task_id={cid} was found.', extra={'hid': self.handler_id})
-                    response = {'status': 'success', 'cid': cid}
+                    response = {'status': 'success', 'cid': cid, 'lines': count_lines(self.mem_conf, cid)}
             elif status == 'finished' and not expiring_date:
                 response = {'status': 'nocache', 'error': 'No cache for this job'}
             elif status in ['new', 'running']:

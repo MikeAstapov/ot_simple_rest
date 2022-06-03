@@ -33,7 +33,6 @@ class GetTimelines(tornado.web.RequestHandler):
     def initialize(self, mem_conf: Dict, static_conf: Dict, notification_conf: Dict):
         self.loader = TimelinesLoader(mem_conf, static_conf)
         self.builder = TimelinesBuilder()
-        self.notification_checker = NotificationChecker([LimitedDataNotification(notification_conf)])
 
     async def get(self):
         params = self.request.query_arguments
@@ -41,10 +40,7 @@ class GetTimelines(tornado.web.RequestHandler):
         response = dict()
         try:
             data, fresh_time, total_lines = self.loader.load_data(cid)  # fresh_time indicates last time interval in all timelines
-            response["timelines"] = self.builder.get_all_timelines(data, fresh_time)
-            notifications = self.notification_checker.check_notifications(lines_total=total_lines)
-            if notifications:
-                response["notifications"] = notifications
+            response = self.builder.get_all_timelines(data, fresh_time)
         except tornado.web.HTTPError as e:
             return self.write(json.dumps({'status': 'failed', 'error': e}, default=str))
         except KeyError:
