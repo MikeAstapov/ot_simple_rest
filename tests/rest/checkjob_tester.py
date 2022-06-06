@@ -93,6 +93,17 @@ class CheckjobTester:
         resp.raise_for_status()
         return resp.json()
 
+    def prepare_limited_data(self, cid):
+        full_path = os.path.join(self.cache_dir, f'search_{cid}.cache/data/')
+        try:
+            os.makedirs(full_path, exist_ok=True)
+        except PermissionError as err:
+            print(err)
+        file = open(os.path.join(full_path, 'data_part_000.json'), 'a')
+        file.write("{'t': '0'}\n" * 1000000)
+        file.close()
+        open(os.path.join(full_path, '_SCHEMA'), 'a').close()
+
     def prepare_data(self, cid):
         full_path = os.path.join(self.cache_dir, f'search_{cid}.cache/data/')
         try:
@@ -100,7 +111,6 @@ class CheckjobTester:
         except PermissionError as err:
             print(err)
         open(os.path.join(full_path, 'data_part_000.json'), 'a').close()
-        open(os.path.join(full_path, 'data_part_001.json'), 'a').close()
         open(os.path.join(full_path, '_SCHEMA'), 'a').close()
 
     def _cleanup(self):
@@ -142,14 +152,15 @@ class CheckjobTester:
         return resp == {'status': 'running'}
 
     def test__finished(self):
+        job_id = 0
         try:
             job_id = self.add_job_with_cache()
             self.update_job_status('finished', job_id)
             self.prepare_data(job_id)
             resp = self.send_request()
-            self._cleanup_data(job_id)
         finally:
             self._cleanup()
+            self._cleanup_data(job_id)
         return resp == {'status': 'success', 'cid': job_id, 'lines': 0}
 
     def test__finished_nocache(self):
@@ -175,3 +186,15 @@ class CheckjobTester:
         finally:
             self._cleanup()
         return resp['status'] == 'canceled'
+
+    def test__limited_data(self):
+        job_id = 0
+        try:
+            job_id = self.add_job_with_cache()
+            self.update_job_status('finished', job_id)
+            self.prepare_limited_data(job_id)
+            resp = self.send_request()
+        finally:
+            self._cleanup()
+            self._cleanup_data(job_id)
+        return {'code': 2, 'value': 1000000} in resp.get('notifications', [])
