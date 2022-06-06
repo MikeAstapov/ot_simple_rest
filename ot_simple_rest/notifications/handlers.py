@@ -37,11 +37,11 @@ class LimitedDataNotification(AbstractNotificationHandler):
 
     def __init__(self, conf: Dict = None) -> None:
         super().__init__()
-        self.threshold = conf.get('limited_data_threshold', self.DEFAULT_THRESHOLD)
+        self.threshold = int(conf.get('limited_data_threshold', self.DEFAULT_THRESHOLD))
 
     def check(self, *args, **kwargs) -> Dict[str, str]:
-        lines_count = kwargs.get('lines_total', 0)
-        if lines_count == self.threshold:
+        lines_count = int(kwargs.get('lines', 0))
+        if lines_count >= self.threshold:
             return Notification(code=self.NOTIFICATION_CODE, value=lines_count).as_dict()
 
         return {}

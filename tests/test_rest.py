@@ -63,6 +63,8 @@ class TestCheckJob(unittest.TestCase):
     def test__canceled(self):
         self.assertTrue(self.tester.test__canceled())
 
+    def test__limited_data(self):
+        self.assertTrue(self.tester.test__limited_data())
 
 class TestMakeJob(unittest.TestCase):
     """
