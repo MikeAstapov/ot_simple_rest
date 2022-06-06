@@ -3,6 +3,7 @@ import re
 import os
 import json
 import asyncio
+from pathlib import Path
 
 from utils import backlasher
 from parsers.otl_resolver.Resolver import Resolver
@@ -17,17 +18,19 @@ __email__ = "akhromov@ot.ru"
 __status__ = "Production"
 
 
-def count_lines(mem_conf, cid):
-    _path = mem_conf['path']
-    path_to_cache_dir = os.path.join(_path, f'search_{cid}.cache/data/')
-    file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
-    length = len(file_names)
-    lines = 0
-    for i in range(length):
-        file_name = file_names[i]
-        with open(path_to_cache_dir + file_name) as fr:
-            lines += len(fr.readlines())
-    return lines
+def count_lines(dir_path):
+    """
+    Count lines in every json file situated in the directory specified
+    @param dir_path: path to the directory
+    @return: total lines count
+    """
+    lines_num = 0
+    for file in Path(dir_path).glob('*.json'):
+        with file.open() as fr:
+            for _ in fr:
+                lines_num += 1
+
+    return lines_num
 
 
 class Job:
@@ -52,6 +55,12 @@ class Job:
         self.resolved_data = None
         self.search = None
 
+    def _get_cache_dir(self, cid):
+        return os.path.join(
+            self.mem_conf['path'],
+            f'search_{cid}.cache/data/'
+        )
+
     def check_dispatcher_status(self):
         delta = self.db.check_dispatcher_status()
         self.logger.debug(f"Dispatcher last check: {delta}.", extra={'hid': self.handler_id})
@@ -67,8 +76,7 @@ class Job:
         :return: List of cache table lines.
         """
         self.logger.debug(f'Started loading cache {cid}.', extra={'hid': self.handler_id})
-        _path = self.mem_conf['path']
-        path_to_cache_dir = os.path.join(_path, f'search_{cid}.cache/data/')
+        path_to_cache_dir = self._get_cache_dir(cid)
         self.logger.debug(f'Path to cache {path_to_cache_dir}.', extra={'hid': self.handler_id})
         file_names = [file_name for file_name in os.listdir(path_to_cache_dir) if file_name[-5:] == '.json']
         with open(path_to_cache_dir + "_SCHEMA") as fr:
@@ -313,7 +321,7 @@ class Job:
                     self.logger.info(f'Cache cid={cid} was loaded.', extra={'hid': self.handler_id})
                 else:
                     self.logger.info(f'Cache for task_id={cid} was found.', extra={'hid': self.handler_id})
-                    response = {'status': 'success', 'cid': cid, 'lines': count_lines(self.mem_conf, cid)}
+                    response = {'status': 'success', 'cid': cid, 'lines': count_lines(self._get_cache_dir(cid))}
             elif status == 'finished' and not expiring_date:
                 response = {'status': 'nocache', 'error': 'No cache for this job'}
             elif status in ['new', 'running']:
