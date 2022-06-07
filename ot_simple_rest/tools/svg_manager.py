@@ -15,12 +15,12 @@ class SVGManager:
         """
         Write given file to disk
         """
-        new_filename = self.name_resolver.resolve_filename_with_suffix(filename)
-        if new_filename is not None:
-            full_filename = os.path.join(self.file_directory, new_filename)
+        resolved_filename = self.name_resolver.resolve_filename_with_suffix(filename)
+        if resolved_filename is not None:
+            full_filename = os.path.join(self.file_directory, resolved_filename)
             f = open(full_filename, "wb")
             f.write(file)
-        return new_filename
+        return resolved_filename
 
     def delete(self, filename: str):
         """

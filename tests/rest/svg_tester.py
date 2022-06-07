@@ -61,7 +61,7 @@ class SvgTester:
             file.close()
         finally:
             self.__cleanup_data()
-        return resp == {'status': 'ok', 'new_filename': os.path.basename(self.test_file)}
+        return resp == {'status': 'ok', 'filename': os.path.basename(self.test_file)}
 
     def test__load_duplicate(self):
         try:
@@ -78,7 +78,7 @@ class SvgTester:
             self.__cleanup_data()
         new_name = os.path.basename(self.test_file).split('.')
         new_name[-2] += '_1'
-        return resp == {'status': 'ok', 'new_filename': '.'.join(new_name)}
+        return resp == {'status': 'ok', 'filename': '.'.join(new_name)}
 
     def test__delete_svg(self):
         try:
@@ -96,4 +96,4 @@ class SvgTester:
     def test__delete_nonexistent(self):
         data = {'filename': self.test_file}
         resp = self.send_request(endpoint=self.endpoint, method='DELETE', data=data)
-        return resp == {'status': 'no such file'}
+        return resp == {'status': 'failed', 'error': 'file not found'}
