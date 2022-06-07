@@ -1,6 +1,8 @@
 import os
 import unittest
 from configparser import ConfigParser
+from io import BytesIO
+
 from handlers.jobs.db_connector import PostgresConnector
 
 from rest.checkjob_tester import CheckjobTester
@@ -448,14 +450,10 @@ class TestSvgLoad(unittest.TestCase):
     config.set('static', 'static_path', '/opt/otp/static/')
 
     def setUp(self) -> None:
-        self.test_file = 'test_file.svg'
-        file = open(self.test_file, 'wb')
-        file.write(b'this is a test file')
-        file.close()
+        self.test_file = BytesIO(b'this is a test file')
+
         self.tester = SvgTester(dict(self.config['rest_conf']), self.config['static']['static_path'], self.test_file)
 
-    def tearDown(self) -> None:
-        os.remove(self.test_file)
 
     def test__load_svg(self):
         self.assertTrue(self.tester.test__load_svg())

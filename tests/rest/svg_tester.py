@@ -47,53 +47,47 @@ class SvgTester:
         resp.raise_for_status()
         return resp.json()
 
-    def __cleanup_data(self):
-        path_for_remove = os.path.join(self.static_path, self.target_dir)
+    def __cleanup_data(self, filename):
+        path_for_remove = os.path.join(self.static_path, self.target_dir, filename)
         if os.path.exists(path_for_remove):
-            shutil.rmtree(path_for_remove)
-            os.mkdir(path_for_remove)
+            os.remove(path_for_remove)
 
     def test__load_svg(self):
         try:
-            file = open(self.test_file, 'rb')
+            file = self.test_file
             files = {'file': file}
             resp = self.send_request(endpoint=self.endpoint, method='POST', files=files)
-            file.close()
         finally:
-            self.__cleanup_data()
-        return resp == {'status': 'ok', 'filename': os.path.basename(self.test_file)}
+            self.__cleanup_data('file')
+        return resp == {'status': 'ok', 'filename': 'file'}
 
     def test__load_duplicate(self):
         try:
-            file = open(self.test_file, 'rb')
+            file = self.test_file
             files = {'file': file}
             resp = self.send_request(endpoint=self.endpoint, method='POST', files=files)
-            file.close()
 
-            file = open(self.test_file, 'rb')
-            files = {'file': file}
+            file_1 = self.test_file
+            files = {'file': file_1}
             resp = self.send_request(endpoint=self.endpoint, method='POST', files=files)
-            file.close()
         finally:
-            self.__cleanup_data()
-        new_name = os.path.basename(self.test_file).split('.')
-        new_name[-2] += '_1'
-        return resp == {'status': 'ok', 'filename': '.'.join(new_name)}
+            self.__cleanup_data('file')
+            self.__cleanup_data('file_1')
+        return resp == {'status': 'ok', 'filename': 'file_1'}
 
     def test__delete_svg(self):
         try:
-            file = open(self.test_file, 'rb')
+            file = self.test_file
             files = {'file': file}
             resp = self.send_request(endpoint=self.endpoint, method='POST', files=files)
-            file.close()
 
-            data = {'filename': os.path.basename(self.test_file)}
+            data = {'filename': 'file'}
             resp = self.send_request(endpoint=self.endpoint, method='DELETE', data=data)
         finally:
-            self.__cleanup_data()
+            self.__cleanup_data('file')
         return resp == {'status': 'ok'}
 
     def test__delete_nonexistent(self):
-        data = {'filename': self.test_file}
+        data = {'filename': 'file'}
         resp = self.send_request(endpoint=self.endpoint, method='DELETE', data=data)
         return resp == {'status': 'failed', 'error': 'file not found'}

@@ -17,7 +17,11 @@ class FileNameResolver:
         else:
             i = 1
             name = '.'.join(full_filename.split('.')[0:-1])
-            extension = '.' + full_filename.split('.')[-1]
+            if name == '':
+                name = full_filename.split('.')[-1]
+                extension = ''
+            else:
+                extension = '.' + full_filename.split('.')[-1]
             while True:
                 tmp_name = name + f'_{i}' + extension
                 if not os.path.exists(tmp_name):
