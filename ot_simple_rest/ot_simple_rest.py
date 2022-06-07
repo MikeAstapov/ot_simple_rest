@@ -13,7 +13,7 @@ from psycopg2.pool import ThreadedConnectionPool
 
 from handlers.eva.auth import AuthLoginHandler
 from handlers.eva.logs import LogsHandler
-from handlers.eva.dashs import DashboardHandler, DashboardsHandler, SvgLoadHandler, DashExportHandler, \
+from handlers.eva.dashs import DashboardHandler, DashboardsHandler, DashExportHandler, \
     DashImportHandler, GroupExportHandler, GroupImportHandler, DashByNameHandler
 from handlers.eva.quizs import QuizsHandler, QuizHandler, QuizQuestionsHandler, QuizFilledHandler, \
     FilledQuizExportHandler, QuizExportJsonHandler, QuizImportJsonHandler, CatalogsListHandler, CatalogHandler
@@ -21,6 +21,7 @@ from handlers.eva.role_model import UserHandler, UsersHandler, RoleHandler, Role
     PermissionsHandler, PermissionHandler, GroupsHandler, GroupHandler, UserPermissionsHandler, \
     IndexesHandler, IndexHandler, UserGroupsHandler, UserDashboardsHandler, GroupDashboardsHandler, UserSettingHandler
 from handlers.eva.papers import PaperLoadHandler, PapersHandler, PaperHandler
+from handlers.eva.svg_load import SvgLoadHandler
 
 from handlers.eva.theme import ThemeListHandler, ThemeGetHandler, ThemeHandler
 from handlers.eva.timelines import GetTimelines
