@@ -1,3 +1,4 @@
+import os
 import unittest
 from configparser import ConfigParser
 from handlers.jobs.db_connector import PostgresConnector
@@ -10,6 +11,8 @@ from rest.eva_tester import EvaTester
 from rest.quizs_tester import QuizsTester
 
 from psycopg2.pool import ThreadedConnectionPool
+
+from tests.rest.svg_tester import SvgTester
 
 
 class TestCheckJob(unittest.TestCase):
@@ -426,3 +429,42 @@ class TestQuizs(unittest.TestCase):
 
     def test__get_catalogs_list(self):
         self.assertTrue(self.tester.test__get_catalogs_list())
+
+
+class TestSvgLoad(unittest.TestCase):
+    """
+        Test suite for /load/svg OT_REST endpoint.
+        Test cases:
+        - load svg
+        - load duplicate name svg
+        - delete existing svg
+        - delete non-existant svg
+        """
+    config = ConfigParser()
+    config.add_section('rest_conf')
+    config.set('rest_conf', 'host', 'localhost')
+    config.set('rest_conf', 'port', '50000')
+    config.add_section('static')
+    config.set('static', 'static_path', '/opt/otp/static/')
+
+    def setUp(self) -> None:
+        self.test_file = 'test_file.svg'
+        file = open(self.test_file, 'wb')
+        file.write(b'this is a test file')
+        file.close()
+        self.tester = SvgTester(dict(self.config['rest_conf']), self.config['static']['static_path'], self.test_file)
+
+    def tearDown(self) -> None:
+        os.remove(self.test_file)
+
+    def test__load_svg(self):
+        self.assertTrue(self.tester.test__load_svg())
+
+    def test__load_duplicate(self):
+        self.assertTrue(self.tester.test__load_duplicate())
+
+    def test__delete_svg(self):
+        self.assertTrue(self.tester.test__delete_svg())
+
+    def test__delete_nonexistent(self):
+        self.assertTrue(self.tester.test__delete_nonexistent())

@@ -1,3 +1,4 @@
+import json
 import os
 import jwt
 import logging
@@ -6,10 +7,11 @@ import tornado.web
 import tornado.httputil
 
 from handlers.eva.base import BaseHandler
-from tools.svg_manager import SVGManager, DELETE_OK, DELETE_FAIL
+from tools.svg_manager import SVGManager
 
 
 class SvgLoadHandler(BaseHandler):
+
     def initialize(self, **kwargs):
         super().initialize(kwargs['db_conn_pool'])
         self.static_conf = kwargs['static_conf']
@@ -35,19 +37,30 @@ class SvgLoadHandler(BaseHandler):
             raise tornado.web.HTTPError(401, "unauthorized")
 
     async def post(self):
-        body = self.request.body
-        args = {}
-        files = {}
-        tornado.httputil.parse_body_arguments(self.request.headers['Content-Type'], body, args, files)
-        _file = files['file'][0]
+        try:
+            body = self.request.body
+            args = {}
+            files = {}
+            tornado.httputil.parse_body_arguments(self.request.headers['Content-Type'], body, args, files)
+            _file = files['file'][0]
 
-        new_name = self.svg_manager.write(_file['filename'], _file['body'])
-        self.write({'status': 'ok'})
+            new_name = self.svg_manager.write(_file['filename'], _file['body'])
+            self.write(json.dumps({'status': 'ok', 'new_filename': new_name}))
+        except Exception as e:
+            self.logger.error(f'{e}')
+            self.write(json.dumps({'status': 'failed', 'error': f'{e}'}, default=str))
 
     async def delete(self):
-        filename = self.get_argument('filename')
-        status = self.svg_manager.delete(filename)
-        if status == DELETE_OK:
-            self.write({'status': 'ok'})
-        else:
-            self.write({'status': 'no such file'})
+        try:
+            filename = self.get_argument('filename')
+            status = self.svg_manager.delete(filename)
+            if status:
+                self.write(json.dumps({'status': 'ok'}))
+            else:
+                self.write(json.dumps({'status': 'no such file'}))
+        except tornado.web.HTTPError as e:
+            self.logger.error(f'{e}')
+            return self.write(json.dumps({'status': 'failed', 'error': f'{e}'}, default=str))
+        except Exception as e:
+            self.logger.error(f'{e}')
+            self.write(json.dumps({'status': 'failed', 'error': f'{e}'}, default=str))
