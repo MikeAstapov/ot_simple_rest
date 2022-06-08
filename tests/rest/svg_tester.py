@@ -14,11 +14,10 @@ class SvgTester:
     - delete non-existent file
     """
 
-    def __init__(self, config, static, test_file):
+    def __init__(self, config, target_dir, test_file):
         self.cookies = None
         self.config = config
-        self.static_path = static
-        self.target_dir = 'svg'
+        self.target_dir = target_dir
         self.endpoint = '/api/load/svg'
         self.test_file = test_file
 
@@ -48,7 +47,7 @@ class SvgTester:
         return resp.json()
 
     def __cleanup_data(self, filename):
-        path_for_remove = os.path.join(self.static_path, self.target_dir, filename)
+        path_for_remove = os.path.join(self.target_dir, filename)
         if os.path.exists(path_for_remove):
             os.remove(path_for_remove)
 

@@ -1,4 +1,5 @@
 import os
+import shutil
 import unittest
 from configparser import ConfigParser
 from io import BytesIO
@@ -448,12 +449,26 @@ class TestSvgLoad(unittest.TestCase):
     config.set('rest_conf', 'port', '50000')
     config.add_section('static')
     config.set('static', 'static_path', '/opt/otp/static/')
+    config.add_section('file_upload')
+    config.set('file_upload', 'svg_path', '/opt/otp/static/svg/')
 
     def setUp(self) -> None:
+        self.svg_path = self.config['file_upload']['svg_path']
+        if not os.path.exists(self.svg_path):
+            root_dir = self.svg_path
+            while not os.path.exists(root_dir):
+                root_dir = os.path.dirname(root_dir)
+            self.cleanup_dir = root_dir
+            os.makedirs(self.svg_path)
+        else:
+            self.cleanup_dir = None
         self.test_file = BytesIO(b'this is a test file')
 
         self.tester = SvgTester(dict(self.config['rest_conf']), self.config['static']['static_path'], self.test_file)
 
+    def tearDown(self) -> None:
+        if self.cleanup_dir is not None:
+            shutil.rmtree(self.config['file_upload']['svg_path'])
 
     def test__load_svg(self):
         self.assertTrue(self.tester.test__load_svg())

@@ -11,6 +11,8 @@ class FileNameResolver:
         self.file_directory = file_directory
 
     def resolve_filename_with_suffix(self, filename: str) -> Optional[str]:
+        if not os.path.exists(self.file_directory):
+            raise FileNotFoundError(f'Target directory {self.file_directory} not found')
         full_filename = os.path.join(self.file_directory, filename)
         if not os.path.exists(full_filename):
             return filename

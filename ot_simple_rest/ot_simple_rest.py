@@ -136,6 +136,7 @@ def main():
     user_conf = dict(config['user'])
     pool_conf = dict(config['db_pool_conf'])
     notification_conf = dict(config['notification_triggers']) if 'notification_triggers' in config else dict()
+    file_upload_conf = dict(config['file_upload']) if 'file_upload' in config else dict()
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -211,7 +212,8 @@ def main():
         (r'/api/dash/import', DashImportHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/dashByName', DashByNameHandler, {"db_conn_pool": db_pool_eva}),
 
-        (r'/api/load/svg', SvgLoadHandler, {"db_conn_pool": db_pool_eva, "static_conf": static_conf}),
+        (r'/api/load/svg', SvgLoadHandler, {"db_conn_pool": db_pool_eva, 'file_upload_conf': file_upload_conf,
+                                            'static_conf': static_conf}),
 
         (r'/qapi/quizs', QuizsHandler, {"db_conn_pool": db_pool_eva}),
         (r'/qapi/quiz', QuizHandler, {"db_conn_pool": db_pool_eva}),

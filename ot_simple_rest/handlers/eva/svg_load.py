@@ -13,9 +13,10 @@ class SvgLoadHandler(BaseHandler):
 
     def initialize(self, **kwargs):
         super().initialize(kwargs['db_conn_pool'])
+        self.file_conf = kwargs['file_upload_conf']
         self.static_conf = kwargs['static_conf']
         self.logger = logging.getLogger('osr')
-        svg_path = os.path.join(self.static_conf['static_path'], 'svg')
+        svg_path = self.file_conf.get('svg_path', os.path.join(self.static_conf['static_path'], 'svg'))
         self.svg_manager = SVGManager(svg_path)
 
     async def post(self):
