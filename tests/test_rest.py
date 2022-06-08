@@ -38,12 +38,14 @@ class TestCheckJob(unittest.TestCase):
     config.set('db_conf', 'user', 'tester')
     config.set('db_conf', 'password', 'password')
     config.set('db_conf', 'host', 'localhost')
+    config.add_section('mem_conf')
+    config.set('mem_conf', 'path', '/tmp/caches')
 
     otl = '| ot ttl=60 | makeresults count=10 | simple'
     pool = ThreadedConnectionPool(2, 4, **dict(config['db_conf']))
     db = PostgresConnector(pool)
 
-    tester = CheckjobTester(db, dict(config['rest_conf']))
+    tester = CheckjobTester(db, dict(config['rest_conf']), path=dict(config['mem_conf'])['path'])
     tester.set_query(otl)
 
     def test__no_job(self):
@@ -67,6 +69,8 @@ class TestCheckJob(unittest.TestCase):
     def test__canceled(self):
         self.assertTrue(self.tester.test__canceled())
 
+    def test__limited_data(self):
+        self.assertTrue(self.tester.test__limited_data())
 
 class TestMakeJob(unittest.TestCase):
     """
