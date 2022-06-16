@@ -13,7 +13,7 @@ from psycopg2.pool import ThreadedConnectionPool
 
 from handlers.eva.auth import AuthLoginHandler
 from handlers.eva.logs import LogsHandler
-from handlers.eva.dashs import DashboardHandler, DashboardsHandler, SvgLoadHandler, DashExportHandler, \
+from handlers.eva.dashs import DashboardHandler, DashboardsHandler, DashExportHandler, \
     DashImportHandler, GroupExportHandler, GroupImportHandler, DashByNameHandler
 from handlers.eva.quizs import QuizsHandler, QuizHandler, QuizQuestionsHandler, QuizFilledHandler, \
     FilledQuizExportHandler, QuizExportJsonHandler, QuizImportJsonHandler, CatalogsListHandler, CatalogHandler
@@ -21,6 +21,7 @@ from handlers.eva.role_model import UserHandler, UsersHandler, RoleHandler, Role
     PermissionsHandler, PermissionHandler, GroupsHandler, GroupHandler, UserPermissionsHandler, \
     IndexesHandler, IndexHandler, UserGroupsHandler, UserDashboardsHandler, GroupDashboardsHandler, UserSettingHandler
 from handlers.eva.papers import PaperLoadHandler, PapersHandler, PaperHandler
+from handlers.eva.svg_load import SvgLoadHandler
 
 from handlers.eva.theme import ThemeListHandler, ThemeGetHandler, ThemeHandler
 from handlers.eva.timelines import GetTimelines
@@ -42,7 +43,7 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, ISG Neuro"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "1.11.0"
+__version__ = "1.12.0"
 __maintainer__ = "Egor Lukyanov"
 __email__ = "astarchenkov@ot.ru"
 __status__ = "Production"
@@ -135,6 +136,7 @@ def main():
     user_conf = dict(config['user'])
     pool_conf = dict(config['db_pool_conf'])
     notification_conf = dict(config['notification_triggers']) if 'notification_triggers' in config else dict()
+    file_upload_conf = dict(config['file_upload']) if 'file_upload' in config else dict()
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -162,9 +164,11 @@ def main():
     # Set TORNADO application with custom handlers.
     application = Tornado([
         (r'/api/ping', PingPong),
-        (r'/api/checkjob', CheckJob, {"manager": manager, "notification_conf": notification_conf, "db_conn_pool": db_pool}),
+        (r'/api/checkjob', CheckJob, {"manager": manager, "notification_conf": notification_conf,
+                                      "db_conn_pool": db_pool}),
         (r'/api/getresult', GetResult, {"mem_conf": mem_conf, "static_conf": static_conf}),
-        (r'/api/gettimelines', GetTimelines, {"mem_conf": mem_conf, "static_conf": static_conf}),
+        (r'/api/gettimelines', GetTimelines, {"mem_conf": mem_conf, "static_conf": static_conf,
+                                              "notification_conf": notification_conf}),
         (r'/api/getinterestingfields', GetInterestingFields, {"mem_conf": mem_conf, "static_conf": static_conf}),
         (r'/api/makejob', MakeJob, {"db_conn_pool": db_pool_eva, "manager": manager, "user_conf": user_conf}),
         (r'/api/loadjob', LoadJob, {"manager": manager}),
@@ -207,9 +211,9 @@ def main():
         (r'/api/dash/export', DashExportHandler, {"db_conn_pool": db_pool_eva, "static_conf": static_conf}),
         (r'/api/dash/import', DashImportHandler, {"db_conn_pool": db_pool_eva}),
         (r'/api/dashByName', DashByNameHandler, {"db_conn_pool": db_pool_eva}),
-        
 
-        (r'/api/load/svg', SvgLoadHandler, {"db_conn_pool": db_pool_eva, "static_conf": static_conf}),
+        (r'/api/load/svg', SvgLoadHandler, {"db_conn_pool": db_pool_eva, 'file_upload_conf': file_upload_conf,
+                                            'static_conf': static_conf}),
 
         (r'/qapi/quizs', QuizsHandler, {"db_conn_pool": db_pool_eva}),
         (r'/qapi/quiz', QuizHandler, {"db_conn_pool": db_pool_eva}),

@@ -1,5 +1,9 @@
+import os
+import shutil
 import unittest
 from configparser import ConfigParser
+from io import BytesIO
+
 from handlers.jobs.db_connector import PostgresConnector
 
 from rest.checkjob_tester import CheckjobTester
@@ -10,6 +14,8 @@ from rest.eva_tester import EvaTester
 from rest.quizs_tester import QuizsTester
 
 from psycopg2.pool import ThreadedConnectionPool
+
+from tests.rest.svg_tester import SvgTester
 
 
 class TestCheckJob(unittest.TestCase):
@@ -32,12 +38,14 @@ class TestCheckJob(unittest.TestCase):
     config.set('db_conf', 'user', 'tester')
     config.set('db_conf', 'password', 'password')
     config.set('db_conf', 'host', 'localhost')
+    config.add_section('mem_conf')
+    config.set('mem_conf', 'path', '/tmp/caches')
 
     otl = '| ot ttl=60 | makeresults count=10 | simple'
     pool = ThreadedConnectionPool(2, 4, **dict(config['db_conf']))
     db = PostgresConnector(pool)
 
-    tester = CheckjobTester(db, dict(config['rest_conf']))
+    tester = CheckjobTester(db, dict(config['rest_conf']), path=dict(config['mem_conf'])['path'])
     tester.set_query(otl)
 
     def test__no_job(self):
@@ -61,6 +69,8 @@ class TestCheckJob(unittest.TestCase):
     def test__canceled(self):
         self.assertTrue(self.tester.test__canceled())
 
+    def test__limited_data(self):
+        self.assertTrue(self.tester.test__limited_data())
 
 class TestMakeJob(unittest.TestCase):
     """
@@ -426,3 +436,52 @@ class TestQuizs(unittest.TestCase):
 
     def test__get_catalogs_list(self):
         self.assertTrue(self.tester.test__get_catalogs_list())
+
+
+class TestSvgLoad(unittest.TestCase):
+    """
+        Test suite for /load/svg OT_REST endpoint.
+        Test cases:
+        - load svg
+        - load duplicate name svg
+        - delete existing svg
+        - delete non-existant svg
+        """
+    config = ConfigParser()
+    config.add_section('rest_conf')
+    config.set('rest_conf', 'host', 'localhost')
+    config.set('rest_conf', 'port', '50000')
+    config.add_section('static')
+    config.set('static', 'static_path', '/opt/otp/static/')
+    config.add_section('file_upload')
+    config.set('file_upload', 'svg_path', '/opt/otp/static/svg/')
+
+    def setUp(self) -> None:
+        self.svg_path = self.config['file_upload']['svg_path']
+        if not os.path.exists(self.svg_path):
+            root_dir = self.svg_path
+            while not os.path.exists(root_dir):
+                root_dir = os.path.dirname(root_dir)
+            self.cleanup_dir = root_dir
+            os.makedirs(self.svg_path)
+        else:
+            self.cleanup_dir = None
+        self.test_file = BytesIO(b'this is a test file')
+
+        self.tester = SvgTester(dict(self.config['rest_conf']), self.config['static']['static_path'], self.test_file)
+
+    def tearDown(self) -> None:
+        if self.cleanup_dir is not None:
+            shutil.rmtree(self.config['file_upload']['svg_path'])
+
+    def test__load_svg(self):
+        self.assertTrue(self.tester.test__load_svg())
+
+    def test__load_duplicate(self):
+        self.assertTrue(self.tester.test__load_duplicate())
+
+    def test__delete_svg(self):
+        self.assertTrue(self.tester.test__delete_svg())
+
+    def test__delete_nonexistent(self):
+        self.assertTrue(self.tester.test__delete_nonexistent())

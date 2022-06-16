@@ -1,4 +1,6 @@
+import os
 import uuid
+import shutil
 import re
 from datetime import datetime
 
@@ -17,9 +19,10 @@ class CheckjobTester:
     - status is 'canceled'
     """
 
-    def __init__(self, db, config):
+    def __init__(self, db, config, path):
         self.db = db
         self.config = config
+        self.cache_dir = path
 
         self._current_otl = None
 
@@ -90,12 +93,37 @@ class CheckjobTester:
         resp.raise_for_status()
         return resp.json()
 
+    def prepare_limited_data(self, cid):
+        full_path = os.path.join(self.cache_dir, f'search_{cid}.cache/data/')
+        try:
+            os.makedirs(full_path, exist_ok=True)
+        except PermissionError as err:
+            print(err)
+        file = open(os.path.join(full_path, 'data_part_000.json'), 'a')
+        file.write("{'t': '0'}\n" * 1000000)
+        file.close()
+        open(os.path.join(full_path, '_SCHEMA'), 'a').close()
+
+    def prepare_data(self, cid):
+        full_path = os.path.join(self.cache_dir, f'search_{cid}.cache/data/')
+        try:
+            os.makedirs(full_path, exist_ok=True)
+        except PermissionError as err:
+            print(err)
+        open(os.path.join(full_path, 'data_part_000.json'), 'a').close()
+        open(os.path.join(full_path, '_SCHEMA'), 'a').close()
+
     def _cleanup(self):
         del_ticks_query = f"""DELETE FROM Ticks WHERE applicationId='test_app';"""
         del_otl_query = f"""DELETE FROM OTLQueries WHERE original_otl='{self.original_otl}';"""
         del_cache_query = f"""DELETE FROM cachesdl WHERE original_otl='{self.original_otl}';"""
         for query in [del_cache_query, del_ticks_query, del_otl_query]:
             self.db.execute_query(query, with_commit=True, with_fetch=False)
+
+    def _cleanup_data(self, cid):
+        full_path = os.path.join(self.cache_dir, f'search_{cid}.cache')
+        if os.path.exists(full_path):
+            shutil.rmtree(full_path)
 
     def test__no_job(self):
         try:
@@ -124,13 +152,16 @@ class CheckjobTester:
         return resp == {'status': 'running'}
 
     def test__finished(self):
+        job_id = 0
         try:
             job_id = self.add_job_with_cache()
             self.update_job_status('finished', job_id)
+            self.prepare_data(job_id)
             resp = self.send_request()
         finally:
             self._cleanup()
-        return resp == {'status': 'success', 'cid': job_id}
+            self._cleanup_data(job_id)
+        return resp == {'status': 'success', 'cid': job_id, 'lines': 0}
 
     def test__finished_nocache(self):
         try:
@@ -155,3 +186,15 @@ class CheckjobTester:
         finally:
             self._cleanup()
         return resp['status'] == 'canceled'
+
+    def test__limited_data(self):
+        job_id = 0
+        try:
+            job_id = self.add_job_with_cache()
+            self.update_job_status('finished', job_id)
+            self.prepare_limited_data(job_id)
+            resp = self.send_request()
+        finally:
+            self._cleanup()
+            self._cleanup_data(job_id)
+        return {'code': 2, 'value': 1000000} in resp.get('notifications', [])

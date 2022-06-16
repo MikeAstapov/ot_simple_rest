@@ -41,7 +41,6 @@ class MakeJob(BaseHandler):
         :return:
         """
         super().initialize(kwargs['db_conn_pool'])
-        self.handler_id = str(uuid.uuid4())
         self.user_conf = kwargs['user_conf']
         self.check_index_access = False if self.user_conf['check_index_access'] == 'False' else True
         self.jobs_manager = kwargs['manager']
@@ -98,7 +97,7 @@ class MakeJob(BaseHandler):
         :type indexes: List.
         :return: Boolean access flag and resolved indexes.
         """
-        self.logger.debug(f'Indexes: {indexes}')
+        self.logger.debug(f'Indexes: {indexes}', extra={'hid': self.handler_id})
         if not indexes:
             return True, indexes
 

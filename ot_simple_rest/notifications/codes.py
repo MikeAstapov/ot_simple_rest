@@ -1,3 +1,4 @@
 
 
 TOO_MANY_JOBS = 1
+LIMITED_DATA = 2
