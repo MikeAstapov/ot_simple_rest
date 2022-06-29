@@ -62,7 +62,7 @@ class LoadJob(tornado.web.RequestHandler):
         :return:
         """
         try:
-            response, strnum = self.jobs_manager.load_job(hid=self.handler_id,
+            response = self.jobs_manager.load_job(hid=self.handler_id,
                                                 request=self.request)
         except Exception as e:
             error = {'status': 'error', 'msg': str(e)}

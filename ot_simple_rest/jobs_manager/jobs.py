@@ -321,7 +321,7 @@ class Job:
                     self.logger.info(f'Cache cid={cid} was loaded.', extra={'hid': self.handler_id})
                 else:
                     self.logger.info(f'Cache for task_id={cid} was found.', extra={'hid': self.handler_id})
-                    response = {'status': 'success', 'cid': cid, 'lines': count_lines(self._get_cache_dir(cid))}
+                    response = {'status': 'success', 'cid': cid}
             elif status == 'finished' and not expiring_date:
                 response = {'status': 'nocache', 'error': 'No cache for this job'}
             elif status in ['new', 'running']:
