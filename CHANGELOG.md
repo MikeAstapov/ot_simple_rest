@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added 
 - Multiline OTL support
+- POST request for check job
 
 ## [1.12.0] - 2022-06-16
 ### Added 
