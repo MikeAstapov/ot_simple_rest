@@ -87,5 +87,6 @@ class CheckJob(tornado.web.RequestHandler):
         Surprise: it writes response to remote side!
         """
         kwargs = json.loads(self.request.body.decode())
+        kwargs = {k: (str(v).encode(),) for k, v in kwargs.items()}
         self.request.arguments = kwargs
         await self._check_job()
