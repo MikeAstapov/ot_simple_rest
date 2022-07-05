@@ -150,7 +150,7 @@ class Job:
     def get_request_params(self):
         request = self.request.arguments
         # Remove OT.Simple OTP app service data from OTP query.
-        original_otl = re.sub('[\r\n]', '', request["original_otl"][0].decode())
+        original_otl = self.preprocess_otl(request["original_otl"][0].decode())
         cache_ttl = re.findall(r"\|\s*ot[^|]*ttl\s*=\s*(\d+)", original_otl)
         cache_ttl = int(cache_ttl[0]) if cache_ttl else int(request['cache_ttl'][0])
         field_extraction = re.findall(r"\|\s*ot[^|]*field_extraction\s*=\s*(\S+)", original_otl)
@@ -175,6 +175,13 @@ class Job:
 
         return {'original_otl': original_otl, 'field_extraction': field_extraction,
                 'preview': preview, 'tws': tws, 'twf': twf, 'cache_ttl': cache_ttl}
+
+    def preprocess_otl(self, original_otl: str) -> str:
+        """
+        Applies all necessary changes to format raw otl
+        """
+        pattern_to_remove = '[\r\n]'
+        return re.sub(pattern_to_remove, '', original_otl)
 
     def resolve(self):
         """
