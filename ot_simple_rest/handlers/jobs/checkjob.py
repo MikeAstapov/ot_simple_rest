@@ -1,3 +1,4 @@
+import json
 import logging
 import uuid
 import tornado.web
@@ -60,12 +61,7 @@ class CheckJob(tornado.web.RequestHandler):
             self.logger.debug(f'Error_msg: {error_msg}', extra={'hid': self.handler_id})
             self.finish(error_msg)
 
-    async def get(self):
-        """
-        It writes response to remote side.
-
-        :return:
-        """
+    async def _check_job(self):
         try:
             response = self.jobs_manager.check_job(hid=self.handler_id, request=self.request)
             notifications = self.notification_checker.check_notifications(**response)
@@ -77,3 +73,20 @@ class CheckJob(tornado.web.RequestHandler):
             return self.write(error)
         self.logger.debug(f'CheckJob RESPONSE: {response}', extra={'hid': self.handler_id})
         self.write(response)
+
+    async def get(self):
+        """
+        It writes response to remote side.
+
+        :return:
+        """
+        await self._check_job()
+
+    async def post(self):
+        """
+        Surprise: it writes response to remote side!
+        """
+        kwargs = json.loads(self.request.body.decode())
+        kwargs = {k: (str(v).encode(),) for k, v in kwargs.items()}
+        self.request.arguments = kwargs
+        await self._check_job()
