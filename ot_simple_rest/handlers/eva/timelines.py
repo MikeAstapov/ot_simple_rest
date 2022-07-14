@@ -44,18 +44,18 @@ class GetTimelines(tornado.web.RequestHandler):
         is_one_timeline: bool = interval and interval in {'minutes', 'hours', 'days', 'months'}
 
         try:
-            data, fresh_time, total_lines = self.loader.load_data(cid)  # fresh_time indicates last time interval in all timelines
+            data = self.loader.load_data(cid)
             if is_one_timeline:
                 if interval == 'minutes':
-                    response = self.builder.get_minutes_timeline(data, fresh_time)
+                    response = self.builder.get_minutes_timeline(data)
                 elif interval == 'hours':
-                    response = self.builder.get_hours_timeline(data, fresh_time)
+                    response = self.builder.get_hours_timeline(data)
                 elif interval == 'days':
-                    response = self.builder.get_days_timeline(data, fresh_time)
+                    response = self.builder.get_days_timeline(data)
                 else:
-                    response = self.builder.get_months_timeline(data, fresh_time)
+                    response = self.builder.get_months_timeline(data)
             else:
-                response = self.builder.get_all_timelines(data, fresh_time)
+                response = self.builder.get_all_timelines(data)
         except tornado.web.HTTPError as e:
             return self.write(json.dumps({'status': 'failed', 'error': e}, default=str))
         except KeyError:
