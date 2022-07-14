@@ -4,6 +4,7 @@ from notifications.handlers import LimitedDataNotification
 import tornado.web
 from tools.timelines_builder import TimelinesBuilder
 from tools.timelines_loader import TimelinesLoader
+from tools.timelines_filterer import TimelinesFilterer
 from typing import Dict
 
 __author__ = "Ilia Sagaidak"
@@ -40,9 +41,11 @@ class GetTimelines(tornado.web.RequestHandler):
         interval = params.get('interval')
         if interval:  # field is optional, by default all 4 timelines are returned
             interval = interval[0].decode()
+        is_one_timeline: bool = interval and interval in {'minutes', 'hours', 'days', 'months'}
+
         try:
             data, fresh_time, total_lines = self.loader.load_data(cid)  # fresh_time indicates last time interval in all timelines
-            if interval and interval in {'minutes', 'hours', 'days', 'months'}:
+            if is_one_timeline:
                 if interval == 'minutes':
                     response = self.builder.get_minutes_timeline(data, fresh_time)
                 elif interval == 'hours':
@@ -59,4 +62,8 @@ class GetTimelines(tornado.web.RequestHandler):
             return self.write(json.dumps({'status': 'failed', 'error': "'_time' column is missing"}, default=str))
         except Exception as e:
             return self.write(json.dumps({'status': 'failed', 'error': f'{e} cid {cid}'}, default=str))
-        self.write(json.dumps(response))
+
+        if is_one_timeline:
+            self.write(json.dumps(TimelinesFilterer.remove_empty_intervals(response)))
+        else:
+            self.write(json.dumps(TimelinesFilterer.remove_empty_intervals_many_timelines(response)))

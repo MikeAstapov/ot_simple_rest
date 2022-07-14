@@ -91,7 +91,7 @@ class TimelinesBuilder:
         for elem in data:
             elem = datetime.fromtimestamp(elem)
             if elem >= old_time:
-                timeline[self.find_index_in_timeline(old_time, elem, TimeIntervals.MINUTES)]['value'] += 1
+                timeline[self.find_index_in_timeline(old_time, elem, step)]['value'] += 1
             else:
                 break
         return timeline
