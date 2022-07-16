@@ -4,7 +4,6 @@ from notifications.handlers import LimitedDataNotification
 import tornado.web
 from tools.timelines_builder import TimelinesBuilder
 from tools.timelines_loader import TimelinesLoader
-from tools.timelines_filterer import TimelinesFilterer
 from typing import Dict
 
 __author__ = "Ilia Sagaidak"
@@ -63,7 +62,4 @@ class GetTimelines(tornado.web.RequestHandler):
         except Exception as e:
             return self.write(json.dumps({'status': 'failed', 'error': f'{e} cid {cid}'}, default=str))
 
-        if is_one_timeline:
-            self.write(json.dumps(TimelinesFilterer.remove_empty_intervals(response)))
-        else:
-            self.write(json.dumps(TimelinesFilterer.remove_empty_intervals_many_timelines(response)))
+        self.write(json.dumps(response))
