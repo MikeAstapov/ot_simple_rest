@@ -1,6 +1,6 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from typing import List, Dict, Tuple
+from typing import List, Dict
 
 
 class TimeIntervals:
