@@ -26,10 +26,12 @@ class SvgLoadHandler(BaseHandler):
             tornado.httputil.parse_body_arguments(self.request.headers['Content-Type'], body, args, files)
             _file = files['file'][0]
             named_as = self.svg_manager.write(_file['filename'], _file['body'])
-            self.write(json.dumps({'status': 'ok', 'filename': named_as}))
+            response = {'status': 'ok', 'filename': named_as, 'notifications': [{'code': 3}]}
+            self.write(json.dumps(response))
         except Exception as e:
             self.logger.error(f'Error while writing file: {e}')
-            self.write(json.dumps({'status': 'failed', 'error': f'{e}'}, default=str))
+            response = {'status': 'failed', 'error': f'{e}', 'notifications': [{'code': 4}]}
+            self.write(json.dumps(response))
 
     async def delete(self):
         try:
