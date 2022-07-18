@@ -35,8 +35,22 @@ class GetInterestingFields(tornado.web.RequestHandler):
     async def get(self):
         params = self.request.query_arguments
         cid = params.get('cid')[0].decode()
+        from_time = params.get('from')
+        to_time = params.get('to')
+        if from_time:
+            from_time = from_time[0].decode()
+            if not from_time.isdigit():
+                return self.write(json.dumps({'status': 'failed', 'error': f'from: {from_time} not a number'},
+                                             default=str))
+            from_time = int(from_time)
+        if to_time:
+            to_time = to_time[0].decode()
+            if not to_time.isdigit():
+                return self.write(json.dumps({'status': 'failed', 'error': f'to: {to_time} not a number'},
+                                             default=str))
+            to_time = int(to_time)
         try:
-            data = self.loader.load_data(cid)
+            data = self.loader.load_data(cid, from_time, to_time)
             interesting_fields = self.builder.get_interesting_fields(data)
         except tornado.web.HTTPError as e:
             return self.write(json.dumps({'status': 'failed', 'error': e}, default=str))
