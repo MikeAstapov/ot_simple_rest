@@ -2,7 +2,7 @@ from .base_loader import BaseLoader
 import os
 import pandas as pd
 from pandas import DataFrame as PandasDataFrame
-from typing import Dict
+from typing import Dict, Optional
 
 
 class InterestingFieldsLoader(BaseLoader):
@@ -14,11 +14,13 @@ class InterestingFieldsLoader(BaseLoader):
     def __init__(self, mem_conf: Dict, static_conf: Dict):
         super().__init__(mem_conf, static_conf)
 
-    def load_data(self, cid: str) -> PandasDataFrame:
+    def load_data(self, cid: str, from_time: Optional[int] = None, to_time: Optional[int] = None) -> PandasDataFrame:
         """
         Load data by cid
 
         :param cid:         OT_Dispatcher's job cid
+        :param from_time:         loads data from that moment
+        :param to_time:         loads data till that moment
         :return:            pandas dataframe
         """
         data = None
@@ -31,4 +33,8 @@ class InterestingFieldsLoader(BaseLoader):
                 data = df
             else:
                 data.append(df, ignore_index=True)
+        if from_time:
+            data = data[data['_time'] >= from_time]
+        if to_time:
+            data = data[data['_time'] <= to_time]
         return data

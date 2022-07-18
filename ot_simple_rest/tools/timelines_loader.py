@@ -12,10 +12,12 @@ class TimelinesLoader(BaseLoader):
     def __init__(self, mem_conf: Dict, static_conf: Dict):
         super().__init__(mem_conf, static_conf)
 
-    def load_data(self, cid: str) -> List[int]:
+    def load_data(self, cid: str, from_time: Optional[int] = None, to_time: Optional[int] = None) -> List[int]:
         """
         Load data by cid
         :param cid:         OT_Dispatcher's job cid
+        :param from_time:         not relevant for this class
+        :param to_time:         not relevant for this class
         :return:            list of timestamps and last_timestamp
         """
         data = []
