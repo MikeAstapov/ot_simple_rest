@@ -28,7 +28,7 @@ class InterestingFieldsLoader(BaseLoader):
         file_names = self._get_cache_file_names(path_to_cache_dir, cid)
         for file_name in file_names:
             self.logger.debug(f'Reading part: {file_name}')
-            df = pd.read_json(os.path.join(path_to_cache_dir, file_name), lines=True, convert_dates=False)
+            df = pd.read_json(file_name, lines=True, convert_dates=False)
             if not data:
                 data = df
             else:
