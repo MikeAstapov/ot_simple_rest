@@ -29,6 +29,16 @@ CREATE TABLE CachesDL (
     UNIQUE(original_otl, tws, twf, field_extraction, preview)
 );
 
+CREATE extension pgcrypto;
+
+create unique index concurrently cachesdl_original_otl_tws_twf_field_extraction_preview_key ON cachesdl USING btree(
+	digest("original_otl", 'sha512'::text),
+	tws,
+	twf,
+	field_extraction,
+	preview
+);
+
 CREATE TABLE CachesLock (
     id INTEGER,
     locker INTEGER,

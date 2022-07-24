@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Timelines now filter 0 values and are not limited with 50 points
 - Timelines can now be called separately
 
+### Fixed
+- Return code status with svg uploading
+- Max svg size not more 1 Mb
+- Cache long SQL-queries
+
+### Changed
+- Documentation; new requirement lib postgresql-contrib.
+- SQL-scripts. Update old and add transit.
+
 ## [1.13.0] - 2022-07-14
 ### Added 
 - Multiline OTL support
