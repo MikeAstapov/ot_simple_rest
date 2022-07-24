@@ -17,10 +17,11 @@ You need:
 * Install ImageMagick-devel.  
 * Install poppler-utils.  
 * Install ExifTool.  
+* Install postgresql-contrib.
 
 For Centos:
 
-```yum install python3 postgresql-server postgresql-devel ImageMagick-devel perl-Image-ExifTool.noarch libreoffice poppler-utils```
+```yum install python3 postgresql-server postgresql-devel postgresql-contrib ImageMagick-devel perl-Image-ExifTool.noarch libreoffice poppler-utils```
 
 ### Installing
 
