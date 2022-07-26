@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import logging
 
 import tornado.web
@@ -10,6 +11,8 @@ from tools.svg_manager import SVGManager
 
 
 class SvgLoadHandler(BaseHandler):
+
+    MAX_FILE_SIZE = 1024
 
     def initialize(self, **kwargs):
         super().initialize(kwargs['db_conn_pool'])
@@ -25,11 +28,19 @@ class SvgLoadHandler(BaseHandler):
             args, files = {}, {}
             tornado.httputil.parse_body_arguments(self.request.headers['Content-Type'], body, args, files)
             _file = files['file'][0]
-            named_as = self.svg_manager.write(_file['filename'], _file['body'])
-            self.write(json.dumps({'status': 'ok', 'filename': named_as}))
+            if sys.getsizeof(_file) > self.MAX_FILE_SIZE:
+                error_msg = f'File size more than 1 Mb; must be less.'
+                self.logger.error(error_msg)
+                response = {'status': 'failed', 'error': f'{error_msg}', 'notifications': [{'code': 4}]}
+                self.write(json.dumps(response))
+            else:
+                named_as = self.svg_manager.write(_file['filename'], _file['body'])
+                response = {'status': 'ok', 'filename': named_as, 'notifications': [{'code': 3}]}
+                self.write(json.dumps(response))
         except Exception as e:
             self.logger.error(f'Error while writing file: {e}')
-            self.write(json.dumps({'status': 'failed', 'error': f'{e}'}, default=str))
+            response = {'status': 'failed', 'error': f'{e}', 'notifications': [{'code': 4}]}
+            self.write(json.dumps(response))
 
     async def delete(self):
         try:

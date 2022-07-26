@@ -1,7 +1,7 @@
 import logging
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generator
+from typing import Any, Dict, Generator, Optional
 from pathlib import Path
 from tornado.web import HTTPError
 
@@ -31,7 +31,7 @@ class BaseLoader(ABC):
         return Path(path_to_cache_dir).glob('*.json')
 
     @abstractmethod
-    def load_data(self, cid: str) -> Any:
+    def load_data(self, cid: str, from_time: Optional[int] = None, to_time: Optional[int] = None) -> Any:
         """Implement data loading"""
         raise NotImplementedError
 

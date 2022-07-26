@@ -58,7 +58,7 @@ class SvgTester:
             resp = self.send_request(endpoint=self.endpoint, method='POST', files=files)
         finally:
             self.__cleanup_data('file')
-        return resp == {'status': 'ok', 'filename': 'file'}
+        return resp == {'status': 'ok', 'filename': 'file', 'notifications': [{'code': 3}]}
 
     def test__load_duplicate(self):
         try:
@@ -72,7 +72,7 @@ class SvgTester:
         finally:
             self.__cleanup_data('file')
             self.__cleanup_data('file_1')
-        return resp == {'status': 'ok', 'filename': 'file_1'}
+        return resp == {'status': 'ok', 'filename': 'file_1', 'notifications': [{'code': 3}]}
 
     def test__delete_svg(self):
         try:

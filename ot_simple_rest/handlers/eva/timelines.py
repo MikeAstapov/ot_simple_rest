@@ -37,14 +37,29 @@ class GetTimelines(tornado.web.RequestHandler):
     async def get(self):
         params = self.request.query_arguments
         cid = params.get('cid')[0].decode()
-        response = dict()
+        interval = params.get('interval')
+        if interval:  # field is optional, by default all 4 timelines are returned
+            interval = interval[0].decode()
+        is_one_timeline: bool = interval and interval in {'minutes', 'hours', 'days', 'months'}
+
         try:
-            data, fresh_time, total_lines = self.loader.load_data(cid)  # fresh_time indicates last time interval in all timelines
-            response = self.builder.get_all_timelines(data, fresh_time)
+            data = self.loader.load_data(cid)
+            if is_one_timeline:
+                if interval == 'minutes':
+                    response = self.builder.get_minutes_timeline(data)
+                elif interval == 'hours':
+                    response = self.builder.get_hours_timeline(data)
+                elif interval == 'days':
+                    response = self.builder.get_days_timeline(data)
+                else:
+                    response = self.builder.get_months_timeline(data)
+            else:
+                response = self.builder.get_all_timelines(data)
         except tornado.web.HTTPError as e:
             return self.write(json.dumps({'status': 'failed', 'error': e}, default=str))
         except KeyError:
             return self.write(json.dumps({'status': 'failed', 'error': "'_time' column is missing"}, default=str))
         except Exception as e:
             return self.write(json.dumps({'status': 'failed', 'error': f'{e} cid {cid}'}, default=str))
+
         self.write(json.dumps(response))

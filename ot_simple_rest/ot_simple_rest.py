@@ -43,9 +43,9 @@ __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, ISG Neuro"
 __credits__ = ["Anton Khromov"]
 __license__ = ""
-__version__ = "1.13.0"
-__maintainer__ = "Egor Lukyanov"
-__email__ = "astarchenkov@ot.ru"
+__version__ = "1.14.0"
+__maintainer__ = "Ilia Sagaidak"
+__email__ = "isagaidak@isgneuro.com"
 __status__ = "Production"
 
 from utils.tornado_mod import Tornado

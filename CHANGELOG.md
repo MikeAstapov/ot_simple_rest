@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2022-07-26
+### Added
+- Interesting fields now can be limited from specified time to specified time
+- Timelines now filter 0 values and are not limited with 50 points
+- Timelines can now be called separately
+- New extension *pgcrypto* in database dispatcher and eva that allows use different hashing functions. 
+For more info read [documentation](https://www.postgresql.org/docs/current/pgcrypto.html).
+- New requirement lib ***postgresql-contrib***
+
+### Fixed
+- Return code status with svg uploading: code 3 - success, code 4 - error.
+- Max svg size not more 1 Mb
+- Allow use long SQL-queries with cache (more 2712 symbols)
+
+### Changed
+- Documentation
+- SQL-scripts. For updating:
+  - recreate users: **./create_user.sh**
+  - apply transfer: **psql -h localhost -d dispatcher -U superuser_dispatcher -a -f update_to_1.14.0.sql**
+
 ## [1.13.0] - 2022-07-14
 ### Added 
 - Multiline OTL support
