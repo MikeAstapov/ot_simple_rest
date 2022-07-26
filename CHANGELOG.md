@@ -9,15 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Interesting fields now can be limited from specified time to specified time
 - Timelines now filter 0 values and are not limited with 50 points
 - Timelines can now be called separately
+- New extension *pgcrypto* in database dispatcher and eva: allow use different hashing functions. 
+For more info read [documentation](https://www.postgresql.org/docs/current/pgcrypto.html).
+- New requirement lib ***postgresql-contrib***
 
 ### Fixed
 - Return code status with svg uploading
 - Max svg size not more 1 Mb
-- Cache long SQL-queries
+- Allow use long SQL-queries with cache (more 2712 symbols)
 
 ### Changed
-- Documentation; new requirement lib postgresql-contrib.
-- SQL-scripts. Update old and add transit.
+- Documentation
+- SQL-scripts. For updating:
+  - recreate users: **./create_user.sh**
+  - apply transfer: **psql -h localhost -d dispatcher -U superuser_dispatcher -a -f  update_to_1.14.0.sql**
 
 ## [1.13.0] - 2022-07-14
 ### Added 

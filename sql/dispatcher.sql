@@ -28,8 +28,6 @@ CREATE TABLE CachesDL (
     expiring_date TIMESTAMPTZ NOT NULL
 );
 
-CREATE extension pgcrypto;
-
 create unique index concurrently cachesdl_original_otl_tws_twf_field_extraction_preview_key ON cachesdl USING btree(
 	digest("original_otl", 'sha512'::text),
 	tws,
