@@ -1,4 +1,5 @@
 from tools.pg_connector import PGConnector
+from utils.hashes import hash512
 
 
 __author__ = "Anton Khromov"
@@ -17,6 +18,7 @@ class PostgresConnector(PGConnector):
 
     def check_cache(self, *, original_otl, tws, twf, field_extraction, preview):
         cache_id = creating_date = None
+        original_otl = hash512(original_otl)
         query_str = "SELECT id, extract(epoch from creating_date) FROM cachesdl WHERE original_otl=%s AND tws=%s AND twf=%s AND field_extraction=%s AND preview=%s;"
         stm_tuple = (original_otl, tws, twf, field_extraction, preview)
         self.logger.info(query_str % stm_tuple)
@@ -78,6 +80,7 @@ class PostgresConnector(PGConnector):
         return cache_id, creating_date
 
     def add_to_cache(self, *, original_otl, tws, twf, cache_id, expiring_date):
+        original_otl = hash512(original_otl)
         query_str = "INSERT INTO CachesDL (original_otl, tws, twf, id, expiring_date) " \
                     "VALUES(%s, %s, %s, %s, to_timestamp(extract(epoch from now()) + %s));"
         stm_tuple = (original_otl, tws, twf, cache_id, expiring_date)

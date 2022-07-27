@@ -25,15 +25,8 @@ CREATE TABLE CachesDL (
     field_extraction BOOLEAN DEFAULT false,
     preview BOOLEAN DEFAULT false,
     creating_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expiring_date TIMESTAMPTZ NOT NULL
-);
-
-create unique index concurrently cachesdl_original_otl_tws_twf_field_extraction_preview_key ON cachesdl USING btree(
-	digest("original_otl", 'sha512'::text),
-	tws,
-	twf,
-	field_extraction,
-	preview
+    expiring_date TIMESTAMPTZ NOT NULL,
+    UNIQUE(original_otl, tws, twf, field_extraction, preview)
 );
 
 CREATE TABLE CachesLock (

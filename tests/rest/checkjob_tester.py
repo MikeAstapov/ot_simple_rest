@@ -3,6 +3,7 @@ import uuid
 import shutil
 import re
 from datetime import datetime
+from utils.hashes import hash512
 
 import requests
 
@@ -69,6 +70,8 @@ class CheckjobTester:
         job_id, _ = self.db.add_job(search=[self.original_otl, self._current_otl], subsearches=[], tws=0,
                                     twf=0, cache_ttl=60, username='tester', field_extraction=False, preview=False)
         self.db.add_to_cache(original_otl=self.original_otl, tws=0, twf=0, cache_id=job_id, expiring_date=1)
+        # import time
+        # time.sleep(100)
         return job_id
 
     def add_job_with_status(self, status):
@@ -81,7 +84,7 @@ class CheckjobTester:
     def original_otl(self):
         original_otl = re.sub(r"\|\s*ot\s[^|]*\|", "", self._current_otl)
         original_otl = re.sub(r"\|\s*simple[^\"]*", "", original_otl)
-        original_otl = original_otl.replace("oteval", "eval")
+        original_otl = original_otl.replace("oteval", "eval ")
         original_otl = original_otl.strip()
         return original_otl
 
@@ -116,7 +119,7 @@ class CheckjobTester:
     def _cleanup(self):
         del_ticks_query = f"""DELETE FROM Ticks WHERE applicationId='test_app';"""
         del_otl_query = f"""DELETE FROM OTLQueries WHERE original_otl='{self.original_otl}';"""
-        del_cache_query = f"""DELETE FROM cachesdl WHERE original_otl='{self.original_otl}';"""
+        del_cache_query = f"""DELETE FROM cachesdl WHERE original_otl='{hash512(self.original_otl)}';"""
         for query in [del_cache_query, del_ticks_query, del_otl_query]:
             self.db.execute_query(query, with_commit=True, with_fetch=False)
 
