@@ -18,21 +18,6 @@ __email__ = "akhromov@ot.ru"
 __status__ = "Production"
 
 
-def count_lines(dir_path):
-    """
-    Count lines in every json file situated in the directory specified
-    @param dir_path: path to the directory
-    @return: total lines count
-    """
-    lines_num = 0
-    for file in Path(dir_path).glob('*.json'):
-        with file.open() as fr:
-            for _ in fr:
-                lines_num += 1
-
-    return lines_num
-
-
 class Job:
     """
     This class contains all of methods for check job status
@@ -55,11 +40,30 @@ class Job:
         self.resolved_data = None
         self.search = None
 
+    @classmethod
+    def count_lines(cls, dir_path):
+        """
+        Count lines in every json file situated in the directory specified
+        @param dir_path: path to the directory
+        @return: total lines count
+        """
+        cls.logger.debug('Starting counting lines...')
+        lines_num = 0
+        for file in Path(dir_path).glob('*.json'):
+            cls.logger.debug(f'File: {file}; lines_num: {lines_num}.')
+            with file.open(encoding='UTF-8') as fr:
+                for _ in fr:
+                    lines_num += 1
+        cls.logger.debug('Success counted lines')
+        return lines_num
+
     def _get_cache_dir(self, cid):
-        return os.path.join(
-            self.mem_conf['path'],
-            f'search_{cid}.cache/data/'
-        )
+        self.logger.debug('Creating path to cache...')
+        path_ = self.mem_conf['path']
+        self.logger.debug('Success got mem conf')
+        path_ = os.path.join(path_, f'search_{cid}.cache/data/')
+        self.logger.debug('Success created path to cache')
+        return path_
 
     def check_dispatcher_status(self):
         delta = self.db.check_dispatcher_status()
@@ -325,10 +329,13 @@ class Job:
                 if with_load:
                     # Step 4. Load results of Job from cache for transcending.
                     response = ''.join(list(self.load_and_send_from_memcache(cid)))
-                    self.logger.info(f'Cache cid={cid} was loaded.', extra={'hid': self.handler_id})
+                    self.logger.info(f'Cache cid={cid} was loaded. Created response: {response}.',
+                                     extra={'hid': self.handler_id})
                 else:
-                    self.logger.info(f'Cache for task_id={cid} was found.', extra={'hid': self.handler_id})
-                    response = {'status': 'success', 'cid': cid, 'lines': count_lines(self._get_cache_dir(cid))}
+                    self.logger.debug(f'Cache for task_id={cid} was found.', extra={'hid': self.handler_id})
+                    response = {'status': 'success', 'cid': cid, 'lines': self.count_lines(self._get_cache_dir(cid))}
+                    self.logger.info(f'Cache for task_id={cid} was found. Created response: {response}.',
+                                     extra={'hid': self.handler_id})
             elif status == 'finished' and not expiring_date:
                 response = {'status': 'nocache', 'error': 'No cache for this job'}
             elif status in ['new', 'running']:
