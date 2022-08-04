@@ -26,7 +26,8 @@ CREATE TABLE CachesDL (
     preview BOOLEAN DEFAULT false,
     creating_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expiring_date TIMESTAMPTZ NOT NULL,
-    UNIQUE(original_otl, tws, twf, field_extraction, preview)
+    hashed_original_otl TEXT NOT NULL,
+    UNIQUE(hashed_original_otl, tws, twf, field_extraction, preview)
 );
 
 CREATE TABLE CachesLock (
