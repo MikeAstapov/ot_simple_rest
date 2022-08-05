@@ -119,7 +119,7 @@ class CheckjobTester:
     def _cleanup(self):
         del_ticks_query = f"""DELETE FROM Ticks WHERE applicationId='test_app';"""
         del_otl_query = f"""DELETE FROM OTLQueries WHERE original_otl='{self.original_otl}';"""
-        del_cache_query = f"""DELETE FROM cachesdl WHERE original_otl='{hash512(self.original_otl)}';"""
+        del_cache_query = f"""DELETE FROM cachesdl WHERE original_otl='{self.original_otl}';"""
         for query in [del_cache_query, del_ticks_query, del_otl_query]:
             self.db.execute_query(query, with_commit=True, with_fetch=False)
 
