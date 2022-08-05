@@ -3,7 +3,6 @@ import uuid
 import shutil
 import re
 from datetime import datetime
-from utils.hashes import hash512
 
 import requests
 
