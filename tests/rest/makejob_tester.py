@@ -2,7 +2,6 @@ import re
 from datetime import datetime
 import uuid
 import time
-from utils.hashes import hash512
 
 import requests
 
@@ -170,7 +169,7 @@ class MakejobTester:
 
     def _cleanup(self):
         del_otl_query = f"""DELETE FROM OTLQueries WHERE original_otl='{self.original_otl}';"""
-        del_cache_query = f"""DELETE FROM cachesdl WHERE original_otl='{hash512(self.original_otl)}';"""
+        del_cache_query = f"""DELETE FROM cachesdl WHERE original_otl='{self.original_otl}';"""
         del_GUISIDs_query = """DELETE FROM GUISIDs;"""
         for query in [del_otl_query, del_cache_query, del_GUISIDs_query]:
             self.db.execute_query(query, with_commit=True, with_fetch=False)
