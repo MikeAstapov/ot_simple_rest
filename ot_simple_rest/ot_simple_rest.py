@@ -42,8 +42,8 @@ from task_scheduler.tasks import DbTasksSchduler
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, ISG Neuro"
 __credits__ = ["Anton Khromov"]
-__license__ = ""
-__version__ = "1.14.3"
+__license__ = "OT.PLATFORM. License agreement."
+__version__ = "1.14.5"
 __maintainer__ = "Ilia Sagaidak"
 __email__ = "isagaidak@isgneuro.com"
 __status__ = "Production"
