@@ -1,3 +1,4 @@
+from typing import List, Dict, Any
 from tools.pg_connector import PGConnector
 from copy import deepcopy
 
@@ -641,6 +642,16 @@ class PostgresConnector(PGConnector):
         dash_id = self.execute_query("SELECT id FROM dash WHERE name = %s;", params=(dash_name,))
         return dash_id
 
+    def _get_dash_groups(self, dash_id: int) -> List[Dict[str, Any]]:
+        return self.execute_query(
+            """
+            SELECT name, "order" FROM dash_group
+            JOIN dash ON dash_group.dash_id=dash.id
+            WHERE dash_id=%s;
+            """,
+            params=(dash_id,), fetchall=True, as_obj=True
+        )
+
     def get_dashs_data(self, *, group_id=None, names_only=False):
         if group_id:
             dashs = self.execute_query("SELECT id, name, body, round(extract(epoch from modified)) as modified "
@@ -654,10 +665,7 @@ class PostgresConnector(PGConnector):
             dashs = [d['name'] for d in dashs]
         else:
             for dash in dashs:
-                groups = self.execute_query('SELECT name FROM "group" WHERE id IN '
-                                            '(SELECT group_id FROM dash_group WHERE dash_id = %s);',
-                                            params=(dash.id,), fetchall=True, as_obj=True)
-                groups = list({v['name']: v for v in groups}.values())
+                groups = self._get_dash_groups(dash.id)
                 dash['groups'] = groups
         return dashs
 
