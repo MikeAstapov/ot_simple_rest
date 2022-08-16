@@ -65,6 +65,7 @@ CREATE TABLE user_group (
 CREATE TABLE dash_group (
     dash_id INT NOT NULL REFERENCES dash(id) ON DELETE CASCADE,
     group_id INT NOT NULL REFERENCES "group"(id) ON DELETE CASCADE,
+    "order" INT NOT NULL DEFAULT -1,
     CONSTRAINT dash_group_id UNIQUE(dash_id, group_id)
 );
 
