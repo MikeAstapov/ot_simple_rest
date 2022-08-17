@@ -474,7 +474,7 @@ class UserSettingHandler(BaseHandler):
         self.logger.debug("User = '%s'" % self.current_user,
                           extra={'hid': self.handler_id})
         user_setting = self.db.get_user_setting(self.current_user)
-        self.logger.debug("Returned user setting jjjj= '%s'" % user_setting)
+        self.logger.debug("Returned user setting jjjj= '%s'" % user_setting, extra={'hid': self.handler_id})
         self.write(user_setting)
 
     async def put(self):
