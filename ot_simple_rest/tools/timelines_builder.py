@@ -1,4 +1,5 @@
 from datetime import datetime
+from dateutil import tz
 from collections import Counter
 from typing import List, Dict
 
@@ -13,7 +14,7 @@ class TimeIntervals:
 class Interval:
     def __init__(self, timestamp: float):
         self._dt: datetime = self._set_interval(
-            datetime.fromtimestamp(timestamp)
+            datetime.fromtimestamp(timestamp, tz=tz.UTC)
         )
 
     def _set_interval(self, dt: datetime):
