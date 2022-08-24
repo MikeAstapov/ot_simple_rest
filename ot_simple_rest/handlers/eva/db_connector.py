@@ -13,6 +13,10 @@ __email__ = "akhromov@ot.ru"
 __status__ = "Production"
 
 
+class QueryError(Exception):
+    pass
+
+
 def flat_to_set(arr):
     return {i[0] for i in arr} if arr else set()
 
