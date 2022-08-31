@@ -103,18 +103,18 @@ class MakeJob(BaseHandler):
 
         accessed_indexes = []
         user_indexes = self.db.get_indexes_data(user_id=self.current_user, names_only=True)
-        self.logger.debug(f'Available indexes for user: {user_indexes}')
+        self.logger.debug(f'Available indexes for user: {user_indexes}', extra={'hid': self.handler_id})
 
         if '*' in user_indexes:
             accessed_indexes.append(EverythingEqual())  # Everything is in the accessed_indexes list
 
         for index in indexes:
-            self.logger.debug(f'Current index in indexes: {index}')
+            self.logger.debug(f'Current index in indexes: {index}', extra={'hid': self.handler_id})
             index = index.replace('"', '').replace('\\', '')
-            self.logger.debug(f'Current index after replace \: {index}')
+            self.logger.debug(f'Current index after replace \: {index}', extra={'hid': self.handler_id})
 
             for _index in user_indexes:
-                self.logger.debug(f'Current _index in user_indexes: {_index}')
+                self.logger.debug(f'Current _index in user_indexes: {_index}', extra={'hid': self.handler_id})
                 indexes_from_rm = re.findall(index.replace("*", ".*"), _index)
                 self.logger.debug(f"Indexes from rm: {indexes_from_rm}. Left index: {index}. "
                                   f"Right index: {_index}.", extra={'hid': self.handler_id})
@@ -123,7 +123,7 @@ class MakeJob(BaseHandler):
                     accessed_indexes += [_index]
 
         self.logger.debug(f'User has a right: {len(accessed_indexes) != 0}', extra={'hid': self.handler_id})
-        self.logger.debug(f'accessed_indexes: {accessed_indexes}')
+        self.logger.debug(f'accessed_indexes: {accessed_indexes}', extra={'hid': self.handler_id})
 
         return accessed_indexes
 
