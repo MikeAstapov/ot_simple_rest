@@ -13,7 +13,7 @@ __status__ = "Production"
 
 
 class PostgresConnector(PGConnector):
-    def __init(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def check_cache(self, *, original_otl, tws, twf, field_extraction, preview):

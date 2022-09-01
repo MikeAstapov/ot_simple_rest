@@ -52,7 +52,7 @@ class LoadJob(tornado.web.RequestHandler):
             error = str(kwargs["exc_info"][1])
             error_msg = {"status": "rest_error", "server_error": self._reason, "status_code": status_code,
                          "error": error}
-            self.logger.debug(f'Error_msg: {error_msg}')
+            self.logger.debug(f'Error_msg: {error_msg}', extra={'hid': self.handler_id})
             self.finish(error_msg)
 
     async def get(self):

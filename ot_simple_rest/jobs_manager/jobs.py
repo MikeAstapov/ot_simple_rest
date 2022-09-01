@@ -2,6 +2,7 @@ import logging
 import re
 import os
 import json
+import uuid
 import asyncio
 from pathlib import Path
 
@@ -24,7 +25,7 @@ class Job:
     and get jobs result from cache.
     """
 
-    logger = logging.getLogger('osr_hid')
+    logger = logging.getLogger('osr')
 
     def __init__(self, *, id, request, db_conn, mem_conf, resolver_conf,
                  tracker_max_interval, indexes=None):
@@ -35,6 +36,8 @@ class Job:
         self.mem_conf = mem_conf
         self.resolver_conf = resolver_conf
         self.tracker_max_interval = tracker_max_interval
+
+        self.logger = logging.getLogger('osr_hid')
 
         self.status = {'status': 'created'}
         self.resolved_data = None
@@ -58,11 +61,11 @@ class Job:
         return lines_num
 
     def _get_cache_dir(self, cid):
-        self.logger.debug('Creating path to cache...')
+        self.logger.debug('Creating path to cache...', extra={'hid': self.handler_id})
         path_ = self.mem_conf['path']
-        self.logger.debug('Success got mem conf')
+        self.logger.debug('Success got mem conf', extra={'hid': self.handler_id})
         path_ = os.path.join(path_, f'search_{cid}.cache/data/')
-        self.logger.debug('Success created path to cache')
+        self.logger.debug('Success created path to cache', extra={'hid': self.handler_id})
         return path_
 
     def check_dispatcher_status(self):

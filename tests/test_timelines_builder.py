@@ -74,14 +74,18 @@ class TestTimelines(unittest.TestCase):
             self.assertEqual(result[i]['value'], 1)
 
     def test_unordered_data(self):
-        self.test_leap_year()
         unordered_data = []
         self.loader.read_file(unordered_data, self.path_beginning +
                                            'builder_data/test_timelines_builder_unordered.json')
         timelines = self.builder.get_all_timelines(unordered_data)
-        self.ordered[0].append({'time': 1583010000.0, 'value': 2})
-        self.ordered[0].append({'time': 1583010060.0, 'value': 1})
-        self.ordered[1].append({'time': 1583010000.0, 'value': 3})
-        self.ordered[2].append({'time': 1583010000.0, 'value': 3})
-        self.ordered[3].append({'time': 1583010000.0, 'value': 3})
-        self.assertEqual(timelines, self.ordered)
+        result = [[{'time': 1456779540.0, 'value': 1}, {'time': 1488315540.0, 'value': 1}, {'time': 1519851540.0, 'value': 1},
+          {'time': 1551387540.0, 'value': 1}, {'time': 1583009940.0, 'value': 1}, {'time': 1583010000.0, 'value': 2},
+          {'time': 1583010060.0, 'value': 1}],
+         [{'time': 1456776000.0, 'value': 1}, {'time': 1488312000.0, 'value': 1}, {'time': 1519848000.0, 'value': 1},
+          {'time': 1551384000.0, 'value': 1}, {'time': 1583006400.0, 'value': 1}, {'time': 1583010000.0, 'value': 3}],
+         [{'time': 1456704000.0, 'value': 1}, {'time': 1488240000.0, 'value': 1}, {'time': 1519776000.0, 'value': 1},
+          {'time': 1551312000.0, 'value': 1}, {'time': 1582934400.0, 'value': 4}],
+         [{'time': 1454284800.0, 'value': 1}, {'time': 1485907200.0, 'value': 1}, {'time': 1517443200.0, 'value': 1},
+          {'time': 1548979200.0, 'value': 1}, {'time': 1580515200.0, 'value': 4}]]
+        self.assertListEqual(result, timelines)
+

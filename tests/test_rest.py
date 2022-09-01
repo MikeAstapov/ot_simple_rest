@@ -72,6 +72,7 @@ class TestCheckJob(unittest.TestCase):
     def test__limited_data(self):
         self.assertTrue(self.tester.test__limited_data())
 
+
 class TestMakeJob(unittest.TestCase):
     """
     Test suite for /api/makejob OT_REST endpoint.

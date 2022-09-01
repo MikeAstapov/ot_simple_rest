@@ -473,23 +473,45 @@ class UserSettingHandler(BaseHandler):
     async def get(self):
         self.logger.debug("User = '%s'" % self.current_user,
                           extra={'hid': self.handler_id})
-        user_setting = self.db.get_user_setting(self.current_user)
-        self.logger.debug("Returned user setting jjjj= '%s'" % user_setting)
+        user_id = self.get_argument('user_id', None)
+        if user_id:
+            user_id = int(user_id)
+
+        # try to get another user settings
+        if user_id and user_id != self.current_user:
+            if 'manage_users' in self.permissions or 'admin_all' in self.permissions:
+                user_setting = self.db.get_user_setting(user_id)
+            else:
+                raise tornado.web.HTTPError(403, str('Not allowed'))
+
+        # try to get current user settings
+        else:
+            user_setting = self.db.get_user_setting(self.current_user)
+        self.logger.debug("Returned user setting jjjj= '%s'" % user_setting, extra={'hid': self.handler_id})
         self.write(user_setting)
 
     async def put(self):
         new_setting = self.data.get("setting", None)
+        user_id = self.data.get('user_id', None)
         if not new_setting:
             raise tornado.web.HTTPError(400, "param 'setting' is needed")
 
         self.logger.debug("User = '%s', with setting = '%s'" % (self.current_user, new_setting),
                           extra={'hid': self.handler_id})
-        try:
-            status = self.db.update_user_setting(self.current_user, new_setting)
-            if status:
-                self.write('{"status": "success"}')
+
+        # try update another user settings
+        if user_id and user_id != self.current_user:
+            if 'manage_users' in self.permissions or 'admin_all' in self.permissions:
+                try:
+                    self.db.update_user_setting(user_id, new_setting)
+                except Exception as err:
+                    raise tornado.web.HTTPError(409, str(err))
             else:
-                raise tornado.web.HTTPError(409, str("Update error"))
-        except Exception as err:
-            raise tornado.web.HTTPError(409, str(err))
-            self.write('{"status": "error"}')
+                raise tornado.web.HTTPError(403, str('Not allowed'))
+        # update current user settings
+        else:
+            try:
+                self.db.update_user_setting(self.current_user, new_setting)
+            except Exception as err:
+                raise tornado.web.HTTPError(409, str(err))
+        self.write('{"status": "success"}')

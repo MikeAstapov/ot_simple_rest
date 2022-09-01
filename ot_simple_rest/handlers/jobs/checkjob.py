@@ -63,15 +63,15 @@ class CheckJob(tornado.web.RequestHandler):
 
     async def _check_job(self):
         try:
-            self.logger.debug('Started check_job...')
+            self.logger.debug('Started check_job...', extra={'hid': self.handler_id})
             response = self.jobs_manager.check_job(hid=self.handler_id, request=self.request)
-            self.logger.debug(f'Success checked job with response: {response}.')
-            self.logger.debug('Started notification_checker...')
+            self.logger.debug(f'Success checked job with response: {response}.', extra={'hid': self.handler_id})
+            self.logger.debug('Started notification_checker...', extra={'hid': self.handler_id})
             notifications = self.notification_checker.check_notifications(**response)
-            self.logger.debug(f'Success checked notification: {notifications}.')
+            self.logger.debug(f'Success checked notification: {notifications}.', extra={'hid': self.handler_id})
             if notifications:
                 response['notifications'] = notifications
-            self.logger.debug('Finished check_job.')
+            self.logger.debug('Finished check_job.', extra={'hid': self.handler_id})
         except Exception as e:
             error = {'status': 'error', 'msg': str(e)}
             self.logger.error(f"CheckJob RESPONSE: {error}", extra={'hid': self.handler_id})
