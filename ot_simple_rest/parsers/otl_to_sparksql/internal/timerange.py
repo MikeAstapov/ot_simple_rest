@@ -19,12 +19,15 @@ class TotalTimeParser:
         FormattedParser: ('current_datetime', 'tz',),
     }
 
-    def __init__(self, current_datetime: datetime = datetime.now(), tz: Optional[timezone] = None):
+    def __init__(self, current_datetime: datetime = None, tz: Optional[timezone] = None):
         """
         Args:
             current_datetime: datetime relative to which to consider the shift
             tz: time zone
         """
+        if current_datetime is None:
+            current_datetime = datetime.now()
+
         self._processor_args2kwargs(locals())
 
     def _processor_args2kwargs(self, locals_init: dict):
@@ -95,12 +98,14 @@ class OTLTimeRangeExtractor:
         otl_cleaned = re.sub(cls.OTL_REGEX, "", line)
         return otl_cleaned, timed_args
 
-    def __init__(self, current_datetime: datetime = datetime.now(), tz: Optional[timezone] = None):
+    def __init__(self, current_datetime: datetime = None, tz: Optional[timezone] = None):
         """
         Args:
             current_datetime: datetime relative to which to consider the shift
             tz: time zone
         """
+        if current_datetime is None:
+            current_datetime = datetime.now()
         self.PARSER = self.PARSER(current_datetime=current_datetime, tz=tz)
 
     def _parse_arg(self, arg: str) -> int or None:

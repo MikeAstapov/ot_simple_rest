@@ -1,3 +1,7 @@
+# [1.15.1] - Hotfix
+### Hotfix
+ - Fixed earliest and latest parsing 
+
 ## [1.15.0] - Release
 ### Fixed
  - Wrong timestamps in Timelines

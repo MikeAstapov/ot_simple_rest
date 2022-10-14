@@ -63,7 +63,9 @@ class NowParser(TimeParser):
 
     PATTERN = ('now', 'now()', 'current')
 
-    def __init__(self, current_datetime: datetime = datetime.now(), tz: Optional[timezone] = None):
+    def __init__(self, current_datetime: datetime = None, tz: Optional[timezone] = None):
+        if current_datetime is None:
+            current_datetime = datetime.now()
         super().__init__(current_datetime=current_datetime, tz=tz)
 
     def parse(self, time_string: str) -> Optional[datetime]:
@@ -105,7 +107,9 @@ class FormattedParser(TimeParser):
 
     """
 
-    def __init__(self, current_datetime: datetime = datetime.now(), tz: Optional[timezone] = None):
+    def __init__(self, current_datetime: datetime = None, tz: Optional[timezone] = None):
+        if current_datetime is None:
+            current_datetime = datetime.now()
         super().__init__(current_datetime=current_datetime, tz=tz)
 
     def parse(self, time_string: str) -> Optional[datetime]:
@@ -170,7 +174,9 @@ class SplunkModifiersParser(TimeParser):
     spliter_regex = r"(\+|-|\@)"
     abbr_regex = r"(\d+)"
 
-    def __init__(self, current_datetime: datetime = datetime.now(), tz: Optional[timezone] = None):
+    def __init__(self, current_datetime: datetime = None, tz: Optional[timezone] = None):
+        if current_datetime is None:
+            current_datetime = datetime.now()
         super().__init__(current_datetime=current_datetime, tz=tz)
         self.res_datetime = None
 
