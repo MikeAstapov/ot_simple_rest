@@ -30,7 +30,7 @@ class TimeParser:
     """
 
     def __init__(self,
-                 current_datetime: datetime = datetime.now(),
+                 current_datetime: datetime = None,
                  tz: Optional[timezone] = None,
                  datetime_format: Optional[str] = None):
         """
@@ -39,6 +39,8 @@ class TimeParser:
             tz: time zone, example: timezone(timedelta(hours=-1))
             datetime_format: datetime format
         """
+        if current_datetime is None:
+            current_datetime = datetime.now()
         self.tz = tz
         self.current_datetime = current_datetime.replace(tzinfo=self.tz)
         self.datetime_format = datetime_format
