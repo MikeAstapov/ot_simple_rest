@@ -650,7 +650,7 @@ class PostgresConnector(PGConnector):
     def _get_dash_groups(self, dash_id: int) -> List[Dict[str, Any]]:
         return self.execute_query(
             """
-            SELECT "group".name, "order" FROM dash_group
+            SELECT "group".id as id, "group".name, "order" FROM dash_group
             JOIN dash ON dash_group.dash_id=dash.id
             JOIN "group" ON dash_group.group_id="group".id
             WHERE dash_id=%s;
@@ -658,7 +658,7 @@ class PostgresConnector(PGConnector):
             params=(dash_id,), fetchall=True, as_obj=True
         )
 
-    def get_dashs_data(self, *, group_id=None, names_only=False):
+    def get_dashs_data(self, *, group_id: str=None, names_only=False):
         if group_id:
             dashs = self.execute_query("SELECT id, name, body, round(extract(epoch from modified)) as modified "
                                        "FROM dash WHERE id IN (SELECT dash_id FROM dash_group WHERE group_id = %s);",
@@ -672,6 +672,12 @@ class PostgresConnector(PGConnector):
         else:
             for dash in dashs:
                 groups = self._get_dash_groups(dash.id)
+                # set order field in dash if group was selected
+                if group_id is not None:
+                    try:
+                        dash['order'] = next(filter(lambda x: str(x['id']) == group_id, groups))['order']
+                    except StopIteration:
+                        pass
                 dash['groups'] = groups
         return dashs
 
