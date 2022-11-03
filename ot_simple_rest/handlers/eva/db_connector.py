@@ -705,14 +705,82 @@ class PostgresConnector(PGConnector):
         if isinstance(group, str):
             self.execute_query(
                 'INSERT INTO dash_group (group_id, dash_id, "order") '
-                'VALUES ((SELECT id FROM "group" WHERE name = %s), %s, -1);',
+                'VALUES ((SELECT id FROM "group" WHERE name = %s), %s, 0);',
                 conn=conn, params=(group, dash_id,), with_fetch=False
             )
+            # add dash in the first position and adjust other dashes
+            self._insert_new_dash_order(dash_id, group, 0, conn)
+
         elif isinstance(group, dict):
             self.execute_query(
                 'INSERT INTO dash_group (group_id, dash_id, "order") '
                 'VALUES ((SELECT id FROM "group" WHERE name = %s), %s, %s);',
                 conn=conn, params=(group['name'], dash_id, group['order']), with_fetch=False
+            )
+            # add dash in specified position and correct other ones
+            self._insert_new_dash_order(dash_id, group['name'], group['order'], conn)
+
+    def _insert_new_dash_order(self, dash_id: int, group_name: str, order: int, conn):
+        # insert dashboard in group
+        self.execute_query(
+            """
+            UPDATE dash_group SET "order" = "order" + 1
+            WHERE dash_id!=%s
+            AND group_id=(SELECT id FROM "group" WHERE name = %s)
+            AND "order" >= %s;
+            """,
+            conn=conn, params=(dash_id, group_name, order,), with_fetch=False
+        )
+
+    def _delete_dash_order(self, dash_id: int, conn):
+        dash_groups = self._get_dash_groups(dash_id)
+        for group in dash_groups:
+            self.execute_query(
+                """
+                UPDATE dash_group SET "order" = "order" - 1
+                WHERE group_id=(SELECT id FROM "group" WHERE name = %s)
+                AND "order" > %s;
+                """,
+                params=(group['name'], group['order'],), with_fetch=False, conn=conn
+            )
+
+    def _change_dashs_order_in_group(self, dash_id: int, group_name: str, new_order: int, conn):
+        """
+        If dash order was change then change all orders between old and new values, with_fetch=False
+        """
+
+        old_order = self.execute_query(
+            """
+            SELECT "order" from dash_group
+            WHERE dash_id=%s
+            AND group_id=(SELECT id FROM "group" WHERE name = %s);
+            """,
+            conn=conn, params=(dash_id, group_name), with_fetch=True
+        )[0]
+
+        if new_order == old_order:
+            return  # nothing to do here
+        elif new_order > old_order:
+            self.execute_query(
+                """
+                UPDATE dash_group SET "order" = "order" - 1
+                WHERE dash_id!=%s
+                AND group_id=(SELECT id FROM "group" WHERE name = %s)
+                AND "order" <= %s
+                AND "order" > %s;
+                """,
+                conn=conn, params=(dash_id, group_name, new_order, old_order), with_fetch=False
+            )
+        else:
+            self.execute_query(
+                """
+                UPDATE dash_group SET "order" = "order" + 1
+                WHERE dash_id!=%s
+                AND group_id=(SELECT id FROM "group" WHERE name = %s)
+                AND "order" >= %s
+                AND "order" < %s;
+                """,
+                conn=conn, params=(dash_id, group_name, new_order, old_order), with_fetch=False
             )
 
     def add_dash(self, *, name, body, groups=None):
@@ -767,6 +835,7 @@ class PostgresConnector(PGConnector):
                     if group_name in groups_for_add:
                         self._add_dash_to_group(dash_id, group, conn)
                     if group_name in current_groups and isinstance(group, dict):
+                        self._change_dashs_order_in_group(dash_id, group_name, group["order"], conn)
                         self.execute_query(
                             """
                             UPDATE dash_group SET "order" = %s
@@ -784,8 +853,10 @@ class PostgresConnector(PGConnector):
         return dash.name, dash.modified
 
     def delete_dash(self, dash_id):
-        self.execute_query("DELETE FROM dash WHERE id = %s;",
-                           params=(dash_id,), with_commit=True, with_fetch=False)
+        with self.transaction('delete_dash') as conn:
+            self._delete_dash_order(dash_id, conn)
+            self.execute_query("DELETE FROM dash WHERE id = %s;",
+                               params=(dash_id,), with_commit=True, with_fetch=False, conn=conn)
         return dash_id
 
     # __QUIZS__ ###############################################################
