@@ -744,10 +744,10 @@ class PostgresConnector(PGConnector):
             self.execute_query(
                 """
                 UPDATE dash_group SET "order" = "order" - 1
-                WHERE group_id=(SELECT id FROM "group" WHERE name = %s)
+                WHERE group_id=%s
                 AND "order" > %s;
                 """,
-                params=(group['name'], group['order'],), with_fetch=False, conn=conn
+                params=(group['id'], group['order'],), with_fetch=False, conn=conn
             )
 
     def _change_dashs_order_in_group(self, dash_id: int, group_name: str, new_order: int, conn):
