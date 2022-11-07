@@ -1,3 +1,9 @@
+## [1.16.0] - Release
+### Fixed
+- Recalculate all dashboards orders in group when one dashboard changes position
+### Added
+- order field in `/dashs/id=<group_id>` endpoint for dashboard when group id is provided
+
 # [1.15.1] - Hotfix
 ### Hotfix
  - Fixed earliest and latest parsing 
