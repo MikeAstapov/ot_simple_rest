@@ -14,6 +14,9 @@ class Settings(BaseHandler):
         self.write({'setting': setting})
 
     async def post(self):
+        if 'admin_all' not in self.permissions:
+            raise tornado.web.HTTPError(403, 'Not allowed')
+
         setting_name = self.data.get('name', None)
         setting_body = self.data.get('body', "")
         if not setting_name:
@@ -28,6 +31,9 @@ class Settings(BaseHandler):
         self.write({'id': new_setting_id})
 
     async def put(self):
+        if 'admin_all' not in self.permissions:
+            raise tornado.web.HTTPError(403, 'Not allowed')
+
         setting_id = self.data.get('id', None)
         if not setting_id:
             raise tornado.web.HTTPError(400, "param 'id' is needed")
