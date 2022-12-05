@@ -1159,29 +1159,38 @@ class PostgresConnector(PGConnector):
         return theme_name
 
     def get_setting(self, setting_id):
-        setting_data = self.execute_query(
-            """
-            SELECT id, name, body
-            FROM settings WHERE id = %s;
-            """,
-            params=(setting_id,), as_obj=True
-        )
-        if not setting_data:
-            raise ValueError(f'Setting with id={setting_id} is not exists')
+        if setting_id:
+            setting_data = self.execute_query(
+                """
+                SELECT id, name, body
+                FROM settings WHERE id = %s;
+                """,
+                params=(setting_id,), as_obj=True,
+            )
+            if not setting_data:
+                raise ValueError(f'Setting with id={setting_id} is not exists')
+        else:
+            setting_data = self.execute_query(
+                """
+                SELECT id, name, body
+                FROM settings;
+                """,
+                params=(), as_obj=True, fetchall=True
+            )
 
         return setting_data
 
     def update_setting(self, *, setting_id, name, body):
-        setting_name = self.execute_query("SELECT name FROM setting WHERE id = %s;", params=(setting_id,))
+        setting_name = self.execute_query("SELECT name FROM settings WHERE id = %s;", params=(setting_id,))
         if not setting_name:
             raise QueryError(f'Setting with id={setting_id} is not exists')
 
         with self.transaction('update_setting_data') as conn:
             if name:
-                self.execute_query("UPDATE setting SET name = %s WHERE id = %s;",
+                self.execute_query("UPDATE settings SET name = %s WHERE id = %s;",
                                    conn=conn, params=(name, setting_id), with_fetch=False)
             if body:
-                self.execute_query("UPDATE setting SET body = %s WHERE id = %s;",
+                self.execute_query("UPDATE settings SET body = %s WHERE id = %s;",
                                    conn=conn, params=(body, setting_id), with_fetch=False)
 
     def add_setting(self, *, name, body):
@@ -1189,17 +1198,19 @@ class PostgresConnector(PGConnector):
         if setting_id:
             raise QueryError(f'Setting with name={name} is already exists')
 
-        setting = self.execute_query(
-            """
-            INSERT INTO settings (name, body) VALUES (%s, %s) 
-            RETURNING id;
-            """,
-            params=(name, body,), as_obj=True)
+        with self.transaction('add_setting') as conn:
+            setting = self.execute_query(
+                """
+                INSERT INTO settings (name, body) VALUES (%s, %s) 
+                RETURNING id;
+                """,
+                params=(name, body,), conn=conn, as_obj=True)
         return setting.id
 
     def delete_setting(self, setting_id):
-        self.execute_query(
-             "DELETE FROM settings WHERE id = %s;",
-             params=(setting_id,), with_commit=True, with_fetch=False
-        )
+        with self.transaction('delete_setting') as conn:
+            self.execute_query(
+                 "DELETE FROM settings WHERE id = %s;",
+                 params=(setting_id,), conn=conn,  with_commit=True, with_fetch=False
+            )
         return setting_id

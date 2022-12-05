@@ -5,20 +5,18 @@ from handlers.eva.base import BaseHandler
 class Settings(BaseHandler):
     async def get(self):
         setting_id = self.get_argument('id', None)
-        if not setting_id:
-            raise tornado.web.HTTPError(400, "param 'id' is needed")
         try:
             setting = self.db.get_setting(setting_id=setting_id)
         except Exception as err:
             raise tornado.web.HTTPError(409, str(err))
-        self.write({'setting': setting})
+        self.write({'settings': setting})
 
     async def post(self):
         if 'admin_all' not in self.permissions:
             raise tornado.web.HTTPError(403, 'Not allowed')
 
         setting_name = self.data.get('name', None)
-        setting_body = self.data.get('body', "")
+        setting_body = self.data.get('body', {})
         if not setting_name:
             raise tornado.web.HTTPError(400, "params 'name' is needed")
         try:
@@ -39,14 +37,14 @@ class Settings(BaseHandler):
             raise tornado.web.HTTPError(400, "param 'id' is needed")
 
         try:
-            name, modified = self.db.update_setting(
+            self.db.update_setting(
                 setting_id=setting_id,
                 name=self.data.get('name', None),
                 body=self.data.get('body', None),
             )
         except Exception as err:
             raise tornado.web.HTTPError(409, str(err))
-        self.write({'id': setting_id, 'name': name})
+        self.write({'id': setting_id})
 
     async def delete(self):
         setting_id = self.get_argument('id', None)
