@@ -26,6 +26,7 @@ from handlers.eva.svg_load import SvgLoadHandler
 from handlers.eva.theme import ThemeListHandler, ThemeGetHandler, ThemeHandler
 from handlers.eva.timelines import GetTimelines
 from handlers.eva.interesting_fields import GetInterestingFields
+from handlers.eva.settings import Settings
 
 from handlers.jobs.makejob import MakeJob
 from handlers.jobs.loadjob import LoadJob
@@ -214,7 +215,7 @@ def main():
 
         (r'/api/load/svg', SvgLoadHandler, {"db_conn_pool": db_pool_eva, 'file_upload_conf': file_upload_conf,
                                             'static_conf': static_conf}),
-
+        (r'/api/settings', Settings, {"db_conn_pool": db_pool_eva}),
         (r'/qapi/quizs', QuizsHandler, {"db_conn_pool": db_pool_eva}),
         (r'/qapi/quiz', QuizHandler, {"db_conn_pool": db_pool_eva}),
         (r'/qapi/quiz/create', QuizHandler, {"db_conn_pool": db_pool_eva}),
