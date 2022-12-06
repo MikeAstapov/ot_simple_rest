@@ -1,3 +1,7 @@
+## [1.17.0] - Release
+### Added
+- Added /settings endpoint for saving global eva settings
+
 ## [1.16.0] - Release
 ### Fixed
 - Recalculate all dashboards orders in group when one dashboard changes position
