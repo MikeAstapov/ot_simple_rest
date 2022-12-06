@@ -81,6 +81,11 @@ CREATE TABLE theme (
     content TEXT
 );
 
+CREATE TABLE settings (
+    id   SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    body TEXT
+);
 
 INSERT INTO "user" (name, password) VALUES ('admin', '$2b$12$ODxOO2wd6vRy2wT4euCJxeKPwU7.GW7HvTrcFmCQgTFbMQOfj851e');
 INSERT INTO permission (name) VALUES ('admin_all');
