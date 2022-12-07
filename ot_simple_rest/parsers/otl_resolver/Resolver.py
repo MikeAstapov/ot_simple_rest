@@ -90,8 +90,9 @@ class Resolver:
         :return: String with replaces of subsearches.
         """
         subsearch_query = match_object.group(1)
+        _subsearch_query = re.sub(self.quoted_return_pattern, self.return_quoted, subsearch_query)
 
-        subsearch_query_service = re.sub(self.read_pattern_middle, self.create_read_graph, subsearch_query)
+        subsearch_query_service = re.sub(self.read_pattern_middle, self.create_read_graph, _subsearch_query)
         subsearch_query_service = re.sub(self.read_pattern_start, self.create_read_graph, subsearch_query_service)
 
         subsearch_query_service = re.sub(self.otstats_pattern_middle, self.create_otstats_graph,
@@ -100,7 +101,6 @@ class Resolver:
 
         subsearch_query_service = re.sub(self.filter_pattern, self.create_filter_graph, subsearch_query_service)
 
-        _subsearch_query = re.sub(self.quoted_return_pattern, self.return_quoted, subsearch_query)
         _subsearch_query_service = re.sub(self.quoted_return_pattern, self.return_quoted, subsearch_query_service)
 
         subsearch_sha256 = sha256(_subsearch_query.strip().encode('utf-8')).hexdigest()
