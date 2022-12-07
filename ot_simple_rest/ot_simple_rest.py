@@ -42,11 +42,11 @@ from task_scheduler.tasks import DbTasksSchduler
 
 __author__ = "Andrey Starchenkov"
 __copyright__ = "Copyright 2019, ISG Neuro"
-__credits__ = ["Anton Khromov"]
+__credits__ = ["Anton Khromov", "Ilia Sagaidak", "Artem Zenkov"]
 __license__ = "OT.PLATFORM. License agreement."
 __version__ = "1.17.1"
-__maintainer__ = "Ilia Sagaidak"
-__email__ = "isagaidak@isgneuro.com"
+__maintainer__ = "Andrey Starchenkov"
+__email__ = "astarchnenkov@isgneuro.com"
 __status__ = "Production"
 
 from utils.tornado_mod import Tornado
