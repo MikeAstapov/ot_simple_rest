@@ -1,3 +1,7 @@
+## [1.17.1] - Hotfix
+### Hotfix
+- The problem (e.g. wildcards) with filters in a "| search" command in subsearches.
+
 ## [1.17.0] - Release
 ### Added
 - Added /settings endpoint for saving global eva settings
