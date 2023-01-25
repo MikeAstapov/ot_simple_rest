@@ -102,7 +102,6 @@ class Resolver:
 
         _subsearch_query = re.sub(self.quoted_return_pattern, self.return_quoted, subsearch_query)
         _subsearch_query_service = re.sub(self.quoted_return_pattern, self.return_quoted, subsearch_query_service)
-        print("new subsearch: {}", _subsearch_query)
 
         subsearch_sha256 = sha256(_subsearch_query.strip().encode('utf-8')).hexdigest()
 
@@ -293,7 +292,7 @@ class Resolver:
     def hide_no_subsearch_commands(self, otl):
         if self.no_subsearch_commands is not None:
             commands = self.no_subsearch_commands.split(',')
-            raw_str = r'\|\s+{command}[^\[]+(\[.+\])'
+            raw_str = r'\|\s+{command}[^\[]+(\[(?:\[??[^\[]*?\]))'
             patterns = [re.compile(raw_str.format(command=command)) for command in commands]
             self.logger.debug(f'Patterns: {patterns}.')
             for pattern in patterns:
