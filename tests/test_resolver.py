@@ -343,6 +343,14 @@ class TestResolver(unittest.TestCase):
         print('target', target)
         self.assertDictEqual(result, target)
 
+    def test_nesting_subsearches_with_no_subsearch_commands(self):
+        otl = """| makeresults | eval rmt = mvappend(1,2,7,3), b ="A" | mvexpand rmt | join rmt type=inner [| makeresults | eval rmt = mvappend(8,9,5,4), t ="X" | mvexpand rmt | foreach *mt [| eval c = sqrt(<<FIELD>>)]]"""
+        target = {'search': ('| makeresults | eval rmt = mvappend(1,2,7,3), b ="A" | mvexpand rmt | join rmt type=inner [| makeresults | eval rmt = mvappend(8,9,5,4), t ="X" | mvexpand rmt | foreach *mt [| eval c = sqrt(<<FIELD>>)]]', '| makeresults | eval rmt = mvappend(1,2,7,3), b ="A" | mvexpand rmt | join rmt type=inner subsearch=subsearch_add685562d3f67b82dc1c25773c77cb5368c21e9244789d29bf9be5f8ad29065'), 'subsearches': {'subsearch_add685562d3f67b82dc1c25773c77cb5368c21e9244789d29bf9be5f8ad29065': ('| makeresults | eval rmt = mvappend(8,9,5,4), t ="X" | mvexpand rmt | foreach *mt _hidden_text_a079e7097ef6b03b640b1635ed68ac9e3050e2db6125d8199e7dbb089304b2cc', '| makeresults | eval rmt = mvappend(8,9,5,4), t ="X" | mvexpand rmt | foreach *mt _hidden_text_a079e7097ef6b03b640b1635ed68ac9e3050e2db6125d8199e7dbb089304b2cc')}}
+        result = self.resolver.resolve(otl)
+        print('result', result)
+        print('target', target)
+        self.assertDictEqual(result, target)
+
     def test_rename_with_bracket(self):
         otl = """search index=main | join host [ search index=main2 | rename bla as host]"""
         target = {'search': ('search index=main | join host [ search index=main2 | rename bla as host]', '| read {"main": {"query": "", "tws": 0, "twf": 0}}| join host subsearch=subsearch_e94ea0468c117b166b32d6e5f7985ac4c1af08bb3bf941a1340a09697943d067'), 'subsearches': {'subsearch_e94ea0468c117b166b32d6e5f7985ac4c1af08bb3bf941a1340a09697943d067': (' search index=main2 | rename bla as host', '| read {"main2": {"query": "", "tws": 0, "twf": 0}}| rename bla as host')}}
