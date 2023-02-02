@@ -292,7 +292,7 @@ class Resolver:
     def hide_no_subsearch_commands(self, otl):
         if self.no_subsearch_commands is not None:
             commands = self.no_subsearch_commands.split(',')
-            raw_str = r'\|\s+{command}[^\[]+(\[.+\])'
+            raw_str = r'\|\s+{command}[^\[]+(\[(?:\[??[^\[]*?\]))'
             patterns = [re.compile(raw_str.format(command=command)) for command in commands]
             self.logger.debug(f'Patterns: {patterns}.')
             for pattern in patterns:
