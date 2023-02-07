@@ -102,6 +102,7 @@ class Resolver:
         subsearch_query_service = re.sub(self.filter_pattern, self.create_filter_graph, subsearch_query_service)
 
         _subsearch_query_service = re.sub(self.quoted_return_pattern, self.return_quoted, subsearch_query_service)
+        _subsearch_query_service = re.sub(self.no_subsearch_return_pattern, self._return_no_subsearch_command, _subsearch_query_service)
 
         subsearch_sha256 = sha256(_subsearch_query.strip().encode('utf-8')).hexdigest()
 
