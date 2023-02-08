@@ -1,3 +1,7 @@
+## [1.17.2] - Hotfix
+### Hotfix
+- Fixed erroneous parsing of nested subsearch with foreach command 
+
 ## [1.17.1] - Hotfix
 ### Hotfix
 - The problem (e.g. wildcards) with filters in a "| search" command in subsearches.
