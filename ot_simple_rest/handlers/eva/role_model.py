@@ -464,7 +464,7 @@ class GroupDashboardsHandler(BaseHandler):
         group_id = self.get_argument('id', None)
         if not group_id:
             raise tornado.web.HTTPError(400, "param 'id' is needed")
-        with_body = self.get_argument('with_body', None)
+        with_body = self.get_argument('with_body', True)
         group_dashs = self.db.get_dashs_data(group_id=group_id, with_body=with_body)
         self.write({'data': group_dashs})
 
