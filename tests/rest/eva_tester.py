@@ -519,6 +519,23 @@ class EvaTester:
             self._cleanup()
         return dashs_from_api == group_data['dashs']
 
+    def test__get_group_dashs_without_body(self):
+        dashs_data = [{'name': 'dash_1'}, {'name': 'dash_2'}]
+        group_data = {'name': 'test_group', 'color': '#332233', 'dashs': ['dash_1', 'dash_2']}
+
+        try:
+            for d in dashs_data:
+                self.send_request(method='POST', endpoint='/api/dash', data=d)
+            self.send_request(method='POST', endpoint='/api/group', data=group_data)
+            group_from_db = self.db.execute_query('SELECT id FROM "group" WHERE name=%s;',
+                                                  params=(group_data['name'],), as_obj=True)
+            dashs_from_api = self.send_request(method='GET',
+                                               endpoint=f'/api/group/dashs?id={group_from_db.id}&with_body=false')
+            dashs_from_api = [d['name'] for d in dashs_from_api['data']]
+        finally:
+            self._cleanup()
+        return dashs_from_api == group_data['dashs']
+
     def test__export_dash_single(self):
         data = {'name': 'test_dash_export', 'body': '{"store":{"qqq":"ddd"}}'}
         try:
