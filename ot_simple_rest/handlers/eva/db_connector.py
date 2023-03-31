@@ -681,8 +681,6 @@ class PostgresConnector(PGConnector):
                         pass
                 dash['groups'] = groups
 
-        if not with_body:
-
         return dashs
 
     def get_dash_data(self, dash_id):
