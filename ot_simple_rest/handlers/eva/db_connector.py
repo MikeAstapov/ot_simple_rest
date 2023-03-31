@@ -659,14 +659,22 @@ class PostgresConnector(PGConnector):
         )
 
     def get_dashs_data(self, *, group_id: str=None, names_only=False, with_body=True):
-        sql_body_string = "body," if with_body else ""
-        if group_id:
-            dashs = self.execute_query("SELECT id, name, %s round(extract(epoch from modified)) as modified "
-                                       "FROM dash WHERE id IN (SELECT dash_id FROM dash_group WHERE group_id = %s);",
-                                       params=(sql_body_string, group_id,), fetchall=True, as_obj=True)
+        if with_body:
+            if group_id:
+                dashs = self.execute_query(f"SELECT id, name, body, round(extract(epoch from modified)) as modified "
+                                           "FROM dash WHERE id IN (SELECT dash_id FROM dash_group WHERE group_id = %s);",
+                                           params=(group_id,), fetchall=True, as_obj=True)
+            else:
+                dashs = self.execute_query("SELECT id, name, body, round(extract(epoch from modified)) as modified "
+                                           "FROM dash;", fetchall=True, as_obj=True)
         else:
-            dashs = self.execute_query("SELECT id, name, %s round(extract(epoch from modified)) as modified "
-                                       "FROM dash;", params=(sql_body_string,), fetchall=True, as_obj=True)
+            if group_id:
+                dashs = self.execute_query(f"SELECT id, name, round(extract(epoch from modified)) as modified "
+                                           "FROM dash WHERE id IN (SELECT dash_id FROM dash_group WHERE group_id = %s);",
+                                           params=(group_id,), fetchall=True, as_obj=True)
+            else:
+                dashs = self.execute_query("SELECT id, name, round(extract(epoch from modified)) as modified "
+                                           "FROM dash;", fetchall=True, as_obj=True)
 
         if names_only:
             dashs = [d['name'] for d in dashs]
