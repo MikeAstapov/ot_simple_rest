@@ -334,6 +334,9 @@ class TestEva(unittest.TestCase):
     def test__get_group_dashs(self):
         self.assertTrue(self.tester.test__get_group_dashs())
 
+    def test__get_group_dashs_without_body(self):
+        self.assertTrue(self.tester.test__get_group_dashs_without_body())
+
     def test__import_dash_single(self):
         self.assertTrue(self.tester.test__import_dash_single())
 
