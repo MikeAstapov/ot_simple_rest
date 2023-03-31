@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.17.3] - 2023-03-30
 ### Changed
-- Endpoint "api/group/dashs" will not return dashboards' body since this release.
+- Endpoint `api/group/dashs` will not return dashboards' body since this release.
 
 ## [1.17.2] - 2023-02-02
 ### Fixed
