@@ -1,4 +1,3 @@
-
 import json
 import logging
 import tornado.web
@@ -14,13 +13,11 @@ __maintainer__ = "Alexander Matiakubov"
 __email__ = "amatiakubov@isgneuro.com"
 __status__ = "Development"
 
+
 class ThemeListHandler(BaseHandler):
     def initialize(self, **kwargs):
         super().initialize(kwargs['db_conn_pool'])
         self.logger = logging.getLogger('osr')
-
-    async def prepare(self):
-        pass
 
     async def get(self):
         _offset = self.get_argument('offset', 0)
@@ -37,9 +34,6 @@ class ThemeGetHandler(BaseHandler):
     def initialize(self, **kwargs):
         super().initialize(kwargs['db_conn_pool'])
         self.logger = logging.getLogger('osr')
-
-    async def prepare(self):
-        pass
 
     async def get(self):
         theme_name = self.get_argument('themeName', None)
@@ -65,7 +59,7 @@ class ThemeHandler(BaseHandler):
         if not theme_name:
             raise tornado.web.HTTPError(400, "param 'themeName' is needed for creating theme")
 
-        #1. create theme in DB
+        # 1. create theme in DB
         try:
             self.logger.debug(f'ThemeHandler create theme, name: {theme_name} with body: {json.dumps(self.data)}')
             theme = self.db.add_theme(theme_name=theme_name,
@@ -73,28 +67,26 @@ class ThemeHandler(BaseHandler):
         except Exception as err:
             raise tornado.web.HTTPError(409, str(err))
 
-        #2. return saved theme
+        # 2. return saved theme
         self.write(json.dumps(theme))
-
 
     async def delete(self):
         theme_name = self.data.get('themeName', None)
         if not theme_name:
             raise tornado.web.HTTPError(400, "param 'themeName' is needed for deleting")
-        #1. get theme
+        # 1. get theme
         try:
             # theme = self.db.get_dash_data(dash_id=dash_id)
             theme = self.db.get_theme(theme_name=theme_name)
         except Exception as err:
             raise tornado.web.HTTPError(409, str(err))
 
-        #2. delete theme
+        # 2. delete theme
         try:
             deleted_theme_name = self.db.delete_theme(theme_name=theme_name)
             self.logger.debug(f'ThemeHandler Deleted theme name: {deleted_theme_name} with body: {theme}')
         except Exception as err:
             raise tornado.web.HTTPError(409, str(err))
 
-        #3. return deleted theme
+        # 3. return deleted theme
         self.write(json.dumps(theme))
-
