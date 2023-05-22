@@ -661,19 +661,19 @@ class PostgresConnector(PGConnector):
     def get_dashs_data(self, *, group_id: str=None, names_only=False, with_body=True):
         if with_body:
             if group_id:
-                dashs = self.execute_query(f"SELECT id, name, body, round(extract(epoch from modified)) as modified "
+                dashs = self.execute_query(f"SELECT id, name, body, round(extract(epoch from modified))::INTEGER as modified "
                                            "FROM dash WHERE id IN (SELECT dash_id FROM dash_group WHERE group_id = %s);",
                                            params=(group_id,), fetchall=True, as_obj=True)
             else:
-                dashs = self.execute_query("SELECT id, name, body, round(extract(epoch from modified)) as modified "
+                dashs = self.execute_query("SELECT id, name, body, round(extract(epoch from modified))::INTEGER as modified "
                                            "FROM dash;", fetchall=True, as_obj=True)
         else:
             if group_id:
-                dashs = self.execute_query(f"SELECT id, name, round(extract(epoch from modified)) as modified "
+                dashs = self.execute_query(f"SELECT id, name, round(extract(epoch from modified))::INTEGER as modified "
                                            "FROM dash WHERE id IN (SELECT dash_id FROM dash_group WHERE group_id = %s);",
                                            params=(group_id,), fetchall=True, as_obj=True)
             else:
-                dashs = self.execute_query("SELECT id, name, round(extract(epoch from modified)) as modified "
+                dashs = self.execute_query("SELECT id, name, round(extract(epoch from modified))::INTEGER as modified "
                                            "FROM dash;", fetchall=True, as_obj=True)
 
         if names_only:
@@ -692,7 +692,7 @@ class PostgresConnector(PGConnector):
         return dashs
 
     def get_dash_data(self, dash_id):
-        dash_data = self.execute_query("SELECT id, name, body, round(extract(epoch from modified)) as modified "
+        dash_data = self.execute_query("SELECT id, name, body, round(extract(epoch from modified))::INTEGER as modified "
                                        "FROM dash WHERE id = %s;", params=(dash_id,), as_obj=True)
         if not dash_data:
             raise ValueError(f'Dash with id={dash_id} is not exists')
@@ -705,7 +705,7 @@ class PostgresConnector(PGConnector):
         return dash_data
 
     def get_dash_data_by_name(self, dash_name, dash_group):
-        dash_data = self.execute_query("SELECT id, name, body, round(extract(epoch from modified)) as modified "
+        dash_data = self.execute_query("SELECT id, name, body, round(extract(epoch from modified))::INTEGER as modified "
                                        "FROM dash WHERE name = %s LIMIT 1;", params=(dash_name,), as_obj=True)
         if not dash_data:
             raise ValueError(f'Dash with name={dash_name} is not exists')
@@ -806,7 +806,7 @@ class PostgresConnector(PGConnector):
 
         with self.transaction('add_dashboard_data') as conn:
             dash = self.execute_query("INSERT INTO dash (name, body) VALUES (%s, %s) "
-                                      "RETURNING id, round(extract(epoch from modified)) as modified;",
+                                      "RETURNING id, round(extract(epoch from modified))::INTEGER as modified;",
                                       conn=conn, params=(name, body,), as_obj=True)
             if isinstance(groups, list):
                 for group in groups:
@@ -821,7 +821,7 @@ class PostgresConnector(PGConnector):
 
         with self.transaction('update_dash_data') as conn:
             dash = self.execute_query("UPDATE dash SET modified = now() WHERE id = %s "
-                                      "RETURNING name, round(extract(epoch from modified)) as modified;",
+                                      "RETURNING name, round(extract(epoch from modified))::INTEGER as modified;",
                                       conn=conn, params=(dash_id,), as_obj=True)
             if name:
                 self.execute_query("UPDATE dash SET name = %s WHERE id = %s;",
